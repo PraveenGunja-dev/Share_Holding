@@ -59,7 +59,7 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
     setErrorMsg('');
     try {
       const endpoint = action === 'view' ? 'preview-slides' : 'preview-pdf';
-      const response = await fetch(`http://localhost:8002/api/reports/${endpoint}?date=${encodeURIComponent(reportISO)}&bu_id=${buId || 1}`);
+      const response = await fetch(`/shareholding-pattern/api/reports/${endpoint}?date=${encodeURIComponent(reportISO)}&bu_id=${buId || 1}`);
       if (!response.ok) {
           const body = await response.json();
           throw new Error(body.detail || 'Failed to connect to report engine');
@@ -89,7 +89,7 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
     setShowDownloadChoice(false);
     try {
       const endpoint = format === 'pdf' ? 'download-pdf' : 'download-pptx';
-      const response = await fetch(`http://localhost:8002/api/reports/${endpoint}?date=${encodeURIComponent(reportISO)}&bu_id=${buId || 1}`);
+      const response = await fetch(`/shareholding-pattern/api/reports/${endpoint}?date=${encodeURIComponent(reportISO)}&bu_id=${buId || 1}`);
       if (!response.ok) throw new Error(`Download failed`);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -110,7 +110,7 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
     if (!email || !reportISO) return;
     setEmailStatus('sending');
     try {
-      const response = await fetch(`http://localhost:8002/api/reports/send-email?bu_id=${buId || 1}`, {
+      const response = await fetch(`/shareholding-pattern/api/reports/send-email?bu_id=${buId || 1}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date: reportISO, email })

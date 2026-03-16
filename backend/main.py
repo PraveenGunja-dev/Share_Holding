@@ -1,11 +1,11 @@
 import os
 import sqlite3
 import time
-from typing import Optional
-from fastapi import FastAPI, HTTPException, Request, Response, Query
+from typing import Optional, Any
+from fastapi import FastAPI, HTTPException, Request, Response, Query, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, RedirectResponse
 from dotenv import load_dotenv
 
 # Import logging and logic
@@ -20,7 +20,9 @@ logger = get_logger("API_GATEWAY")
 load_dotenv()
 
 app = FastAPI(title="Adani Shareholding Analytics API")
-app.include_router(reports_router, prefix="/api/reports", tags=["Reports"])
+
+# Create a master router for the /shareholding-pattern prefix
+main_router = APIRouter(prefix="/shareholding-pattern")
 
 # Security & Analytics Middleware
 @app.middleware("http")
@@ -72,6 +74,7 @@ app.add_middleware(
 # Root directory where .db files are stored
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(ROOT_DIR, "WeeklyShareHolding_Update5.db")
+DIST_DIR = os.path.join(ROOT_DIR, "frontend", "dist")
 
 def dict_factory(cursor, row):
     d = {}
@@ -87,9 +90,8 @@ def get_db_connection():
     conn.row_factory = dict_factory
     return conn
 
-# ─── NEW: Business Units endpoint ───────────────────────────────────
-@app.get("/api/business-units")
-@app.get("/shareholding-pattern/api/business-units")
+# ─── Business Units endpoint ───────────────────────────────────
+@main_router.get("/api/business-units")
 async def get_business_units():
     conn = get_db_connection()
     if not conn:
@@ -105,15 +107,13 @@ async def get_business_units():
         if conn: conn.close()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/date-ranges")
-@app.get("/shareholding-pattern/api/date-ranges")
+@main_router.get("/api/date-ranges")
 async def get_date_ranges(bu_id: int):
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Database connection failed")
     try:
         cur = conn.cursor()
-        # Union across all major tables to find all available weeks for this BU
         tables = [
             "Top 20 Holders", "Top 20 Buyers", "Top 20 Sellers", 
             "Entry", "Exit", "Top 20 Holders FII", 
@@ -131,8 +131,6 @@ async def get_date_ranges(bu_id: int):
         if conn: conn.close()
         raise HTTPException(status_code=500, detail=str(e))
 
-# Endpoints mapping from flow description
-# Map is: endpoint_path -> (table_name, order_by_col)
 ENDPOINTS = {
     "holders/institutional": ("Top 20 Holders", "Rank"),
     "holders/buyers": ("Top 20 Buyers", "Sr.No"),
@@ -146,7 +144,6 @@ ENDPOINTS = {
     "holders/exits": ("Exit", None),
 }
 
-# Dynamic function creator for endpoints — now filters by bu_id and optional date_range
 def create_endpoint(table_name: str, order_by: Optional[str]):
     async def endpoint(
         bu_id: Optional[int] = None, 
@@ -157,22 +154,16 @@ def create_endpoint(table_name: str, order_by: Optional[str]):
             raise HTTPException(status_code=500, detail="Database connection failed")
         try:
             cur = conn.cursor()
-            
-            # Simple list of conditions
             clauses = []
-            vals = []
-            
+            vals: list[Any] = []
             if bu_id is not None:
                 clauses.append("bu_id = ?")
                 vals.append(bu_id)
-            
-            # If date_range is provided, we MUST use it to filter
             actual_dr = date_range
             if actual_dr and actual_dr.lower() != "latest" and actual_dr.strip() != "":
                 clauses.append('"DateRange" = ?')
                 vals.append(actual_dr)
             elif bu_id is not None:
-                # No specific range, find latest for THIS BU
                 try:
                     cur.execute(f'SELECT DISTINCT "DateRange" FROM "{table_name}" WHERE bu_id = ?', (bu_id,))
                     dr_list = [r["DateRange"] for r in cur.fetchall() if r["DateRange"]]
@@ -182,14 +173,11 @@ def create_endpoint(table_name: str, order_by: Optional[str]):
                         vals.append(latest_one)
                 except:
                     pass
-
             sql = f'SELECT * FROM "{table_name}"'
             if clauses:
                 sql += " WHERE " + " AND ".join(clauses)
-            
             if order_by:
                 sql += f' ORDER BY "{order_by}" ASC'
-            
             cur.execute(sql, vals)
             data = [dict(r) for r in cur.fetchall()]
             cur.close()
@@ -200,16 +188,11 @@ def create_endpoint(table_name: str, order_by: Optional[str]):
             raise HTTPException(status_code=500, detail=str(e))
     return endpoint
 
-# Register endpoints (both with and without prefix as per flow)
 for path, (table, order) in ENDPOINTS.items():
     fn = create_endpoint(table, order)
-    # Register /api/holders/...
-    app.get(f"/api/{path}")(fn)
-    # Register /shareholding-pattern/api/holders/... (Nginx safety)
-    app.get(f"/shareholding-pattern/api/{path}")(fn)
+    main_router.get(f"/api/{path}")(fn)
 
-@app.get("/api/metadata")
-@app.get("/shareholding-pattern/api/metadata")
+@main_router.get("/api/metadata")
 async def get_metadata(bu_id: Optional[int] = None):
     conn = get_db_connection()
     if not conn:
@@ -228,29 +211,21 @@ async def get_metadata(bu_id: Optional[int] = None):
         if conn: conn.close()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/reports/generate-pptx")
-@app.get("/shareholding-pattern/api/reports/generate-pptx")
+@main_router.get("/api/reports/generate-pptx")
 async def get_report_pptx(date: Optional[str] = None, bu_id: int = 1):
-    """Generate a PPTX report using the PPT folder template and SQLite DB."""
     import sys
     backend_dir = os.path.dirname(os.path.abspath(__file__))
     ppt_dir = os.path.join(backend_dir, "PPT")
     if ppt_dir not in sys.path:
         sys.path.append(ppt_dir)
-    
     from generate_ppt import generate_report as ppt_generate
-    
-    # Discover template from PPT folder 
     template_path = os.path.join(ppt_dir, "Weekly Shareholder Movement_Template.pptx")
     if not os.path.exists(template_path):
-        # Fallback: any template .pptx in backend folder
         pptx_files = [f for f in os.listdir(backend_dir) if f.lower().endswith('.pptx') and 'template' in f.lower()]
         if pptx_files:
             template_path = os.path.join(backend_dir, pptx_files[0])
-
     try:
         pptx_bytes, display_date = ppt_generate(template_path, DB_PATH, date, bu_id)
-        
         logger.info(f"REPORT_GENERATED | SUCCESS | BU: {bu_id} | Date: {display_date}")
         return StreamingResponse(
             io.BytesIO(pptx_bytes),
@@ -260,22 +235,26 @@ async def get_report_pptx(date: Optional[str] = None, bu_id: int = 1):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/databases")
-@app.get("/shareholding-pattern/api/databases")
+@main_router.get("/api/databases")
 def get_available_databases():
     return ["WeeklyShareHolding_Update5"]
 
-# Serve static files from the build/dist directory if it exists
-# In Vite this is 'dist', in Create React App this is 'build'
-DIST_DIR = os.path.join(ROOT_DIR, "frontend", "dist")
+# Include the reports router under the main router prefix
+main_router.include_router(reports_router, prefix="/api/reports", tags=["Reports"])
+
+# Include the main router into the app
+app.include_router(main_router)
+
+# Serve static files logic
 if os.path.exists(DIST_DIR):
     assets_dir = os.path.join(DIST_DIR, "assets")
     if os.path.exists(assets_dir):
-        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+        # Mount assets first so they take priority
+        app.mount("/shareholding-pattern/assets", StaticFiles(directory=assets_dir), name="assets")
 
-@app.get("/{path:path}")
+@app.get("/shareholding-pattern/{path:path}")
 async def catch_all(request: Request, path: str):
-    # Try to serve as a file from dist
+    # If path corresponds to a file in dist (e.g. favicon.ico), serve it
     file_path = os.path.join(DIST_DIR, path)
     if os.path.isfile(file_path):
         return FileResponse(file_path)
@@ -285,9 +264,14 @@ async def catch_all(request: Request, path: str):
     if os.path.isfile(index_path):
         return FileResponse(index_path)
     
-    return {"message": "Development API Server Live - Use /api endpoints"}
+    return {"message": "Frontend build not found. Visit /shareholding-pattern/api for the API."}
+
+@app.get("/")
+async def root_redirect():
+    return RedirectResponse(url="/shareholding-pattern/")
 
 if __name__ == "__main__":
     import uvicorn
+    # Enforce port 8002 as requested
     port = int(os.getenv("API_PORT", 8002))
     uvicorn.run(app, host="0.0.0.0", port=port)

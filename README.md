@@ -27,6 +27,7 @@ Navigate to the `backend` folder:
   ```bash
   python main.py
   ```
+The dashboard will be available at: `http://localhost:8002/shareholding-pattern/`
 
 ### 2. Frontend (React + Vite)
 Navigate to the `frontend` folder:
