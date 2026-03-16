@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+python-dotenv
+python-multipart
+requests
+python-jose[cryptography]
+passlib[bcrypt]
+pandas
+openpyxl
+jinja2
+python-pptx
+pdfkit
+email-validator
+pywin32

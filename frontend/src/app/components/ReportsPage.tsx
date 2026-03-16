@@ -1,0 +1,323 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  FileText, Download, Mail, Eye, 
+  RotateCcw, CheckCircle, X, Loader2,
+  Calendar, FileStack, AlertCircle, FileType, ChevronDown,
+  Info, Sparkles, Send
+} from 'lucide-react';
+import { Card, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Badge } from './ui/badge';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./ui/dialog";
+
+interface ReportsPageProps { 
+  dateRange: string; 
+  buId?: number;
+}
+
+type Stage = 'idle' | 'generating' | 'viewing' | 'error';
+type EmailStatus = 'idle' | 'sending' | 'sent' | 'error';
+
+export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
+  const [stage, setStage] = useState<Stage>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [slides, setSlides] = useState<string[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [buName, setBuName] = useState('Adani');
+  const [showEmail, setShowEmail] = useState(false);
+  const [showDownloadChoice, setShowDownloadChoice] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<EmailStatus>('idle');
+  const [email, setEmail] = useState('');
+
+  // The reportISO should be just the date from the dateRange prop
+  // If dateRange is "latest" or a range like "27-Feb-26 vs 06-Mar-26", 
+  // the backend knows how to handle it if we pass it as 'date' param.
+  const { reportISO, displayDate } = useMemo(() => {
+    if (!dateRange || dateRange === '') return { reportISO: 'latest', displayDate: 'Current Week' };
+    
+    if (dateRange.includes(' vs ')) {
+      const parts = dateRange.split(' vs ');
+      return { reportISO: dateRange, displayDate: parts[1] };
+    }
+    
+    return { reportISO: dateRange, displayDate: dateRange === 'latest' ? 'Current Week' : dateRange };
+  }, [dateRange]);
+
+  const handleAction = async (action: 'view' | 'generate') => {
+    if (!reportISO) return;
+    setStage('generating');
+    setErrorMsg('');
+    try {
+      const endpoint = action === 'view' ? 'preview-slides' : 'preview-pdf';
+      const response = await fetch(`http://localhost:8002/api/reports/${endpoint}?date=${encodeURIComponent(reportISO)}&bu_id=${buId || 1}`);
+      if (!response.ok) {
+          const body = await response.json();
+          throw new Error(body.detail || 'Failed to connect to report engine');
+      }
+      
+      if (action === 'view') {
+        const data = await response.json();
+        if (data.slides && data.slides.length > 0) {
+          setSlides(data.slides);
+          setBuName(data.bu_name || 'Adani');
+          setCurrentSlide(0);
+          setStage('viewing');
+        } else {
+          throw new Error('No slides generated');
+        }
+      } else {
+        // Just triggering generation logic if needed, but 'view' handles the slide logic now
+        setStage('idle');
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Generation failed');
+      setStage('error');
+    }
+  };
+
+  const handleDownload = async (format: 'pdf' | 'pptx') => {
+    setShowDownloadChoice(false);
+    try {
+      const endpoint = format === 'pdf' ? 'download-pdf' : 'download-pptx';
+      const response = await fetch(`http://localhost:8002/api/reports/${endpoint}?date=${encodeURIComponent(reportISO)}&bu_id=${buId || 1}`);
+      if (!response.ok) throw new Error(`Download failed`);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Weekly_Report_${displayDate?.replace(/-/g, '_') || 'latest'}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(`Download Error`);
+    }
+  };
+
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !reportISO) return;
+    setEmailStatus('sending');
+    try {
+      const response = await fetch(`http://localhost:8002/api/reports/send-email?bu_id=${buId || 1}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: reportISO, email })
+      });
+      if (!response.ok) throw new Error('Email delivery failed');
+      setEmailStatus('sent');
+    } catch (err) {
+      setEmailStatus('error');
+    }
+  };
+
+  return (
+    <div className="w-full m-4 h-full space-y-6 animate-in fade-in duration-500">
+      {/* Control Card - Full Width Adani Sidebar-to-Sidebar style */}
+      <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden rounded-xl bg-white dark:bg-slate-900 border">
+        <div className="bg-[#002B5C] px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <FileText className="w-5 h-5 text-white/90" />
+            <h2 className="text-white font-black text-sm tracking-widest uppercase">Weekly Shareholder Report</h2>
+          </div>
+          <Badge className="bg-white/10 text-white border-none text-[10px] font-black px-3 py-1">
+            {displayDate}
+          </Badge>
+        </div>
+        
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            
+            {/* Filename Block */}
+            <div className="flex items-center gap-6 flex-1 min-w-0">
+               <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 flex items-center gap-4 flex-1 min-w-0">
+                  <div className="w-10 h-10 rounded bg-[#002B5C]/10 flex items-center justify-center">
+                    <FileType className="w-6 h-6 text-[#002B5C]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Generated Output</p>
+                    <p className="text-sm font-bold text-[#002B5C] dark:text-sky-400 truncate">
+                      Weekly_Report_{buName.replace(/ /g, '_')}_{displayDate?.replace(/-/g, '_') || 'latest'}.pptx
+                    </p>
+                  </div>
+               </div>
+            </div>
+
+            {/* Actions Row */}
+            <div className="flex items-center gap-3">
+              <Button 
+                onClick={() => handleAction('view')}
+                disabled={stage === 'generating'}
+                className="h-12 px-6 bg-[#002B5C] hover:bg-[#001a4d] text-white font-black text-xs gap-3 rounded transition-all active:scale-95"
+              >
+                {stage === 'generating' ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                Generate & Preview
+              </Button>
+
+              <Button 
+                variant="outline"
+                onClick={() => setShowEmail(true)}
+                className="h-12 px-5 border-slate-200 dark:border-slate-800 text-[#002B5C] dark:text-sky-400 font-black text-xs gap-2 rounded hover:bg-slate-50 hover:text-[#002B5C] transition-all"
+              >
+                <Mail className="w-4 h-4" />
+                Email
+              </Button>
+
+              <Button 
+                variant="outline"
+                onClick={() => setShowDownloadChoice(true)}
+                className="h-12 px-5 border-slate-200 dark:border-slate-800 text-[#002B5C] dark:text-sky-400 font-black text-xs gap-2 rounded hover:bg-slate-50 hover:text-[#002B5C] transition-all"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
+            </div>
+          </div>
+
+          {stage === 'error' && (
+            <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded flex items-center gap-3 text-red-600 dark:text-red-400 text-xs font-black">
+              <AlertCircle className="w-5 h-5" />
+              {errorMsg}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Preview Section */}
+      {stage === 'viewing' && slides.length > 0 && (
+        <Card className="border-slate-200 dark:border-slate-800 shadow-xl rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 border-2">
+          <div className="bg-[#002B5C] px-6 py-3 flex justify-between items-center border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <Eye className="w-4 h-4 text-sky-400" />
+              <div className="flex items-center gap-3">
+                <span className="text-white font-black text-[10px] uppercase tracking-widest text-white/70">Presentation View</span>
+                <Badge variant="outline" className="text-[9px] border-white/20 text-white/50 h-5">
+                  SLIDE {currentSlide + 1} OF {slides.length}
+                </Badge>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => setStage('idle')} className="text-white/50 hover:text-white hover:bg-white/10 rounded-full h-8 w-8">
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          
+          <div className="relative p-6 flex flex-col items-center">
+             {/* Slide Navigation Overlay */}
+             <div className="absolute inset-x-6 top-1/2 -translate-y-1/2 flex justify-between items-center z-20 pointer-events-none">
+                <Button 
+                  variant="secondary" size="icon" 
+                  className="rounded-full shadow-xl pointer-events-auto h-12 w-12 bg-white/90 hover:bg-white text-[#002B5C] border border-slate-100"
+                  onClick={() => setCurrentSlide(prev => Math.max(0, prev - 1))}
+                  disabled={currentSlide === 0}
+                >
+                  <ChevronDown className="w-6 h-6 rotate-90" />
+                </Button>
+                <Button 
+                  variant="secondary" size="icon" 
+                  className="rounded-full shadow-xl pointer-events-auto h-12 w-12 bg-white/90 hover:bg-white text-[#002B5C] border border-slate-100"
+                  onClick={() => setCurrentSlide(prev => Math.min(slides.length - 1, prev + 1))}
+                  disabled={currentSlide === slides.length - 1}
+                >
+                  <ChevronDown className="w-6 h-6 -rotate-90" />
+                </Button>
+             </div>
+
+             {/* Slide Image Wrapper */}
+             <div className="w-full max-w-5xl bg-white shadow-2xl rounded-lg overflow-hidden border border-slate-200 aspect-[16/9] relative">
+                <img 
+                  src={`data:image/png;base64,${slides[currentSlide]}`} 
+                  alt={`Slide ${currentSlide + 1}`}
+                  className="w-full h-full object-contain select-none pointer-events-none"
+                />
+             </div>
+
+             {/* Slide Indicators */}
+             <div className="flex items-center gap-2 mt-6 overflow-x-auto max-w-full py-2 px-1">
+                {slides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`transition-all h-2 rounded-full ${idx === currentSlide ? 'w-8 bg-[#002B5C]' : 'w-2 bg-slate-300 hover:bg-slate-400'}`}
+                  />
+                ))}
+             </div>
+          </div>
+        </Card>
+      )}
+
+      {(slides.length === 0 || stage === 'idle') && (
+        <div className="py-24 text-center rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800 bg-slate-50/20">
+           <div className="w-20 h-20 bg-white dark:bg-slate-900 shadow-sm rounded-2xl flex items-center justify-center mx-auto mb-6 border border-slate-100 dark:border-slate-800">
+              <FileStack className="w-10 h-10 text-[#002B5C] dark:text-sky-500 opacity-20" />
+           </div>
+           <h3 className="text-[#002B5C] dark:text-sky-300 font-black text-lg tracking-tight">Report Engine Ready</h3>
+           <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-2">Generate report for global reporting period</p>
+        </div>
+      )}
+
+      {/* Format Select */}
+      <Dialog open={showDownloadChoice} onOpenChange={setShowDownloadChoice}>
+        <DialogContent className="sm:max-w-xs p-8 rounded-2xl border-none shadow-2xl bg-white">
+          <DialogTitle className="text-center font-black text-xl text-[#002B5C] mb-6">Select Export Format</DialogTitle>
+          <div className="grid grid-cols-2 gap-4">
+              <Button variant="outline" className="flex flex-col h-auto py-6 rounded-xl border-slate-100 hover:bg-slate-50 transition-all" onClick={() => handleDownload('pdf')}>
+                <FileType className="w-10 h-10 text-rose-500 mb-2" />
+                <span className="text-xs font-black text-[#002B5C]">PDF</span>
+              </Button>
+              <Button variant="outline" className="flex flex-col h-auto py-6 rounded-xl border-slate-100 hover:bg-slate-50 transition-all" onClick={() => handleDownload('pptx')}>
+                <FileText className="w-10 h-10 text-orange-500 mb-2" />
+                <span className="text-xs font-black text-[#002B5C]">PPTX</span>
+              </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Dialog */}
+      <Dialog open={showEmail} onOpenChange={setShowEmail}>
+        <DialogContent className="sm:max-w-md p-10 rounded-2xl border-none shadow-2xl bg-white">
+          {emailStatus === 'sent' ? (
+              <div className="text-center py-6 animate-in zoom-in duration-300">
+                <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
+                <h3 className="font-black text-xl text-slate-900 tracking-tight">Email Sent</h3>
+                <p className="text-slate-400 text-xs mt-2 font-bold uppercase tracking-widest leading-relaxed">The report has been successfully<br/>distributed to the recipient</p>
+                <Button className="mt-8 w-full bg-[#002B5C] h-12 rounded font-black text-sm" onClick={() => { setShowEmail(false); setEmailStatus('idle'); }}>Close</Button>
+              </div>
+          ) : (
+            <>
+                <DialogTitle className="font-black text-2xl text-[#002B5C] tracking-tight mb-2">Email Report</DialogTitle>
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-8">Send PDF copy via investor relations</p>
+                <form onSubmit={handleSendEmail} className="space-y-6">
+                    <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Recipient</Label>
+                        <Input 
+                            type="email" required placeholder="investor.relations@adani.com"
+                            className="h-14 bg-slate-50 border-none rounded font-bold px-4"
+                            value={email} onChange={e => setEmail(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-4">
+                        <Button type="button" variant="ghost" className="flex-1 h-14 font-black rounded text-slate-400" onClick={() => setShowEmail(false)}>Cancel</Button>
+                        <Button type="submit" className="flex-[2] bg-[#002B5C] hover:bg-[#001a4d] h-14 rounded font-black text-sm text-white" disabled={emailStatus === 'sending'}>
+                            {emailStatus === 'sending' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4 mr-3" />}
+                            {emailStatus === 'sending' ? 'Sending' : 'Send'}
+                        </Button>
+                    </div>
+                </form>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
