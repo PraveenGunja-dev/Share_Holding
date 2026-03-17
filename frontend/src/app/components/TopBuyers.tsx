@@ -8,7 +8,8 @@ import { TrendingUp, Users, Trophy } from 'lucide-react';
 import { getTopBuyers, getTopSellers } from '../services/api';
 import { useEffect, useState } from 'react';
 import { CATEGORY_COLORS, getCategoryColor } from '../constants/colors';
-import { cn , formatName} from "./ui/utils";
+import { cn, formatName } from "./ui/utils";
+import { useTheme } from '../context/ThemeContext';
 
 interface TopBuyersProps {
   selectedCategories: string[];
@@ -19,6 +20,7 @@ interface TopBuyersProps {
 
 
 export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuyersProps) {
+  const { theme } = useTheme();
   const [liveData, setLiveData] = useState<any[]>([]);
   const [totalSoldVal, setTotalSoldVal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -166,29 +168,29 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
       {/* Header Row: Title on Left, KPIs on Right */}
       <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-3">
         <div className="pb-1">
-          <h2 className="text-xl 2xl:text-2xl font-[1000] text-primary dark:text-sky-400 tracking-tighter leading-none mb-0.5 shadow-sm inline-block transition-all">Top {topN} Buyers</h2>
-          <p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold opacity-80 tracking-widest">Shares acquired (Percent %)</p>
+          <h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 tracking-tighter leading-none mb-1 inline-block transition-all">Top {topN} Buyers</h2>
+          <p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold opacity-80 tracking-widest leading-relaxed">Shares acquired (Percent %)</p>
         </div>
 
         {/* KPIs Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-sky-500">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0">Total shares acquired</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-sky-500 min-h-[85px] h-full">
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total shares acquired</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300">
               {Math.abs(totalBought).toLocaleString()}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-sky-500">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0">Total buyers</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-sky-500 min-h-[85px] h-full">
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total buyers</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300">
               {filteredData.length}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Investors</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-blue-500">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 truncate" title={topBuyer?.name}>
-              Top: {topBuyer?.name || '—'}
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-blue-500 min-h-[85px] h-full">
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 truncate uppercase" title={topBuyer?.name}>
+              Top Buyer: {topBuyer?.name || '—'}
             </div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300 leading-none">
               {topBuyer ? fmtVal(topBuyer.bought) : '—'}
@@ -200,15 +202,15 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
 
       {/* ── Horizontal Bar Chart ── */}
       <Card className="p-4 bg-card border-border shadow-[0_8px_30px_-4px_rgba(0,32,91,0.08)] dark:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.3)]">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <p className="text-[11px] 2xl:text-[13px] text-muted-foreground font-bold tracking-[0.2em] mt-1 opacity-80">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-10 border-b border-slate-100 dark:border-slate-800 pb-6">
+          <div className="border-l-4 border-primary dark:border-sky-500 pl-4">
+            <h3 className="text-sm 2xl:text-base font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest uppercase mb-1">TOP BUYING INSTITUTIONS PERFORMANCE</h3>
+            <p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold tracking-[0.2em] opacity-80 uppercase">
               Shares acquired (in lakhs) — Ranked 1 to {topN} top to bottom
             </p>
           </div>
 
-          {/* Category Color Legend */}
-          <div className="flex flex-wrap items-center gap-4 bg-muted/20 dark:bg-slate-800/40 px-4 py-2 rounded-xl border border-border/50">
+          <div className="flex flex-wrap items-center gap-4 bg-slate-50 dark:bg-slate-800/40 px-5 py-2.5 rounded-full border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
             {[
               { label: 'FII', color: CATEGORY_COLORS['FII'] },
               { label: 'MF', color: CATEGORY_COLORS['DII-MF'] },
@@ -217,9 +219,9 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
               { label: 'IF', color: CATEGORY_COLORS['DII-IF'] },
               { label: 'AIF', color: CATEGORY_COLORS['DII-AIF'] },
             ].map(item => (
-              <div key={item.label} className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.2)]" style={{ backgroundColor: item.color }} />
-                <span className="text-[10px] font-black text-primary dark:text-sky-400 tracking-wider">{item.label}</span>
+              <div key={item.label} className="flex items-center gap-2 group cursor-default">
+                <div className="w-2.5 h-2.5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-900 group-hover:scale-125 transition-transform" style={{ backgroundColor: item.color }} />
+                <span className="text-[10px] font-black text-[#002B5C] dark:text-sky-400 tracking-wider uppercase">{item.label}</span>
               </div>
             ))}
           </div>
@@ -263,7 +265,7 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
                 axisLine={{ stroke: 'var(--border)', strokeWidth: 0.5 }}
                 tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
               >
-                <Label value="Shares Acquired (Lakhs)" offset={-25} position="insideBottom" fontSize={13} fontWeight={900} fill="var(--muted-foreground)" style={{ opacity: 0.9 }} />
+                <Label value="SHARES ACQUIRED (LAKHS)" offset={-25} position="insideBottom" fontSize={13} fontWeight={900} fill="var(--muted-foreground)" style={{ opacity: 0.9 }} />
               </XAxis>
 
               <YAxis
@@ -280,8 +282,8 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
                   const fontSize = 13;
                   return (
                     <g transform={`translate(${x},${y})`}>
-                      <text x={-12} y={3} textAnchor="end" fontSize={fontSize} fontWeight={500} fill={dimensions.width > 0 ? '#00205B' : '#38bdf8'} style={{ letterSpacing: '0.01em' }}>
-                        {text}
+                      <text x={-12} y={4} dominantBaseline="central" textAnchor="end" fontSize={fontSize} fontWeight={500} fill={theme === 'dark' ? '#38bdf8' : '#00205B'} style={{ letterSpacing: '0.01em' }}>
+                        {text.toUpperCase()}
                       </text>
                     </g>
                   );
@@ -289,7 +291,7 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
                 tickLine={false}
                 axisLine={false}
               >
-                <Label value="Institutional Shareholders" angle={-90} position="insideLeft" offset={-15} style={{ textAnchor: 'middle', fontSize: 13, fontWeight: 500, fill: 'var(--muted-foreground)', opacity: 0.7 }} />
+                <Label value="INSTITUTIONAL SHAREHOLDERS" angle={-90} position="insideLeft" offset={-15} style={{ textAnchor: 'middle', fontSize: 13, fontWeight: 500, fill: 'var(--muted-foreground)', opacity: 0.7 }} />
               </YAxis>
 
               <Tooltip
@@ -299,10 +301,10 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
                   const d = payload[0].payload;
                   return (
                     <div className="bg-card border border-border rounded-xl p-4 shadow-xl backdrop-blur-md bg-opacity-90">
-                      <div className="text-[13px] font-medium text-muted-foreground mb-2 tracking-widest">{d.category}</div>
-                      <div className="text-[13px] font-medium text-primary dark:text-sky-400 mb-1 leading-tight">{d.name}</div>
-                      <div className="text-[13px] font-medium text-card-foreground">
-                        {d.value.toLocaleString()} <span className="text-[13px] text-muted-foreground">Lakhs</span>
+                      <div className="text-[13px] font-medium text-muted-foreground mb-2 tracking-widest uppercase">{d.category}</div>
+                      <div className="text-[13px] font-medium text-primary dark:text-sky-400 mb-1 leading-tight uppercase">{d.name}</div>
+                      <div className="text-[13px] font-medium text-card-foreground uppercase">
+                        {d.value.toLocaleString()} <span className="text-[13px] text-muted-foreground uppercase">Lakhs</span>
                       </div>
                     </div>
                   );
@@ -310,9 +312,9 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
               />
 
               {/* Lollipop Bar: Thin bar with a Circle head */}
-              <Bar 
-                dataKey="value" 
-                barSize={3} 
+              <Bar
+                dataKey="value"
+                barSize={3}
                 animationDuration={1500}
                 shape={(props: any) => {
                   const { x, y, width, height, fill, value } = props;
@@ -320,11 +322,11 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
                   return (
                     <g>
                       {/* The Stick */}
-                      <rect x={x} y={y + height / 2 - 1.5} width={width} height={3} fill={fill} rx={1.5} />
+                      <rect x={x} y={y + height / 2 - 1.5 + 4} width={width} height={3} fill={fill} rx={1.5} />
                       {/* The Head (Circle) */}
-                      <circle cx={x + width} cy={y + height / 2} r={6} fill={fill} stroke="white" strokeWidth={2} />
+                      <circle cx={x + width} cy={y + height / 2 + 4} r={6} fill={fill} stroke="white" strokeWidth={2} />
                       {/* Outer Glow */}
-                      <circle cx={x + width} cy={y + height / 2} r={10} fill={fill} fillOpacity={0.15} />
+                      <circle cx={x + width} cy={y + height / 2 + 4} r={10} fill={fill} fillOpacity={0.15} />
                     </g>
                   );
                 }}
@@ -338,6 +340,7 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
                   formatter={(v: number) => v === 0 ? '' : (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toLocaleString())}
                   style={{ fontSize: '13px', fontWeight: 500, fill: 'var(--foreground)' }}
                   offset={15}
+                  dy={4}
                 />
               </Bar>
             </BarChart>
@@ -347,76 +350,76 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
 
       </Card>
 
-        {/* ── DETAILED TABLE ── */}
-        <Card className="p-3 2xl:p-4 bg-card border-border shadow-[0_4px_20px_-4px_rgba(0,32,91,0.08)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]">
-          <h3 className="text-[11px] 2xl:text-xs font-black text-primary dark:text-sky-400 mb-2 uppercase tracking-wider opacity-90">Top {filteredData.length} Buyers (Detailed View)</h3>
-          <div className="border border-border rounded-xl shadow-md flex flex-col bg-card overflow-hidden">
-            <div className="max-h-[500px] overflow-y-auto custom-scrollbar relative">
-              <Table>
-                <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-20 shadow-sm">
-                  <TableRow className="hover:bg-transparent border-b border-white/10">
-                    <TableHead rowSpan={2} className="w-16 font-bold text-white text-center border-r border-white/5 py-4">Rank</TableHead>
-                    <TableHead rowSpan={2} className="font-bold text-white border-r border-white/5 min-w-[250px] py-4">Shareholder Name</TableHead>
-                    <TableHead rowSpan={2} className="font-bold text-white border-r border-white/5 py-4">Category</TableHead>
-                    <TableHead rowSpan={2} className="text-center font-bold text-white border-r border-white/5 py-4 bg-sky-500/20">Shares Acquired during the Week</TableHead>
-                    <TableHead colSpan={2} className="text-center font-bold text-white border-r border-white/5 bg-white/10 py-2">{detectedDates.latest}</TableHead>
-                    <TableHead colSpan={2} className="text-center font-bold text-white bg-white/5 py-2">{detectedDates.prev}</TableHead>
+      {/* ── DETAILED TABLE ── */}
+      <Card className="p-3 2xl:p-4 bg-card border-border shadow-[0_4px_20px_-4px_rgba(0,32,91,0.08)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]">
+        <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 mb-2 uppercase tracking-wider opacity-90">Top {filteredData.length} Buyers (Detailed View)</h3>
+        <div className="border border-border rounded-xl shadow-md flex flex-col bg-card overflow-hidden">
+          <div className="max-h-[500px] overflow-y-auto custom-scrollbar relative">
+            <Table>
+              <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-20 shadow-sm">
+                <TableRow className="hover:bg-transparent border-b border-white/10">
+                  <TableHead rowSpan={2} className="w-16 font-bold text-white text-center border-r border-white/5 py-4 uppercase">Rank</TableHead>
+                  <TableHead rowSpan={2} className="font-bold text-white border-r border-white/5 min-w-[250px] py-4 uppercase">Shareholder Name</TableHead>
+                  <TableHead rowSpan={2} className="font-bold text-white border-r border-white/5 py-4 uppercase">Category</TableHead>
+                  <TableHead rowSpan={2} className="text-center font-bold text-white border-r border-white/5 py-4 bg-sky-500/20">Shares Acquired during the Week</TableHead>
+                  <TableHead colSpan={2} className="text-center font-bold text-white border-r border-white/5 bg-white/10 py-2">{detectedDates.latest}</TableHead>
+                  <TableHead colSpan={2} className="text-center font-bold text-white bg-white/5 py-2">{detectedDates.prev}</TableHead>
+                </TableRow>
+                <TableRow className="hover:bg-transparent border-b border-white/10">
+                  <TableHead className="text-center font-bold text-white border-r border-white/5 text-[10px] uppercase py-1.5">Holding</TableHead>
+                  <TableHead className="text-center font-bold text-white border-r border-white/5 text-[10px] uppercase py-1.5">% of Share Capital</TableHead>
+                  <TableHead className="text-center font-bold text-white border-r border-white/5 text-[10px] uppercase py-1.5">Holding</TableHead>
+                  <TableHead className="text-center font-bold text-white text-[10px] uppercase py-1.5">% of Share Capital</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="bg-card">
+                {filteredData.map((row, idx) => (
+                  <TableRow
+                    key={idx}
+                    className={cn(
+                      "hover:bg-muted/50 border-b border-border last:border-0 transition-all duration-200",
+                      activeRank === idx && "bg-sky-500/[0.15] dark:bg-sky-400/[0.15] border-l-4 border-l-sky-500 scale-[1.01] shadow-md z-10"
+                    )}
+                    onMouseEnter={() => setActiveRank(idx)}
+                    onMouseLeave={() => setActiveRank(null)}
+                  >
+                    <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-2">{idx + 1}</TableCell>
+                    <TableCell className="py-2 border-r border-border max-w-[140px] sm:max-w-[180px] lg:max-w-[220px] 2xl:max-w-[300px]">
+                      <div className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 truncate uppercase" title={row.name}>{row.name}</div>
+                    </TableCell>
+                    <TableCell className="border-r border-border py-2">
+                      <div className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] 2xl:text-[11px] font-bold uppercase tracking-tighter uppercase"
+                        style={{ backgroundColor: `${getCategoryColor(row.category)}15`, color: getCategoryColor(row.category) }}>
+                        {row.category}
+                      </div>
+                    </TableCell>
+                    <TableCell className={cn(
+                      "text-center border-r border-border font-mono font-black text-[11px] 2xl:text-[13px] py-2 transition-all",
+                      activeRank === idx
+                        ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-105 shadow-inner"
+                        : "bg-sky-500/10 text-sky-700 dark:text-sky-400"
+                    )}>
+                      {row.bought.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-center border-r border-border font-mono font-bold text-[11px] 2xl:text-[13px] text-foreground py-2">
+                      {row.totalHoldings.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-center font-mono font-bold text-[11px] 2xl:text-[13px] text-foreground border-r border-border py-2">
+                      {row.percent.toFixed(2)}%
+                    </TableCell>
+                    <TableCell className="text-center border-r border-border font-mono font-bold text-[11px] 2xl:text-[13px] text-muted-foreground py-2">
+                      {row.prevHoldings.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-center font-mono font-bold text-[11px] 2xl:text-[13px] text-muted-foreground py-2">
+                      {row.prevPercent.toFixed(2)}%
+                    </TableCell>
                   </TableRow>
-                  <TableRow className="hover:bg-transparent border-b border-white/10">
-                    <TableHead className="text-center font-bold text-white border-r border-white/5 text-[10px] uppercase py-1.5">Holding</TableHead>
-                    <TableHead className="text-center font-bold text-white border-r border-white/5 text-[10px] uppercase py-1.5">% of Share Capital</TableHead>
-                    <TableHead className="text-center font-bold text-white border-r border-white/5 text-[10px] uppercase py-1.5">Holding</TableHead>
-                    <TableHead className="text-center font-bold text-white text-[10px] uppercase py-1.5">% of Share Capital</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="bg-card">
-                  {filteredData.map((row, idx) => (
-                    <TableRow 
-                      key={idx} 
-                      className={cn(
-                        "hover:bg-muted/50 border-b border-border last:border-0 transition-all duration-200",
-                        activeRank === idx && "bg-sky-500/[0.15] dark:bg-sky-400/[0.15] border-l-4 border-l-sky-500 scale-[1.01] shadow-md z-10"
-                      )}
-                      onMouseEnter={() => setActiveRank(idx)}
-                      onMouseLeave={() => setActiveRank(null)}
-                    >
-                      <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-2">{idx + 1}</TableCell>
-                      <TableCell className="py-2 border-r border-border max-w-[140px] sm:max-w-[180px] lg:max-w-[220px] 2xl:max-w-[300px]">
-                        <div className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 truncate" title={row.name}>{row.name}</div>
-                      </TableCell>
-                      <TableCell className="border-r border-border py-2">
-                        <div className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] 2xl:text-[11px] font-bold uppercase tracking-tighter"
-                          style={{ backgroundColor: `${getCategoryColor(row.category)}15`, color: getCategoryColor(row.category) }}>
-                          {row.category}
-                        </div>
-                      </TableCell>
-                      <TableCell className={cn(
-                        "text-center border-r border-border font-mono font-black text-[11px] 2xl:text-[13px] py-2 transition-all",
-                        activeRank === idx 
-                          ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-105 shadow-inner" 
-                          : "bg-sky-500/10 text-sky-700 dark:text-sky-400"
-                      )}>
-                        {row.bought.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-center border-r border-border font-mono font-bold text-[11px] 2xl:text-[13px] text-foreground py-2">
-                        {row.totalHoldings.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-center font-mono font-bold text-[11px] 2xl:text-[13px] text-foreground border-r border-border py-2">
-                        {row.percent.toFixed(2)}%
-                      </TableCell>
-                      <TableCell className="text-center border-r border-border font-mono font-bold text-[11px] 2xl:text-[13px] text-muted-foreground py-2">
-                        {row.prevHoldings.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-center font-mono font-bold text-[11px] 2xl:text-[13px] text-muted-foreground py-2">
-                        {row.prevPercent.toFixed(2)}%
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-        </Card>
+        </div>
+      </Card>
     </div>
   );
 }

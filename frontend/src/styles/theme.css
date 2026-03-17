@@ -125,12 +125,12 @@
     font-weight: 500;
   }
 
-  /* Standardize all typography elements to the same size and styling */
+  /* Standardize all typography elements — no !important so Tailwind classes can override */
   h1, h2, h3, h4, h5, h6, p, span, div, label, button, input, table, th, td, a, text, tspan {
-    font-size: 13px !important;
-    font-family: 'Adani', sans-serif !important;
-    font-weight: 500 !important;
-    line-height: 1.2 !important;
+    font-size: 13px;
+    font-family: 'Adani', sans-serif;
+    font-weight: 500;
+    line-height: 1.2;
   }
 
   html {

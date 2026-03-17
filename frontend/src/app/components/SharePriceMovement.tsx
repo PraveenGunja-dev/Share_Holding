@@ -26,7 +26,7 @@ export function SharePriceMovement({ dateRange }: SharePriceProps) {
   return (
     <div id="price" className="space-y-6 transition-all duration-300">
       <div className="border-b border-border pb-3 mb-4">
-        <h2 className="text-lg 2xl:text-2xl font-black text-primary dark:text-sky-400 tracking-tight">Weekly Share Price & Volume Movement</h2>
+        <h2 className="text-xl 2xl:text-2xl font-black font-['Adani'] text-primary dark:text-sky-400 tracking-tight">Weekly Share Price & Volume Movement</h2>
         <p className="text-[11px] 2xl:text-[13px] text-muted-foreground font-bold tracking-widest uppercase opacity-80 mt-1">Price comparison with Nifty 50 and trading volume analysis</p>
       </div>
 
@@ -56,7 +56,7 @@ export function SharePriceMovement({ dateRange }: SharePriceProps) {
 
       {/* Price Movement Comparison */}
       <Card className="p-4 2xl:p-6 bg-card shadow-xl border-border">
-        <h3 className="text-base 2xl:text-xl font-black text-primary dark:text-sky-300 mb-6 uppercase tracking-widest opacity-90 border-l-4 border-primary pl-4">Price Movement Comparison (APL vs Nifty 50)</h3>
+        <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-300 mb-6 uppercase tracking-widest opacity-90 border-l-4 border-primary pl-4">Price Movement Comparison (APL vs Nifty 50)</h3>
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={priceVolumeData} margin={{ left: 0, right: 30, bottom: 20 }}>
             <CartesianGrid strokeDasharray="4 4" stroke="var(--border)" vertical={false} opacity={0.6} />
@@ -103,7 +103,7 @@ export function SharePriceMovement({ dateRange }: SharePriceProps) {
 
       {/* Trading Volume Analysis */}
       <Card className="p-4 2xl:p-6 bg-card shadow-xl border-border">
-        <h3 className="text-base 2xl:text-xl font-black text-primary dark:text-sky-300 mb-6 uppercase tracking-widest opacity-90 border-l-4 border-emerald-500 pl-4">Trading Volume Analysis (Delivery vs Intraday)</h3>
+        <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-300 mb-6 uppercase tracking-widest opacity-90 border-l-4 border-emerald-500 pl-4">Trading Volume Analysis (Delivery vs Intraday)</h3>
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={priceVolumeData} margin={{ left: 0, right: 30, bottom: 20 }}>
             <CartesianGrid strokeDasharray="4 4" stroke="var(--border)" vertical={false} opacity={0.6} />
@@ -153,7 +153,7 @@ export function SharePriceMovement({ dateRange }: SharePriceProps) {
 
       {/* Daily Price & Volume Data Table */}
       <Card className="p-4 2xl:p-6 bg-card shadow-2xl border-border">
-        <h3 className="text-base 2xl:text-xl font-black text-primary dark:text-sky-300 mb-6 uppercase tracking-widest opacity-90 border-l-4 border-indigo-500 pl-3">Daily Price & Volume Data</h3>
+        <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-300 mb-6 uppercase tracking-widest opacity-90 border-l-4 border-indigo-500 pl-3">Daily Price & Volume Data</h3>
         <div className="border border-border rounded-xl overflow-hidden shadow-xl bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -170,7 +170,7 @@ export function SharePriceMovement({ dateRange }: SharePriceProps) {
               <tbody>
                 {priceVolumeData.map((row, index) => (
                   <tr key={index} className="border-b border-border last:border-0 hover:bg-primary/5 transition-all">
-                    <td className="py-4 px-6 text-[13px] 2xl:text-[15px] font-black text-primary dark:text-sky-300">{row.date}</td>
+                    <td className="py-4 px-6 text-[13px] 2xl:text-[15px] font-black text-primary dark:text-sky-300 uppercase">{row.date}</td>
                     <td className="py-4 px-6 text-[13px] 2xl:text-[15px] font-mono font-black text-right text-primary dark:text-foreground">₹{row.aplPrice?.toFixed(2)}</td>
                     <td className="py-4 px-6 text-[13px] 2xl:text-[15px] font-mono text-right text-muted-foreground">{row.niftyPrice?.toLocaleString()}</td>
                     <td className="py-4 px-6 text-[13px] 2xl:text-[15px] font-mono font-black text-right text-emerald-600 dark:text-emerald-400">{row.deliveryVolume?.toLocaleString()}</td>

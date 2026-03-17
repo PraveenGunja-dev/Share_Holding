@@ -129,7 +129,7 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
       <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-3">
         <div className="pb-1 space-y-4">
           <div>
-            <h2 className="text-xl 2xl:text-2xl font-[1000] text-primary dark:text-sky-400 tracking-tighter leading-none mb-0.5 shadow-sm inline-block">Insurance & PF</h2>
+            <h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 tracking-tighter leading-none mb-1 inline-block">Insurance & PF</h2>
             <p className="text-[11px] 2xl:text-[13px] text-muted-foreground font-bold opacity-80 tracking-widest">Holdings by {selectedView === 'Insurance' ? 'Insurance Funds' : 'Provident Funds'}</p>
           </div>
 
@@ -162,27 +162,27 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
         </div>
 
         {/* KPIs Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4"
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 min-h-[85px] h-full"
             style={{ borderRightColor: selectedView === 'Insurance' ? getCategoryColor('DII-Insurance') : getCategoryColor('DII-PF') }}>
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none">Total holdings</div>
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none uppercase">Total holdings</div>
             <div className="text-base 2xl:text-lg font-black" style={{ color: selectedView === 'Insurance' ? getCategoryColor('DII-Insurance') : getCategoryColor('DII-PF') }}>
               {totalHoldings.toLocaleString()}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-sky-500">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0">Change in holding shares</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-sky-500 min-h-[85px] h-full">
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Change in holding shares</div>
             <div className={cn("text-base 2xl:text-lg font-black", wowChange >= 0 ? "text-primary dark:text-sky-400" : "text-rose-600 dark:text-rose-400")}>
               {Math.abs(wowChange).toLocaleString()}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
             </div>
           </Card>
           <Card className={cn(
-            "p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4",
+            "p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 min-h-[85px] h-full",
             selectedView === 'Insurance' ? "border-r-fuchsia-500" : "border-r-blue-500"
           )}>
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none">Active investors</div>
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none uppercase">Active investors</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300">
               {currentViewData.length}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Entities</span>
@@ -193,8 +193,11 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
 
       {/* TABLE SECTION */}
       <Card className="p-4 bg-card shadow-xl border-border relative overflow-hidden">
+        <div className="w-full mb-6">
+          <h3 className="text-sm 2xl:text-base font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest uppercase border-l-4 border-primary dark:border-sky-500 pl-3">INSURANCE & PROVIDENT FUND ANALYSIS</h3>
+        </div>
         <div className="mb-6">
-          <h3 className="text-base 2xl:text-xl font-black text-primary dark:text-sky-400 border-l-4 border-primary dark:border-sky-500 pl-3 tracking-widest opacity-90">
+          <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 border-l-4 border-primary dark:border-sky-500 pl-3 tracking-widest opacity-90">
             {selectedView === 'Insurance' ? `Top ${topN} Insurance Company Holdings` : `Top ${topN} Provident Fund Holdings`}
           </h3>
         </div>
@@ -204,7 +207,7 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-20 shadow-sm">
-                  <TableRow className="hover:bg-transparent border-b border-white/10">
+                  <TableRow className="hover:bg-transparent border-b border-white/10 uppercase">
                     <TableHead rowSpan={2} className="w-16 text-center text-white font-bold border-r border-white/5 py-4">Rank</TableHead>
                     <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 min-w-[300px] py-4">Shareholder Name</TableHead>
                     <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2">
@@ -215,7 +218,7 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
                     </TableHead>
                     <TableHead rowSpan={2} className="text-center text-white font-bold py-4">Change in Holding Shares</TableHead>
                   </TableRow>
-                  <TableRow className="hover:bg-transparent text-[10px] 2xl:text-[11px] border-b border-white/10">
+                  <TableRow className="hover:bg-transparent text-[10px] 2xl:text-[11px] border-b border-white/10 uppercase">
                     <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2">Holding (L)</TableHead>
                     <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2">% of Share Capital</TableHead>
                     <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2">Holding (L)</TableHead>
@@ -228,7 +231,7 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
                       "hover:bg-muted/50 transition-colors border-b border-border last:border-0 group"
                     )}>
                       <TableCell className="text-center font-black text-muted-foreground text-[12px] 2xl:text-[14px] border-r border-border py-4">{idx + 1}</TableCell>
-                      <TableCell className="font-bold text-[13px] 2xl:text-[15px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight">{row.name}</TableCell>
+                      <TableCell className="font-bold text-[13px] 2xl:text-[15px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight uppercase">{row.name}</TableCell>
                       <TableCell className="text-center font-mono font-bold text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4">{row.holdings.toLocaleString()}</TableCell>
                       <TableCell className="text-center font-mono font-bold text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4">{row.percent.toFixed(2)}%</TableCell>
                       <TableCell className="text-center font-mono font-bold text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4">{row.prevHoldings.toLocaleString()}</TableCell>

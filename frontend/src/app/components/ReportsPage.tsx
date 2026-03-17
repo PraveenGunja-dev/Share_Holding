@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { getDateRanges } from '../services/api';
 import { 
   FileText, Download, Mail, Eye, 
   RotateCcw, CheckCircle, X, Loader2,
-  Calendar, FileStack, AlertCircle, FileType, ChevronDown,
+  Calendar as CalendarIcon, FileStack, AlertCircle, FileType, ChevronDown,
   Info, Sparkles, Send
 } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
@@ -19,6 +20,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "./ui/dialog";
+import { Calendar } from "./ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { format, parse, isWithinInterval, startOfDay } from 'date-fns';
+import { cn } from './ui/utils';
 
 interface ReportsPageProps { 
   dateRange: string; 
@@ -38,20 +43,85 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
   const [showDownloadChoice, setShowDownloadChoice] = useState(false);
   const [emailStatus, setEmailStatus] = useState<EmailStatus>('idle');
   const [email, setEmail] = useState('');
+  const [availableRanges, setAvailableRanges] = useState<any[]>([]);
+  const [selectedRange, setSelectedRange] = useState<string>(dateRange || '');
+  const [fetchingRanges, setFetchingRanges] = useState(false);
+  const [downloadRange, setDownloadRange] = useState<string>('');
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isDownloadCalendarOpen, setIsDownloadCalendarOpen] = useState(false);
+
+  useEffect(() => {
+    if (selectedRange) setDownloadRange(selectedRange);
+  }, [selectedRange]);
+
+  useEffect(() => {
+    async function fetchRanges() {
+      if (!buId) return;
+      setFetchingRanges(true);
+      try {
+        const data = await getDateRanges(buId);
+        if (data && Array.isArray(data)) {
+          // Normalize to array of strings for easier processing
+          const normalized = data.map(item => {
+            if (typeof item === 'string') return item;
+            if (item && typeof item === 'object' && item.DateRange) return item.DateRange;
+            return null;
+          }).filter((val): val is string => val !== null && val.trim() !== '');
+
+          setAvailableRanges(normalized);
+          
+          // Logic to establish the best selected range:
+          if (normalized.includes(dateRange)) {
+            setSelectedRange(dateRange);
+          } else if (normalized.length > 0) {
+            setSelectedRange(normalized[0]);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch date ranges for reports:", err);
+      } finally {
+        setFetchingRanges(false);
+      }
+    }
+    fetchRanges();
+  }, [buId, dateRange]);
 
   // The reportISO should be just the date from the dateRange prop
   // If dateRange is "latest" or a range like "27-Feb-26 vs 06-Mar-26", 
   // the backend knows how to handle it if we pass it as 'date' param.
   const { reportISO, displayDate } = useMemo(() => {
-    if (!dateRange || dateRange === '') return { reportISO: 'latest', displayDate: 'Current Week' };
+    if (!selectedRange || selectedRange === '') return { reportISO: 'latest', displayDate: 'Current Week' };
     
-    if (dateRange.includes(' vs ')) {
-      const parts = dateRange.split(' vs ');
-      return { reportISO: dateRange, displayDate: parts[1] };
+    if (selectedRange.includes(' vs ')) {
+      const parts = selectedRange.split(' vs ');
+      return { reportISO: selectedRange, displayDate: parts[1] };
     }
     
-    return { reportISO: dateRange, displayDate: dateRange === 'latest' ? 'Current Week' : dateRange };
-  }, [dateRange]);
+    return { reportISO: selectedRange, displayDate: selectedRange === 'latest' ? 'Current Week' : selectedRange };
+  }, [selectedRange]);
+
+  // Pre-calculate parsed date intervals for the calendar
+  const parsedIntervals = useMemo(() => {
+    return availableRanges.map(dr => {
+      if (!dr || !dr.includes(' vs ')) return null;
+      try {
+        const [startStr, endStr] = dr.split(' vs ');
+        return {
+          start: startOfDay(parse(startStr, 'dd-MMM-yy', new Date())),
+          end: startOfDay(parse(endStr, 'dd-MMM-yy', new Date())),
+          original: dr
+        };
+      } catch (e) { return null; }
+    }).filter((x): x is {start: Date, end: Date, original: string} => x !== null);
+  }, [availableRanges]);
+
+  const selectedInterval = useMemo(() => {
+    return parsedIntervals.find(i => i.original === selectedRange);
+  }, [parsedIntervals, selectedRange]);
+
+  const downloadInterval = useMemo(() => {
+    return parsedIntervals.find(i => i.original === downloadRange);
+  }, [parsedIntervals, downloadRange]);
 
   const handleAction = async (action: 'view' | 'generate') => {
     if (!reportISO) return;
@@ -85,17 +155,19 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
     }
   };
 
-  const handleDownload = async (format: 'pdf' | 'pptx') => {
+  const handleDownload = async (format: 'pdf' | 'pptx', overrideRange?: string) => {
     setShowDownloadChoice(false);
     try {
       const endpoint = format === 'pdf' ? 'download-pdf' : 'download-pptx';
-      const response = await fetch(`/shareholding-pattern/api/reports/${endpoint}?date=${encodeURIComponent(reportISO)}&bu_id=${buId || 1}`);
+      const rangeToUse = overrideRange || reportISO;
+      const response = await fetch(`/shareholding-pattern/api/reports/${endpoint}?date=${encodeURIComponent(rangeToUse)}&bu_id=${buId || 1}`);
       if (!response.ok) throw new Error(`Download failed`);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Weekly_Report_${displayDate?.replace(/-/g, '_') || 'latest'}.${format}`;
+      const rangeName = overrideRange || displayDate;
+      a.download = `Weekly_Report_${rangeName?.replace(/-/g, '_') || 'latest'}.${format}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -122,8 +194,34 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
     }
   };
 
+  const onCalendarSelect = (date: Date | undefined) => {
+    if (!date) return;
+    const selected = startOfDay(date);
+    const match = parsedIntervals.find(i => isWithinInterval(selected, { start: i.start, end: i.end }));
+
+    if (match) {
+      setSelectedRange(match.original);
+      setIsCalendarOpen(false);
+    } else {
+      alert(`No reporting period found for ${format(date, 'PPP')}. Please select a date within an available range.`);
+    }
+  };
+
+  const onDownloadCalendarSelect = (date: Date | undefined) => {
+    if (!date) return;
+    const selected = startOfDay(date);
+    const match = parsedIntervals.find(i => isWithinInterval(selected, { start: i.start, end: i.end }));
+
+    if (match) {
+      setDownloadRange(match.original);
+      setIsDownloadCalendarOpen(false);
+    } else {
+      alert(`No reporting period found for ${format(date, 'PPP')}. Please select a date within an available range.`);
+    }
+  };
+
   return (
-    <div className="w-full m-4 h-full space-y-6 animate-in fade-in duration-500">
+    <div className="w-full h-full space-y-6 animate-in fade-in duration-500">
       {/* Control Card - Full Width Adani Sidebar-to-Sidebar style */}
       <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden rounded-xl bg-white dark:bg-slate-900 border">
         <div className="bg-[#002B5C] px-6 py-3 flex items-center justify-between">
@@ -137,11 +235,56 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
         </div>
         
         <CardContent className="p-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex flex-col xl:flex-row items-center justify-between gap-8">
             
-            {/* Filename Block */}
-            <div className="flex items-center gap-6 flex-1 min-w-0">
-               <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 flex items-center gap-4 flex-1 min-w-0">
+            {/* Date Selection and Filename Block */}
+            <div className="flex flex-col md:flex-row items-center gap-6 flex-1 min-w-0">
+               {/* Date Selector */}
+                <div className="w-full md:w-80 shrink-0">
+                  <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Reporting Period</Label>
+                  <Dialog open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                    <Button 
+                      onClick={() => setIsCalendarOpen(true)}
+                      variant="outline" 
+                      className="w-full h-12 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <CalendarIcon className="w-5 h-5 text-[#002B5C] dark:text-sky-400 group-hover:scale-110 transition-transform" />
+                        <span className="font-bold text-[#002B5C] dark:text-sky-400">
+                          {displayDate}
+                        </span>
+                      </div>
+                      <ChevronDown className="w-4 h-4 text-slate-400" />
+                    </Button>
+                    <DialogContent className="sm:max-w-md p-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-white">
+                      <div className="bg-[#002B5C] p-6 text-white text-center">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-1">Interactive Selection</p>
+                        <h3 className="text-xl font-black">Select Reporting Week</h3>
+                        <p className="text-white/50 text-xs mt-1">Select any date to pick the full reporting week</p>
+                      </div>
+                      
+                      <div className="p-4 flex flex-col items-center">
+                        <Calendar 
+                          mode="single"
+                          selected={selectedInterval?.start}
+                          onSelect={onCalendarSelect}
+                          initialFocus
+                          className="bg-white mx-auto scale-110 my-4"
+                          modifiers={{
+                            selectedRange: selectedInterval ? { from: selectedInterval.start, to: selectedInterval.end } : [],
+                            availableRange: parsedIntervals.map(i => ({ from: i.start, to: i.end }))
+                          }}
+                          modifiersClassNames={{
+                            selectedRange: "bg-[#002B5C] text-white rounded-none first:rounded-l-md last:rounded-r-md !opacity-100",
+                            availableRange: "font-black text-[#002B5C] hover:bg-sky-50"
+                          }}
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+               </div>
+
+               <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 flex items-center gap-4 flex-1 min-w-0 h-20">
                   <div className="w-10 h-10 rounded bg-[#002B5C]/10 flex items-center justify-center">
                     <FileType className="w-6 h-6 text-[#002B5C]" />
                   </div>
@@ -266,19 +409,62 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
         </div>
       )}
 
-      {/* Format Select */}
       <Dialog open={showDownloadChoice} onOpenChange={setShowDownloadChoice}>
-        <DialogContent className="sm:max-w-xs p-8 rounded-2xl border-none shadow-2xl bg-white">
-          <DialogTitle className="text-center font-black text-xl text-[#002B5C] mb-6">Select Export Format</DialogTitle>
-          <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="flex flex-col h-auto py-6 rounded-xl border-slate-100 hover:bg-slate-50 transition-all" onClick={() => handleDownload('pdf')}>
-                <FileType className="w-10 h-10 text-rose-500 mb-2" />
-                <span className="text-xs font-black text-[#002B5C]">PDF</span>
-              </Button>
-              <Button variant="outline" className="flex flex-col h-auto py-6 rounded-xl border-slate-100 hover:bg-slate-50 transition-all" onClick={() => handleDownload('pptx')}>
-                <FileText className="w-10 h-10 text-orange-500 mb-2" />
-                <span className="text-xs font-black text-[#002B5C]">PPTX</span>
-              </Button>
+        <DialogContent className="sm:max-w-md p-8 rounded-2xl border-none shadow-2xl bg-white">
+          <DialogTitle className="text-center font-black text-xl text-[#002B5C] mb-2">Export Report</DialogTitle>
+          <p className="text-center text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6">Select period and file format</p>
+          
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Download Period</Label>
+              <Dialog open={isDownloadCalendarOpen} onOpenChange={setIsDownloadCalendarOpen}>
+                <Button 
+                  onClick={() => setIsDownloadCalendarOpen(true)}
+                  variant="outline" 
+                  className="w-full h-12 bg-slate-50 border-slate-200 flex items-center justify-between px-4 hover:bg-slate-100 transition-all font-bold text-[#002B5C]"
+                >
+                  <div className="flex items-center gap-3">
+                    <CalendarIcon className="w-5 h-5" />
+                    <span>{downloadRange.includes(' vs ') ? downloadRange.replace(' vs ', ' to ') : (downloadRange || 'Select Period')}</span>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                </Button>
+                <DialogContent className="sm:max-w-md p-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-white">
+                  <div className="bg-[#002B5C] p-4 text-white text-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Target Week</p>
+                    <p className="text-sm font-bold">Pick date for export</p>
+                  </div>
+                  <div className="p-4 flex flex-col items-center">
+                    <Calendar 
+                      mode="single"
+                      selected={downloadInterval?.start}
+                      onSelect={onDownloadCalendarSelect}
+                      initialFocus
+                      className="bg-white"
+                      modifiers={{
+                        selectedRange: downloadInterval ? { from: downloadInterval.start, to: downloadInterval.end } : [],
+                        availableRange: parsedIntervals.map(i => ({ from: i.start, to: i.end }))
+                      }}
+                      modifiersClassNames={{
+                        selectedRange: "bg-[#002B5C] text-white rounded-none first:rounded-l-md last:rounded-r-md !opacity-100",
+                        availableRange: "font-black text-[#002B5C] hover:bg-sky-50"
+                      }}
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <Button variant="outline" className="flex flex-col h-auto py-6 rounded-xl border-slate-100 hover:bg-slate-50 transition-all group" onClick={() => handleDownload('pdf', downloadRange)}>
+                  <FileType className="w-10 h-10 text-rose-500 mb-2 transition-transform group-hover:scale-110" />
+                  <span className="text-xs font-black text-[#002B5C]">PDF</span>
+                </Button>
+                <Button variant="outline" className="flex flex-col h-auto py-6 rounded-xl border-slate-100 hover:bg-slate-50 transition-all group" onClick={() => handleDownload('pptx', downloadRange)}>
+                  <FileText className="w-10 h-10 text-orange-500 mb-2 transition-transform group-hover:scale-110" />
+                  <span className="text-xs font-black text-[#002B5C]">PPTX</span>
+                </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
