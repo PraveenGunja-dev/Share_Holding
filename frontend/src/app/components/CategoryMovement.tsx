@@ -62,7 +62,7 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
     <div id="category" className="space-y-6 transition-all duration-300">
       <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-border pb-4 gap-4">
         <div>
-          <h2 className="text-xl 2xl:text-3xl font-black text-primary dark:text-sky-400 tracking-tight">Category-wise Shareholder Movement</h2>
+          <h2 className="text-xl 2xl:text-2xl font-black font-['Adani'] text-primary dark:text-sky-400 tracking-tight">Category-wise Shareholder Movement</h2>
           <p className="text-[12px] 2xl:text-[14px] text-muted-foreground font-bold tracking-widest uppercase mt-1 opacity-80">
             Comparison Between <span className="text-primary dark:text-sky-300">19-Dec-25</span> and <span className="text-primary dark:text-sky-300">26-Dec-25</span>
           </p>
@@ -89,7 +89,7 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
       {/* Holdings Comparison Chart */}
       <Card className="p-8 bg-card border-border shadow-xl">
         <div className="flex items-center justify-between mb-10">
-          <h3 className="text-lg 2xl:text-2xl font-black text-primary dark:text-sky-300 uppercase tracking-widest opacity-90 border-l-4 border-primary pl-4">
+          <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-300 uppercase tracking-widest opacity-90 border-l-4 border-primary pl-4">
             Holdings Comparison <span className="text-muted-foreground font-bold ml-2">(% Share Capital)</span>
           </h3>
         </div>
@@ -102,6 +102,7 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
               type="category"
               width={160}
               tick={{ fontSize: 13, fontWeight: 500, fontFamily: 'inherit', fill: 'var(--foreground)' }}
+              tickFormatter={(v: string) => v.toUpperCase()}
               axisLine={false}
               tickLine={false}
             />
@@ -148,7 +149,7 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
 
       {/* Detailed Movement Data Table */}
       <Card className="p-8 bg-card border-border shadow-xl">
-        <h3 className="text-lg 2xl:text-2xl font-black text-primary dark:text-sky-300 mb-8 uppercase tracking-widest opacity-90 border-l-4 border-emerald-500 pl-4">Detailed Movement Data</h3>
+        <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 mb-8 uppercase tracking-widest opacity-90 border-l-4 border-emerald-500 pl-4">Detailed Movement Data</h3>
         <div className="border border-border rounded-xl overflow-hidden shadow-2xl bg-card">
           <div className="overflow-x-auto">
             <Table>
@@ -167,7 +168,7 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
                 {filteredTableData.map((item, index) => (
                   <TableRow key={item.category} className="hover:bg-primary/5 transition-colors border-b border-border last:border-0 group">
                     <TableCell className="text-center font-black text-muted-foreground text-[12px] 2xl:text-[14px] py-4">{index + 1}</TableCell>
-                    <TableCell className="font-bold text-[13px] 2xl:text-[15px] text-primary dark:text-sky-300 py-4">{item.category}</TableCell>
+                    <TableCell className="font-bold text-[13px] 2xl:text-[15px] text-primary dark:text-sky-300 py-4 uppercase">{item.category}</TableCell>
                     <TableCell className="text-right font-mono font-bold text-[12px] 2xl:text-[14px] text-muted-foreground py-4">{item.holding19.toLocaleString()}</TableCell>
                     <TableCell className="text-right font-mono font-bold text-[12px] 2xl:text-[14px] text-muted-foreground py-4 border-r border-border/50">{item.percent19.toFixed(2)}%</TableCell>
                     <TableCell className="text-right font-mono font-bold text-[13px] 2xl:text-[15px] text-primary dark:text-foreground py-4 bg-primary/5 dark:bg-sky-400/5">{item.holding26.toLocaleString()}</TableCell>

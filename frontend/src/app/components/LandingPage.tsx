@@ -50,7 +50,7 @@ export function LandingPage({ onSubmit }: LandingPageProps) {
         <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           {/* Top gradient border */}
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#00205B] via-[#00A3E0] to-[#00205B]" />
-          
+
           <div className="p-10 md:p-14">
             {/* Logo and Header Section */}
             <div className="flex flex-col items-center mb-10">
@@ -60,7 +60,7 @@ export function LandingPage({ onSubmit }: LandingPageProps) {
                   <img src={logoImage} alt="Adani Renewables" className="h-12 object-contain" />
                 </div>
               </div>
-              
+
               {/* App Name */}
               <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#00205B] to-[#00A3E0] dark:from-sky-400 dark:to-cyan-300 tracking-tight text-center">
                 Shareholding Pattern
@@ -75,7 +75,7 @@ export function LandingPage({ onSubmit }: LandingPageProps) {
                   <SelectTrigger
                     className="w-full h-14 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-6 text-base font-bold text-primary dark:text-foreground focus:ring-2 focus:ring-[#00A3E0]/30 focus:border-[#00A3E0] transition-all duration-300 hover:border-[#00A3E0]/50"
                   >
-                    <SelectValue 
+                    <SelectValue
                       placeholder={
                         loading ? (
                           <span className="flex items-center gap-2">
@@ -85,11 +85,11 @@ export function LandingPage({ onSubmit }: LandingPageProps) {
                         ) : (
                           "Select Business Unit"
                         )
-                      } 
+                      }
                     />
                   </SelectTrigger>
-                  <SelectContent 
-                    position="popper" 
+                  <SelectContent
+                    position="popper"
                     side="bottom"
                     sideOffset={8}
                     avoidCollisions={true}

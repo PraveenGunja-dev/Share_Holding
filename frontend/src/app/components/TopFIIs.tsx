@@ -189,14 +189,15 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
       <g transform={`translate(${x},${y})`}>
         <text
           x={-12}
-          y={3}
+          y={4}
+          dominantBaseline="central"
           textAnchor="end"
           fontSize={fontSize}
           fontWeight={500}
           fill={theme === 'dark' ? '#38bdf8' : '#00205B'}
           style={{ letterSpacing: '0.01em' }}
         >
-          {text}
+          {text.toUpperCase()}
         </text>
       </g>
     );
@@ -209,26 +210,27 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
     <div id="fiis" className="space-y-4 transition-all duration-300">
       <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-3">
         <div className="pb-1">
-          <h2 className="text-xl 2xl:text-2xl font-[1000] text-primary dark:text-sky-400 tracking-tighter leading-none mb-0.5 shadow-sm inline-block transition-all">Top {topN} FIIs & FPIs</h2>
+          <h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 tracking-tighter leading-none mb-1 inline-block transition-all">Top {topN} FIIs & FPIs</h2>
+          <p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold opacity-80 tracking-widest leading-relaxed">Institutional Investment Analysis - Performance & Holdings</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-orange-500">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0">Total FII/FPI holdings</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-orange-500 min-h-[85px] h-full">
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total FII/FPI holdings</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300">
               {totalFIIHoldings.toLocaleString()}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-sky-500">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0">Change in holding shares</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-sky-500 min-h-[85px] h-full">
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Change in holding shares</div>
             <div className={cn("text-base 2xl:text-lg font-black", thisWeekWoW >= 0 ? "text-primary dark:text-sky-400" : "text-rose-600 dark:text-rose-400")}>
               {Math.abs(thisWeekWoW).toLocaleString()}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-blue-500">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0">Number of FII/FPI</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-blue-500 min-h-[85px] h-full">
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Number of FII/FPI</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300">
               {liveData.length}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Investors</span>
@@ -238,6 +240,9 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
       </div>
 
       <Card className="p-3 bg-card border-border shadow-[0_4px_20px_-4px_rgba(0,32,91,0.08)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]">
+        <div className="w-full mb-4 px-2">
+          <h3 className="text-sm 2xl:text-base font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest uppercase border-l-4 border-primary dark:border-sky-500 pl-3">FII & FPI HOLDINGS DISTRIBUTION</h3>
+        </div>
         <div className="w-full mb-2 flex flex-col md:flex-row md:items-center justify-end gap-4">          <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-full bg-muted/40 dark:bg-slate-900/50 border border-border/50 shadow-sm self-start md:self-auto">
           {Array.from(new Set(liveData.map(d => d.category))).slice(0, 8).map((cat: string) => (
             <div key={cat} className="flex items-center gap-1.5 border-r border-border/30 last:border-0 pr-3 last:pr-0">
@@ -289,7 +294,7 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
                 tickLine={false}
               >
                 <Label
-                  value={metricView === 'percentage' ? '% Share Capital' : metricView === 'change' ? 'Change in Shares' : 'Lakhs Owned (Scale)'}
+                  value={(metricView === 'percentage' ? '% Share Capital' : metricView === 'change' ? 'Change in Shares' : 'Lakhs Owned (Scale)').toUpperCase()}
                   offset={-15}
                   position="insideBottom"
                   style={{ fontSize: '13px', fontWeight: 500, fill: theme === 'dark' ? '#ffffff' : '#475569', letterSpacing: '0.1em' }}
@@ -305,7 +310,7 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
                 interval={0}
               >
                 <Label
-                  value="FIIs & FPIs Shareholders"
+                  value={"FIIs & FPIs Shareholders".toUpperCase()}
                   angle={-90}
                   position="insideLeft"
                   offset={-15}
@@ -358,23 +363,23 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
       </Card>
 
       <Card className="p-4 bg-card border-border shadow-sm">
-        <h3 className="text-sm 2xl:text-base font-black text-primary dark:text-sky-400 mb-4 tracking-widest opacity-90 border-l-4 border-orange-500 pl-4">Top {topN} FIIs & FPIs​</h3>
+        <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 mb-4 tracking-widest opacity-90 border-l-4 border-orange-500 pl-4">Top {topN} FIIs & FPIs​</h3>
         <div className="border border-border rounded-xl shadow-md flex flex-col bg-card overflow-hidden">
           <div className="flex-1 max-h-[500px] overflow-y-auto custom-scrollbar relative">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader className="bg-primary dark:bg-slate-900 transition-all sticky top-0 z-20 shadow-sm">
-                  <TableRow className="hover:bg-transparent border-b border-white/10 text-white">
+                  <TableRow className="hover:bg-transparent border-b border-white/10 text-white uppercase">
                     <TableHead rowSpan={2} className="w-16 font-bold text-white text-center border-r border-white/5 py-4">Rank</TableHead>
                     <TableHead rowSpan={2} className="font-bold text-white border-r border-white/5 min-w-[200px] py-4">Shareholder Name</TableHead>
                     <TableHead rowSpan={2} className="font-bold text-white border-r border-white/5 py-4">Category</TableHead>
-                    <TableHead colSpan={2} className={cn("text-center font-bold text-white border-r border-white/5 transition-colors", (metricView === 'holdings' || metricView === 'percentage') ? "bg-white/20" : "bg-white/10")}>{detectedDates.latest}</TableHead>
-                    <TableHead colSpan={2} className="text-center font-bold text-white border-r border-white/5 bg-white/5 py-2">{detectedDates.prev}</TableHead>
-                    <TableHead rowSpan={2} className={cn("text-center font-bold text-white py-4 transition-colors", metricView === 'change' ? "bg-white/20" : "")}>Change in Holding</TableHead>
+                    <TableHead colSpan={2} className={cn("text-center font-bold text-white border-r border-white/5 transition-colors uppercase", (metricView === 'holdings' || metricView === 'percentage') ? "bg-white/20" : "bg-white/10")}>{detectedDates.latest}</TableHead>
+                    <TableHead colSpan={2} className="text-center font-bold text-white border-r border-white/5 bg-white/5 py-2 uppercase">{detectedDates.prev}</TableHead>
+                    <TableHead rowSpan={2} className={cn("text-center font-bold text-white py-4 transition-colors uppercase", metricView === 'change' ? "bg-white/20" : "")}>Change in Holding</TableHead>
                   </TableRow>
-                  <TableRow className="hover:bg-transparent border-b border-white/10 text-[10px] text-white/80">
-                    <TableHead className={cn("text-center font-bold text-white/80 border-r border-white/5 py-2 transition-all", metricView === 'holdings' ? "bg-sky-400/20" : "")}>Holding (L)</TableHead>
-                    <TableHead className={cn("text-center font-bold text-white/80 border-r border-white/5 py-2 transition-all", metricView === 'percentage' ? "bg-sky-400/20" : "")}>% of Share Capital</TableHead>
+                  <TableRow className="hover:bg-transparent border-b border-white/10 text-[10px] text-white/80 uppercase">
+                    <TableHead className={cn("text-center font-bold text-white/80 border-r border-white/5 py-2 transition-all uppercase", metricView === 'holdings' ? "bg-sky-400/20" : "")}>Holding (L)</TableHead>
+                    <TableHead className={cn("text-center font-bold text-white/80 border-r border-white/5 py-2 transition-all uppercase", metricView === 'percentage' ? "bg-sky-400/20" : "")}>% of Share Capital</TableHead>
                     <TableHead className="text-center font-bold text-white/80 border-r border-white/5 py-2">Holding (L)</TableHead>
                     <TableHead className="text-center font-bold text-white/80 border-r border-white/5 py-2">% of Share Capital</TableHead>
                   </TableRow>
@@ -392,11 +397,11 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
                     >
                       <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-2">{idx + 1}</TableCell>
                       <TableCell className="py-2 border-r border-border max-w-[140px] sm:max-w-[180px] lg:max-w-[220px] 2xl:max-w-[300px]">
-                        <div className="font-black text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 truncate" title={row.name}>{row.name}</div>
+                        <div className="font-black text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 truncate uppercase" title={row.name}>{row.name}</div>
                       </TableCell>
                       <TableCell className="border-r border-border py-2">
                         <div
-                          className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] 2xl:text-[11px] font-bold tracking-tighter"
+                          className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] 2xl:text-[11px] font-bold tracking-tighter uppercase"
                           style={{ backgroundColor: `${getCategoryColor(row.category)}15`, color: getCategoryColor(row.category) }}
                         >
                           {row.category}

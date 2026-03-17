@@ -4,7 +4,7 @@ import { Badge } from './ui/badge';
 import { UserPlus, UserMinus } from 'lucide-react';
 import { getEntries, getExits } from '../services/api';
 import { useEffect, useState } from 'react';
-import { formatDateRange , formatName} from "./ui/utils";
+import { formatDateRange, formatName } from "./ui/utils";
 import { getCategoryColor } from '../constants/colors';
 
 interface NewEntriesExitsProps {
@@ -77,7 +77,7 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
   return (
     <div id="entries" className="space-y-4 transition-all duration-300">
       <div className="border-b border-border pb-2 mb-3">
-        <h2 className="text-xl 2xl:text-2xl font-[1000] text-primary dark:text-sky-400 tracking-tighter leading-none mb-0.5 shadow-sm inline-block">New Entries / Exits</h2>
+        <h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 tracking-tighter leading-none mb-0.5 inline-block">New Entries / Exits</h2>
         <p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold tracking-widest opacity-80 mt-1">Shareholders who entered or exited during {formatDateRange(dateRange)}</p>
       </div>
 
@@ -86,7 +86,7 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
         <Card className="p-0 bg-card shadow-xl overflow-hidden border-border flex flex-col hover:shadow-2xl transition-all duration-300">
           <div className="px-3 py-2 border-b border-border flex items-center justify-between bg-muted/10 dark:bg-slate-900/40">
             <div>
-              <h3 className="text-sm 2xl:text-base font-black text-primary dark:text-emerald-400 tracking-tight">New Entries</h3>
+              <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-emerald-400 tracking-tight">New Entries</h3>
               <p className="text-[9px] 2xl:text-[10px] font-bold text-muted-foreground tracking-widest mt-0.5">{filteredNewEntries.length} new shareholders recorded</p>
             </div>
           </div>
@@ -96,7 +96,7 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
               <div className="flex-1 max-h-[400px] overflow-y-auto custom-scrollbar relative">
                 <Table>
                   <TableHeader className="bg-primary dark:bg-slate-900 sticky top-0 z-20 shadow-sm">
-                    <TableRow className="hover:bg-transparent border-b border-white/10">
+                    <TableRow className="hover:bg-transparent border-b border-white/10 text-white uppercase">
                       <TableHead className="w-[100px] text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Category</TableHead>
                       <TableHead className="text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Shareholder Name</TableHead>
                       <TableHead className="w-[120px] text-right text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Shares (Lakhs)</TableHead>
@@ -119,7 +119,7 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
                             {entry.category}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border whitespace-normal break-words leading-tight py-2">{entry.shareholder}</TableCell>
+                        <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border whitespace-normal break-words leading-tight py-2 uppercase">{entry.shareholder}</TableCell>
                         <TableCell className="text-right font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-2">{entry.shares.toFixed(2)}</TableCell>
                         <TableCell className="text-right font-mono font-black text-[12px] 2xl:text-[14px] text-foreground py-2">{entry.percent.toFixed(2)}%</TableCell>
                       </TableRow>
@@ -127,7 +127,7 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
                   </TableBody>
                 </Table>
               </div>
-          </div>
+            </div>
           </div>
 
           {/* Total at bottom */}
@@ -144,7 +144,7 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
         <Card className="p-0 bg-card shadow-xl overflow-hidden border-border flex flex-col hover:shadow-2xl transition-all duration-300">
           <div className="px-3 py-2 border-b border-border flex items-center justify-between bg-muted/10 dark:bg-slate-900/40">
             <div>
-              <h3 className="text-sm 2xl:text-base font-black text-primary dark:text-sky-400 tracking-tight">Exits</h3>
+              <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 tracking-tight">Exits</h3>
               <p className="text-[9px] 2xl:text-[10px] font-bold text-muted-foreground tracking-widest mt-0.5">{filteredExits.length} shareholders exited</p>
             </div>
           </div>
@@ -154,7 +154,7 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
               <div className="flex-1 max-h-[400px] overflow-y-auto custom-scrollbar relative">
                 <Table>
                   <TableHeader className="bg-primary dark:bg-slate-900 sticky top-0 z-20 shadow-sm">
-                    <TableRow className="hover:bg-transparent border-b border-white/10">
+                    <TableRow className="hover:bg-transparent border-b border-white/10 text-white uppercase">
                       <TableHead className="w-[100px] text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Category</TableHead>
                       <TableHead className="text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Shareholder Name</TableHead>
                       <TableHead className="w-[120px] text-right text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Shares (Lakhs)</TableHead>
@@ -177,7 +177,7 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
                             {exit.category}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border whitespace-normal break-words leading-tight py-2">{exit.shareholder}</TableCell>
+                        <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border whitespace-normal break-words leading-tight py-2 uppercase">{exit.shareholder}</TableCell>
                         <TableCell className="text-right font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-2">{exit.shares.toFixed(2)}</TableCell>
                         <TableCell className="text-right font-mono font-black text-[12px] 2xl:text-[14px] text-foreground py-2">{exit.percent.toFixed(2)}%</TableCell>
                       </TableRow>
@@ -185,7 +185,7 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
                   </TableBody>
                 </Table>
               </div>
-          </div>
+            </div>
           </div>
 
           {/* Total at bottom */}

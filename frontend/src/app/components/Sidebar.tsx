@@ -94,7 +94,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
                       )}
 
                       <span className={cn(
-                        "text-[13px] tracking-tight transition-transform duration-300",
+                        "text-[12px] 2xl:text-[14px] tracking-tight transition-transform duration-300",
                         isActive ? "translate-x-1" : "group-hover:translate-x-1"
                       )}>
                         {item.label}

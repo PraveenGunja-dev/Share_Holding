@@ -33,7 +33,7 @@ export function BondYieldMovement({ dateRange }: BondYieldProps) {
   return (
     <div id="yield" className="space-y-6 transition-all duration-300">
       <div className="border-b border-border pb-3 mb-4">
-        <h2 className="text-lg 2xl:text-2xl font-black text-primary dark:text-sky-400 tracking-tight">Bond Yield / Spread Movement</h2>
+        <h2 className="text-xl 2xl:text-2xl font-black font-['Adani'] text-primary dark:text-sky-400 tracking-tight">Bond Yield / Spread Movement</h2>
         <p className="text-[11px] 2xl:text-[13px] text-muted-foreground font-bold tracking-widest uppercase opacity-80 mt-1">YTM, G-Spread, and Z-Spread analysis for AGEL bonds</p>
       </div>
 
@@ -113,7 +113,7 @@ export function BondYieldMovement({ dateRange }: BondYieldProps) {
 
       {/* Detailed Bond Information Table */}
       <Card className="p-4 2xl:p-6 bg-card shadow-2xl border-border">
-        <h3 className="text-base 2xl:text-xl font-black text-primary dark:text-sky-400 mb-6 uppercase tracking-widest opacity-90 border-l-4 border-primary dark:border-sky-500 pl-3">Detailed Bond Information</h3>
+        <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 mb-6 uppercase tracking-widest opacity-90 border-l-4 border-primary dark:border-sky-500 pl-3">Detailed Bond Information</h3>
         <div className="border border-border rounded-xl overflow-hidden shadow-xl bg-card">
           <div className="overflow-x-auto">
             <Table>
@@ -134,14 +134,14 @@ export function BondYieldMovement({ dateRange }: BondYieldProps) {
               <TableBody>
                 {bondData.map((bond, index) => (
                   <TableRow key={index} className="border-b border-border last:border-0 hover:bg-primary/5 transition-colors">
-                    <TableCell className="py-3 text-[12px] 2xl:text-[14px] font-bold text-primary dark:text-sky-300">{bond.issueDate || '-'}</TableCell>
-                    <TableCell className="py-3 text-[12px] 2xl:text-[14px] font-bold text-primary dark:text-sky-300">{bond.particular}</TableCell>
+                    <TableCell className="py-3 text-[12px] 2xl:text-[14px] font-bold text-primary dark:text-sky-300 uppercase">{bond.issueDate || '-'}</TableCell>
+                    <TableCell className="py-3 text-[12px] 2xl:text-[14px] font-bold text-primary dark:text-sky-300 uppercase">{bond.particular}</TableCell>
                     <TableCell className="py-3 text-center">
-                      <span className="text-[9px] 2xl:text-[11px] px-2 py-0.5 rounded-full font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">{bond.rating}</span>
+                      <span className="text-[9px] 2xl:text-[11px] px-2 py-0.5 rounded-full font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase">{bond.rating}</span>
                     </TableCell>
                     <TableCell className="text-right py-3 font-mono font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-foreground">₹{bond.issueSize?.toLocaleString()}</TableCell>
                     <TableCell className="text-right py-3 font-mono font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-400">{bond.coupon?.toFixed(2)}%</TableCell>
-                    <TableCell className="py-3 text-[12px] 2xl:text-[14px] text-muted-foreground font-bold">{bond.maturity}</TableCell>
+                    <TableCell className="py-3 text-[12px] 2xl:text-[14px] text-muted-foreground font-bold uppercase">{bond.maturity}</TableCell>
                     <TableCell className="text-right py-3 font-mono font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-foreground">{bond.currentYTM?.toFixed(2)}%</TableCell>
                     <TableCell className="text-right py-3 font-mono font-bold text-[12px] 2xl:text-[14px] text-muted-foreground">{bond.gSpread}</TableCell>
                     <TableCell className="text-right py-3 font-mono font-bold text-[12px] 2xl:text-[14px] text-muted-foreground">{bond.zSpread}</TableCell>

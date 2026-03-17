@@ -28,19 +28,67 @@ export default function App() {
   const { isLoggedIn } = useAuth();
 
   // Always skip login page and go straight to landing
-  const [screen, setScreen] = useState<AppScreen>('landing');
-  const [selectedBU, setSelectedBU] = useState('');
-  const [selectedBUId, setSelectedBUId] = useState<number | undefined>(undefined);
+  const [screen, setScreen] = useState<AppScreen>(() => {
+    const saved = localStorage.getItem('app_screen');
+    return (saved as AppScreen) || 'landing';
+  });
+  const [selectedBU, setSelectedBU] = useState(() => {
+    return localStorage.getItem('selected_bu') || '';
+  });
+  const [selectedBUId, setSelectedBUId] = useState<number | undefined>(() => {
+    const saved = localStorage.getItem('selected_bu_id');
+    return saved ? parseInt(saved, 10) : undefined;
+  });
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
   // Dashboard state
-  const [activeSection, setActiveSection] = useState('institutional');
-  const [dateRange, setDateRange] = useState('');
+  const [activeSection, setActiveSection] = useState(() => {
+    return localStorage.getItem('active_section') || 'institutional';
+  });
+  const [dateRange, setDateRange] = useState(() => {
+    return localStorage.getItem('date_range') || '';
+  });
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [topN, setTopN] = useState(15);
-  const [metricView, setMetricView] = useState('all');
-  const [mfView, setMfView] = useState('all');
+  const [topN, setTopN] = useState(() => {
+    const saved = localStorage.getItem('top_n');
+    return saved ? parseInt(saved, 10) : 15;
+  });
+  const [metricView, setMetricView] = useState(() => {
+    return localStorage.getItem('metric_view') || 'all';
+  });
+  const [mfView, setMfView] = useState(() => {
+    return localStorage.getItem('mf_view') || 'all';
+  });
   const isScrollingRef = useRef(false);
+
+  // Persist state to localStorage
+  useEffect(() => {
+    localStorage.setItem('app_screen', screen);
+    localStorage.setItem('selected_bu', selectedBU);
+    localStorage.setItem('active_section', activeSection);
+    localStorage.setItem('date_range', dateRange);
+    localStorage.setItem('top_n', topN.toString());
+    localStorage.setItem('metric_view', metricView);
+    localStorage.setItem('mf_view', mfView);
+    if (selectedBUId !== undefined) {
+      localStorage.setItem('selected_bu_id', selectedBUId.toString());
+    } else {
+      localStorage.removeItem('selected_bu_id');
+    }
+  }, [screen, selectedBU, selectedBUId, activeSection, dateRange, topN, metricView, mfView]);
+
+  // Restore scroll position after refresh if on dashboard
+  useEffect(() => {
+    if (screen === 'dashboard' && activeSection) {
+      const timer = setTimeout(() => {
+        const element = document.getElementById(activeSection);
+        if (element) {
+          element.scrollIntoView({ behavior: 'auto', block: 'start' });
+        }
+      }, 800); // Give some time for components to load
+      return () => clearTimeout(timer);
+    }
+  }, [screen]); // Only run on mount/screen change to dashboard
 
   const handleBUSubmit = (buId: number, buName: string) => {
     setSelectedBU(buName);
@@ -147,117 +195,119 @@ export default function App() {
         </aside>
 
         <ScrollArea className="flex-1 bg-background transition-colors duration-300">
-          {/* Subtle background overlay */}
-          <div className="absolute inset-0 opacity-[0.4] dark:opacity-[0.1] pointer-events-none"
-            style={{ backgroundImage: 'radial-gradient(var(--foreground) 0.5px, transparent 0.5px)', backgroundSize: '32px 32px' }} />
+          <div className="flex flex-col min-h-[calc(100vh-80px)] relative">
+            {/* Subtle background overlay */}
+            <div className="absolute inset-0 opacity-[0.4] dark:opacity-[0.1] pointer-events-none"
+              style={{ backgroundImage: 'radial-gradient(var(--foreground) 0.5px, transparent 0.5px)', backgroundSize: '32px 32px' }} />
 
-          <main className={`relative z-10 w-full overflow-x-clip ${screen === 'reports' ? '' : 'p-3 md:p-4 lg:p-5 space-y-4 md:space-y-6 max-w-[1280px] xl:max-w-[1440px] 2xl:max-w-[1536px] mx-auto'}`}>
-            {screen === 'dashboard' ? (
-              <>
-                {/* 1. Category Movement - Disabled for now as data is unavailable */}
-                {/* <section id="category">
-                  <CategoryMovement
-                    selectedCategories={selectedCategories}
-                    metricView={metricView}
-                    dateRange={dateRange}
-                  />
-                </section> */}
+            <main className="flex-1 relative z-10 w-full overflow-x-clip p-3 md:p-4 lg:p-5 space-y-4 md:space-y-6 max-w-[1280px] xl:max-w-[1440px] 2xl:max-w-[1536px] mx-auto">
+              {screen === 'dashboard' ? (
+                <>
+                  {/* 1. Category Movement - Disabled for now as data is unavailable */}
+                  {/* <section id="category">
+                    <CategoryMovement
+                      selectedCategories={selectedCategories}
+                      metricView={metricView}
+                      dateRange={dateRange}
+                    />
+                  </section> */}
 
-                {/* 2. Institutional Holders */}
-                <section id="institutional">
-                  <InstitutionalHolders
-                    selectedCategories={selectedCategories}
-                    availableCategories={availableCategories}
-                    topN={topN}
-                    metricView={metricView}
-                    dateRange={dateRange}
-                    buId={selectedBUId}
-                  />
-                </section>
-
-                {/* 3. Buyers */}
-                <section id="buyers">
-                  <TopBuyers
-                    selectedCategories={selectedCategories}
-                    topN={topN}
-                    dateRange={dateRange}
-                    buId={selectedBUId}
-                  />
-                </section>
-
-                {/* 4. Sellers */}
-                <section id="sellers">
-                  <TopSellers
-                    selectedCategories={selectedCategories}
-                    topN={topN}
-                    dateRange={dateRange}
-                    buId={selectedBUId}
-                  />
-                </section>
-
-                {/* 5. New Entries & Exits */}
-                <section id="entries">
-                  <NewEntriesExits
-                    selectedCategories={selectedCategories}
-                    dateRange={dateRange}
-                    buId={selectedBUId}
-                  />
-                </section>
-
-                {/* 6. FIIs & FPIs */}
-                {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('FII') || c.includes('FPI'))) && (
-                  <section id="fiis">
-                    <TopFIIs
+                  {/* 2. Institutional Holders */}
+                  <section id="institutional">
+                    <InstitutionalHolders
+                      selectedCategories={selectedCategories}
+                      availableCategories={availableCategories}
                       topN={topN}
                       metricView={metricView}
                       dateRange={dateRange}
                       buId={selectedBUId}
                     />
                   </section>
-                )}
 
-                {/* 7. Mutual Funds */}
-                {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('Mutual Funds') || c.includes('MF'))) && (
-                  <section id="mutualfunds">
-                    <TopMutualFunds
+                  {/* 3. Buyers */}
+                  <section id="buyers">
+                    <TopBuyers
+                      selectedCategories={selectedCategories}
                       topN={topN}
-                      metricView={metricView}
-                      mfView={mfView}
                       dateRange={dateRange}
                       buId={selectedBUId}
                     />
                   </section>
-                )}
 
-                {/* 8. Insurance & PFs */}
-                {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('Insurance') || c.includes('PF') || c.includes('Provident'))) && (
-                  <section id="insurance">
-                    <TopInsurancePFs
+                  {/* 4. Sellers */}
+                  <section id="sellers">
+                    <TopSellers
+                      selectedCategories={selectedCategories}
                       topN={topN}
-                      metricView={metricView}
                       dateRange={dateRange}
                       buId={selectedBUId}
                     />
                   </section>
-                )}
 
-                {/* 9. AIFs */}
-                {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('AIF'))) && (
-                  <section id="aifs">
-                    <TopAIFs
-                      topN={topN}
-                      metricView={metricView}
+                  {/* 5. New Entries & Exits */}
+                  <section id="entries">
+                    <NewEntriesExits
+                      selectedCategories={selectedCategories}
                       dateRange={dateRange}
                       buId={selectedBUId}
                     />
                   </section>
-                )}
-              </>
-            ) : (
-              <ReportsPage dateRange={dateRange} buId={selectedBUId} />
-            )}
-          </main>
-          <DashboardFooter />
+
+                  {/* 6. FIIs & FPIs */}
+                  {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('FII') || c.includes('FPI'))) && (
+                    <section id="fiis">
+                      <TopFIIs
+                        topN={topN}
+                        metricView={metricView}
+                        dateRange={dateRange}
+                        buId={selectedBUId}
+                      />
+                    </section>
+                  )}
+
+                  {/* 7. Mutual Funds */}
+                  {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('Mutual Funds') || c.includes('MF'))) && (
+                    <section id="mutualfunds">
+                      <TopMutualFunds
+                        topN={topN}
+                        metricView={metricView}
+                        mfView={mfView}
+                        dateRange={dateRange}
+                        buId={selectedBUId}
+                      />
+                    </section>
+                  )}
+
+                  {/* 8. Insurance & PFs */}
+                  {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('Insurance') || c.includes('PF') || c.includes('Provident'))) && (
+                    <section id="insurance">
+                      <TopInsurancePFs
+                        topN={topN}
+                        metricView={metricView}
+                        dateRange={dateRange}
+                        buId={selectedBUId}
+                      />
+                    </section>
+                  )}
+
+                  {/* 9. AIFs */}
+                  {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('AIF'))) && (
+                    <section id="aifs">
+                      <TopAIFs
+                        topN={topN}
+                        metricView={metricView}
+                        dateRange={dateRange}
+                        buId={selectedBUId}
+                      />
+                    </section>
+                  )}
+                </>
+              ) : (
+                <ReportsPage dateRange={dateRange} buId={selectedBUId} />
+              )}
+            </main>
+            <DashboardFooter />
+          </div>
         </ScrollArea>
       </div>
     </div>

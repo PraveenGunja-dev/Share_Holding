@@ -262,7 +262,7 @@ export function InstitutionalHolders({
     <div id="institutional" className="space-y-4 transition-all duration-300">
       <div className="flex items-end justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
         <div>
-          <h2 className="text-xl 2xl:text-2xl font-[1000] text-primary dark:text-sky-400 tracking-tighter leading-none mb-0.5 shadow-sm inline-block transition-all">Top {topN} Institutional Holders</h2>
+          <h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 tracking-tighter leading-none mb-1.5 inline-block transition-all">Top {topN} Institutional Holders</h2>
           <p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold tracking-tight opacity-80">
             Based on holdings as of {detectedDates.latest || (formatDateRange(dateRange).split(' vs ')[1] || 'Latest Date')}
           </p>
@@ -277,13 +277,13 @@ export function InstitutionalHolders({
           {/* Ownership Mix ribbon */}
           <div className="flex items-center justify-between gap-4 mb-4 bg-muted/20 dark:bg-slate-900/40 p-2 rounded-xl border border-border/40 shadow-sm backdrop-blur-sm overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-3">
-              <div className="h-[35px] w-[35px] 2xl:h-[45px] 2xl:w-[45px] flex-shrink-0">
+              <div className="h-[50px] w-[50px] 2xl:h-[65px] 2xl:w-[65px] flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={donutData}
-                      innerRadius={8}
-                      outerRadius={16}
+                      innerRadius={12}
+                      outerRadius={24}
                       paddingAngle={4}
                       dataKey="value"
                       stroke="none"
@@ -297,16 +297,16 @@ export function InstitutionalHolders({
                 </ResponsiveContainer>
               </div>
               <div className="flex flex-col">
-                <span className="text-[8px] 2xl:text-[10px] font-black text-primary dark:text-sky-400 tracking-[0.15em]">Ownership Mix</span>
-                <span className="text-[7px] 2xl:text-[8px] text-muted-foreground font-bold opacity-60">Distribution by category</span>
+                <span className="text-[12px] 2xl:text-[14px] font-black text-primary dark:text-sky-400 tracking-[0.15em] uppercase">Ownership Mix</span>
+                <span className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold opacity-60 uppercase">Distribution by category</span>
               </div>
             </div>
 
             <div className="flex items-center gap-6 pr-2">
               {donutData.map((d: any) => (
                 <div key={d.name} className="flex items-center gap-2 flex-shrink-0">
-                  <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: d.color }} />
-                  <span className="text-[10px] 2xl:text-[12px] font-black text-foreground whitespace-nowrap tracking-tight">{d.name}</span>
+                  <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: d.color }} />
+                  <span className="text-[12px] 2xl:text-[14px] font-black text-foreground whitespace-nowrap tracking-tight uppercase">{d.name}</span>
                 </div>
               ))}
             </div>
@@ -336,7 +336,7 @@ export function InstitutionalHolders({
                 tickLine={false}
               >
                 <Label
-                  value={metricView === 'percentage' ? '% Share Capital' : metricView === 'change' ? 'Change in Shares' : 'Lakhs Owned (Scale)'}
+                  value={(metricView === 'percentage' ? '% Share Capital' : metricView === 'change' ? 'Change in Shares' : 'Lakhs Owned (Scale)').toUpperCase()}
                   offset={-15}
                   position="insideBottom"
                   style={{ fontSize: '11px', fontWeight: 900, fill: theme === 'dark' ? '#ffffff' : '#475569', letterSpacing: '0.1em' }}
@@ -355,8 +355,8 @@ export function InstitutionalHolders({
                   const fontSize = 13;
                   return (
                     <g transform={`translate(${x},${y})`}>
-                      <text x={-12} y={3} textAnchor="end" fontSize={fontSize} fontWeight={500} fill={theme === 'dark' ? '#38bdf8' : '#00205B'} style={{ letterSpacing: '0.01em' }}>
-                        {text}
+                      <text x={-12} y={4} dominantBaseline="central" textAnchor="end" fontSize={fontSize} fontWeight={500} fill={theme === 'dark' ? '#38bdf8' : '#00205B'} style={{ letterSpacing: '0.01em' }}>
+                        {text.toUpperCase()}
                       </text>
                     </g>
                   );
@@ -366,7 +366,7 @@ export function InstitutionalHolders({
                 interval={0}
               >
                 <Label
-                  value="Institutional Shareholders"
+                  value="INSTITUTIONAL SHAREHOLDERS"
                   angle={-90}
                   position="insideLeft"
                   offset={-15}
@@ -386,7 +386,7 @@ export function InstitutionalHolders({
                 labelStyle={{ color: 'var(--primary)', fontSize: 13, fontWeight: 500, marginBottom: '8px' }}
                 formatter={(value: any, name: any, props: any) => [
                   `${props.payload.lakhs.toLocaleString()} L (${props.payload.percent.toFixed(2)}%)`,
-                  'Total Holding'
+                  'TOTAL HOLDING'
                 ]}
               />
 
@@ -424,7 +424,7 @@ export function InstitutionalHolders({
 
         <Card className="col-span-12 p-3 2xl:p-4 bg-card border-border shadow-[0_4px_20px_-4px_rgba(0,32,91,0.08)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-[11px] 2xl:text-xs font-black text-primary dark:text-sky-400 tracking-wider">Top {topN} Institutional Shareholders​</h3>
+            <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 tracking-wider">Top {topN} Institutional Shareholders</h3>
           </div>
 
           <div className="border border-border rounded-xl shadow-md flex flex-col bg-card overflow-hidden">
@@ -432,9 +432,9 @@ export function InstitutionalHolders({
               <Table>
                 <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-20 shadow-sm">
                   <TableRow className="hover:bg-transparent border-b border-white/10">
-                    <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5">Rank</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5">Shareholder Name</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5">Category</TableHead>
+                    <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 uppercase">Rank</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 uppercase">Shareholder Name</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 uppercase">Category</TableHead>
                     <TableHead colSpan={2} className={cn("text-center text-white font-bold border-r border-white/5 transition-colors", (metricView === 'holdings' || metricView === 'percentage' || metricView === 'all') ? "bg-white/20" : "bg-white/10")}>{detectedDates.latest}</TableHead>
                     <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5">{detectedDates.prev}</TableHead>
                     <TableHead rowSpan={2} className={cn("text-center text-white font-bold transition-colors", metricView === 'change' ? "bg-white/20" : "")}>Change in Holding Shares</TableHead>
@@ -461,13 +461,13 @@ export function InstitutionalHolders({
                         {index + 1}
                       </TableCell>
                       <TableCell className="py-2 border-r border-border max-w-[140px] sm:max-w-[180px] lg:max-w-[220px] 2xl:max-w-[300px]">
-                        <div className="font-black text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 truncate" title={row.name}>
+                        <div className="font-black text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 truncate uppercase" title={row.name}>
                           {row.name}
                         </div>
                       </TableCell>
                       <TableCell className="border-r border-border py-2">
                         <div
-                          className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] 2xl:text-[11px] font-black tracking-tighter shadow-sm"
+                          className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] 2xl:text-[11px] font-black tracking-tighter shadow-sm uppercase"
                           style={{ backgroundColor: `${getCategoryColor(row.category)}15`, color: getCategoryColor(row.category) }}
                         >
                           {row.category}
