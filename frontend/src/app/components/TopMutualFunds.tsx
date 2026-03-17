@@ -374,7 +374,7 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                       <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight uppercase">
                         {detectedDates.prev}
                       </TableHead>
-                      <TableHead rowSpan={2} className="text-center text-white font-bold py-4 whitespace-normal leading-tight uppercase">Change in Holding</TableHead>
+                      <TableHead rowSpan={2} className="text-center text-white font-bold py-4 whitespace-normal leading-tight uppercase">Change in Holding Share</TableHead>
                     </TableRow>
                     <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10 uppercase">
                       <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20">HOLDINGS (L)</TableHead>

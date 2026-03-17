@@ -375,7 +375,7 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
                     <TableHead rowSpan={2} className="font-bold text-white border-r border-white/5 py-4">Category</TableHead>
                     <TableHead colSpan={2} className={cn("text-center font-bold text-white border-r border-white/5 transition-colors uppercase", (metricView === 'holdings' || metricView === 'percentage') ? "bg-white/20" : "bg-white/10")}>{detectedDates.latest}</TableHead>
                     <TableHead colSpan={2} className="text-center font-bold text-white border-r border-white/5 bg-white/5 py-2 uppercase">{detectedDates.prev}</TableHead>
-                    <TableHead rowSpan={2} className={cn("text-center font-bold text-white py-4 transition-colors uppercase", metricView === 'change' ? "bg-white/20" : "")}>Change in Holding</TableHead>
+                    <TableHead rowSpan={2} className={cn("text-center font-bold text-white py-4 transition-colors uppercase", metricView === 'change' ? "bg-white/20" : "")}>Change in Holding Shares</TableHead>
                   </TableRow>
                   <TableRow className="hover:bg-transparent border-b border-white/10 text-[10px] text-white/80 uppercase">
                     <TableHead className={cn("text-center font-bold text-white/80 border-r border-white/5 py-2 transition-all uppercase", metricView === 'holdings' ? "bg-sky-400/20" : "")}>Holding (L)</TableHead>

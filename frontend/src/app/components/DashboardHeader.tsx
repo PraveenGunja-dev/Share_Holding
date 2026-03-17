@@ -290,7 +290,7 @@ export function DashboardHeader({
                 <SelectItem value="all" className="text-xs">All Metrics</SelectItem>
                 <SelectItem value="holdings" className="text-xs">Total Holdings</SelectItem>
                 <SelectItem value="percentage" className="text-xs">% Share Capital</SelectItem>
-                <SelectItem value="change" className="text-xs">Velocity (Change)</SelectItem>
+                <SelectItem value="change" className="text-xs">Change in Holding share</SelectItem>
               </SelectContent>
             </Select>
           </div>
