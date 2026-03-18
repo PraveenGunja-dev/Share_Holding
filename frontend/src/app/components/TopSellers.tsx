@@ -302,7 +302,7 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
                       <div className="text-[13px] font-medium text-muted-foreground mb-2 tracking-widest uppercase">{d.category}</div>
                       <div className="text-[13px] font-medium text-primary dark:text-sky-400 mb-1 leading-tight uppercase">{d.name}</div>
                       <div className="text-[13px] font-medium text-card-foreground uppercase">
-                        {d.value.toLocaleString()} <span className="text-[13px] text-muted-foreground uppercase">Lakhs</span>
+                        {d.value.toLocaleString()} <span className="text-[13px] text-muted-foreground uppercase">Lakhs Sold</span> <span className="text-rose-500">▼</span>
                       </div>
                     </div>
                   );
@@ -337,8 +337,8 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
                 <LabelList
                   dataKey="value"
                   position="right"
-                  formatter={(v: number) => v === 0 ? '' : (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toLocaleString())}
-                  style={{ fontSize: '13px', fontWeight: 500, fill: 'var(--foreground)' }}
+                  formatter={(v: number) => v === 0 ? '' : (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toLocaleString()) + ' ▼'}
+                  style={{ fontSize: '13px', fontWeight: 900, fill: '#ef4444' }}
                   offset={15}
                 />
               </Bar>

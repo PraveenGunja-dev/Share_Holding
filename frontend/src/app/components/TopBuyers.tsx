@@ -304,7 +304,7 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
                       <div className="text-[13px] font-medium text-muted-foreground mb-2 tracking-widest uppercase">{d.category}</div>
                       <div className="text-[13px] font-medium text-primary dark:text-sky-400 mb-1 leading-tight uppercase">{d.name}</div>
                       <div className="text-[13px] font-medium text-card-foreground uppercase">
-                        {d.value.toLocaleString()} <span className="text-[13px] text-muted-foreground uppercase">Lakhs</span>
+                        {d.value.toLocaleString()} <span className="text-[13px] text-muted-foreground uppercase">Lakhs Bought</span> <span className="text-emerald-500">▲</span>
                       </div>
                     </div>
                   );
@@ -337,8 +337,8 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
                 <LabelList
                   dataKey="value"
                   position="right"
-                  formatter={(v: number) => v === 0 ? '' : (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toLocaleString())}
-                  style={{ fontSize: '13px', fontWeight: 500, fill: 'var(--foreground)' }}
+                  formatter={(v: number) => v === 0 ? '' : (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toLocaleString()) + ' ▲'}
+                  style={{ fontSize: '13px', fontWeight: 900, fill: '#10b981' }}
                   offset={15}
                   dy={4}
                 />

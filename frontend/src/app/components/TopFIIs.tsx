@@ -133,6 +133,9 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
     } else if (metricView === 'change') {
       activeVal = Math.abs(fii.buy - fii.sell);
       label = `${(fii.buy - fii.sell) > 0 ? '+' : ''}${(fii.buy - fii.sell).toLocaleString()}L`;
+    } else if (metricView === 'all') {
+      const change = fii.buy - fii.sell;
+      label = `${fii.holdings.toLocaleString()}L\u00A0(${fii.percent.toFixed(2)}%)\u00A0${change > 0 ? '▲' : change < 0 ? '▼' : ''}`.trim();
     }
 
     return {
@@ -318,16 +321,41 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
               </YAxis>
               <Tooltip
                 cursor={{ fill: 'var(--muted)', opacity: 0.2 }}
-                contentStyle={{
-                  backgroundColor: 'var(--card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '16px',
-                  padding: '16px',
-                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                content={({ active, payload }: any) => {
+                  if (active && payload && payload.length) {
+                    const data = payload.find((p: any) => p.dataKey === 'value')?.payload;
+                    if (!data) return null;
+                    const fii = allFIIs.find(f => f.name === data.name);
+                    if (!fii) return null;
+                    
+                    return (
+                      <div className="bg-card border border-border rounded-xl p-4 shadow-xl backdrop-blur-md bg-opacity-90 min-w-[200px]">
+                        <div className="text-[11px] font-bold text-muted-foreground mb-2 tracking-widest uppercase opacity-70 border-b border-border/50 pb-1">{fii.category}</div>
+                        <div className="text-[13px] font-black text-primary dark:text-sky-400 mb-3 leading-tight uppercase">{fii.name}</div>
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex justify-between items-center text-[11px] font-bold">
+                            <span className="text-muted-foreground uppercase tracking-wider">Total Holding</span>
+                            <span className="text-foreground">{fii.holdings.toLocaleString()} L</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[11px] font-bold">
+                            <span className="text-muted-foreground uppercase tracking-wider">Equity Stake</span>
+                            <span className="text-foreground">{fii.percent.toFixed(2)}%</span>
+                          </div>
+                          {fii.buy || fii.sell ? (
+                            <div className="flex justify-between items-center text-[11px] font-bold border-t border-border/50 pt-1.5 mt-1">
+                              <span className="text-muted-foreground uppercase tracking-wider">Weekly Activity</span>
+                              <span className={cn(fii.buy > fii.sell ? "text-emerald-500" : "text-rose-500", "flex items-center gap-1")}>
+                                {fii.buy > fii.sell ? `+${fii.buy.toLocaleString()} L` : `-${fii.sell.toLocaleString()} L`}
+                                {fii.buy > fii.sell ? '▲' : '▼'}
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
                 }}
-                itemStyle={{ color: 'var(--card-foreground)', fontSize: '13px', fontWeight: 500 }}
-                labelStyle={{ color: 'var(--primary)', fontSize: '13px', fontWeight: 500, marginBottom: '8px' }}
-                formatter={(v: any) => [`${v.toLocaleString()}${metricView === 'percentage' ? '%' : ' Lakhs'}`, metricView === 'percentage' ? 'Share Capital' : 'Holdings']}
               />
 
               {/* Background Track */}

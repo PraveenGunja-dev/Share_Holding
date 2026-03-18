@@ -293,6 +293,17 @@ export function InstitutionalHolders({
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
+                    <Tooltip
+                      formatter={(v: any, name: string) => [`${v.toLocaleString()} Lakhs`, name]}
+                      contentStyle={{
+                        backgroundColor: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                        padding: '8px 12px'
+                      }}
+                      itemStyle={{ fontSize: '12px', fontWeight: 500, color: 'var(--card-foreground)' }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -375,19 +386,38 @@ export function InstitutionalHolders({
               </YAxis>
               <Tooltip
                 cursor={{ fill: 'var(--muted)', opacity: 0.2 }}
-                contentStyle={{
-                  backgroundColor: 'var(--card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '16px',
-                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                  padding: '16px'
+                content={({ active, payload }: any) => {
+                  if (active && payload && payload.length) {
+                    const data = payload.find((p: any) => p.dataKey === 'activeVal')?.payload;
+                    if (!data) return null;
+                    return (
+                      <div className="bg-card border border-border rounded-xl p-4 shadow-xl backdrop-blur-md bg-opacity-90 min-w-[200px]">
+                        <div className="text-[11px] font-bold text-muted-foreground mb-2 tracking-widest uppercase opacity-70 border-b border-border/50 pb-1">{data.category}</div>
+                        <div className="text-[13px] font-black text-primary dark:text-sky-400 mb-3 leading-tight uppercase">{data.name}</div>
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex justify-between items-center text-[11px] font-bold">
+                            <span className="text-muted-foreground uppercase tracking-wider">Total Holding</span>
+                            <span className="text-foreground">{data.lakhs.toLocaleString()} L</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[11px] font-bold">
+                            <span className="text-muted-foreground uppercase tracking-wider">Equity Stake</span>
+                            <span className="text-foreground">{data.percent.toFixed(2)}%</span>
+                          </div>
+                          {data.change !== 0 && (
+                            <div className="flex justify-between items-center text-[11px] font-bold border-t border-border/50 pt-1.5 mt-1">
+                              <span className="text-muted-foreground uppercase tracking-wider">WoW Change</span>
+                              <span className={cn(data.change > 0 ? "text-emerald-500" : "text-rose-500", "flex items-center gap-1")}>
+                                {data.change > 0 ? '+' : ''}{data.change.toLocaleString()} L
+                                {data.change > 0 ? '▲' : '▼'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
                 }}
-                itemStyle={{ color: 'var(--card-foreground)', fontSize: 13, fontWeight: 500 }}
-                labelStyle={{ color: 'var(--primary)', fontSize: 13, fontWeight: 500, marginBottom: '8px' }}
-                formatter={(value: any, name: any, props: any) => [
-                  `${props.payload.lakhs.toLocaleString()} L (${props.payload.percent.toFixed(2)}%)`,
-                  'TOTAL HOLDING'
-                ]}
               />
 
               {/* Background Track Bar */}
