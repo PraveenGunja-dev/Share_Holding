@@ -240,23 +240,22 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
       </div>
 
       <Card className="p-3 bg-card border-border shadow-[0_4px_20px_-4px_rgba(0,32,91,0.08)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]">
-        <div className="w-full mb-4 px-2">
+        <div className="w-full mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
           <h3 className="text-sm 2xl:text-base font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest uppercase border-l-4 border-primary dark:border-sky-500 pl-3">FII & FPI HOLDINGS DISTRIBUTION</h3>
-        </div>
-        <div className="w-full mb-2 flex flex-col md:flex-row md:items-center justify-end gap-4">          <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-full bg-muted/40 dark:bg-slate-900/50 border border-border/50 shadow-sm self-start md:self-auto">
-          {Array.from(new Set(liveData.map(d => d.category))).slice(0, 8).map((cat: string) => (
-            <div key={cat} className="flex items-center gap-1.5 border-r border-border/30 last:border-0 pr-3 last:pr-0">
-              <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: getCategoryColor(cat) }} />
-              <span className="text-[9px] 2xl:text-[10px] font-black text-primary dark:text-sky-300 tracking-tighter">
-                {cat === 'Alternative Investment Funds' ? 'AIF' :
-                  cat === 'Insurance Companies' ? 'INS' :
-                    cat === 'Mutual Funds' ? 'MF' :
-                      cat === 'Provident Funds' ? 'PF' :
-                        cat === 'Institutional Investors' ? 'IF' : cat}
-              </span>
-            </div>
-          ))}
-        </div>
+          <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-full bg-muted/40 dark:bg-slate-900/50 border border-border/50 shadow-sm self-start md:self-auto">
+            {Array.from(new Set(liveData.map(d => d.category))).slice(0, 8).map((cat: string) => (
+              <div key={cat} className="flex items-center gap-1.5 border-r border-border/30 last:border-0 pr-3 last:pr-0">
+                <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: getCategoryColor(cat) }} />
+                <span className="text-[9px] 2xl:text-[10px] font-black text-primary dark:text-sky-300 tracking-tighter">
+                  {cat === 'Alternative Investment Funds' ? 'AIF' :
+                    cat === 'Insurance Companies' ? 'INS' :
+                      cat === 'Mutual Funds' ? 'MF' :
+                        cat === 'Provident Funds' ? 'PF' :
+                          cat === 'Institutional Investors' ? 'IF' : cat}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="w-full" style={{ height: chartH }}>
@@ -332,7 +331,7 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
               />
 
               {/* Background Track */}
-              <Bar dataKey="maxValue" xAxisId={0} fill="var(--muted)" fillOpacity={0.1} barSize={20} radius={[10, 10, 10, 10]} isAnimationActive={false} />
+              <Bar dataKey="maxValue" xAxisId={0} fill="var(--muted)" fillOpacity={0.1} barSize={20} radius={[10, 10, 10, 10]} isAnimationActive={false} tooltipType="none" />
 
               {/* Gradient Bullet Bar */}
               <Bar 

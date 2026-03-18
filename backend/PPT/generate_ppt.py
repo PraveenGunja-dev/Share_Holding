@@ -1,6 +1,6 @@
 """
 =============================================================================
-  Weekly Shareholder Movement ' PowerPoint Report Generator
+  Weekly Shareholder Movement â†’ PowerPoint Report Generator
   -----------------------------------------------------------
   Reads shareholder data from PostgreSQL tables and generates a professional
   PowerPoint presentation matching the Adani template structure.
@@ -120,7 +120,8 @@ def _get_date_range_label() -> Optional[str]:
     return None
 
 # Load DB config from environment
-DB_PATH = _get_env("DB_PATH", "d:\\weekly share holder\\WeeklyShareHolding_Update5.db").strip()
+_default_db_path = str((_here.parent.parent / "WeeklyShareHolding_Update5.db").resolve())
+DB_PATH = _get_env("DB_PATH", _default_db_path).strip()
 if not DB_PATH:
     raise ValueError("Missing required DB env var: DB_PATH")
 
@@ -159,16 +160,13 @@ def _derive_report_dates_from_db():
     try:
         conn = sqlite3.connect(DB_PATH)
         cur = conn.cursor()
-        # In SQLite, we check the table itself for columns
-        cur.execute(f"PRAGMA table_info(\"{ANALYSIS_TABLE}\")")
+        cur.execute(f'PRAGMA table_info("{ANALYSIS_TABLE}")')
         cols = [r[1] for r in cur.fetchall()]
         conn.close()
-        # Find date-like columns such as '12/26/2025'
         import re
         date_cols = []
         for c in cols:
             if re.match(r"^\d{1,2}/\d{1,2}/\d{2,4}$", c.strip()):
-                # Parse trying mm/dd/YYYY then m/d/YY, normalize
                 from datetime import datetime as _dt
                 for fmt in ("%m/%d/%Y", "%m/%d/%y", "%d/%m/%Y", "%d/%m/%y"):
                     try:
@@ -181,7 +179,6 @@ def _derive_report_dates_from_db():
             return None, None
         date_cols.sort(key=lambda x: x[0], reverse=True)
         latest, prev = date_cols[0][0], date_cols[1][0]
-        # Format as DD-MMM-YY (e.g., 26-Dec-25)
         return latest.strftime("%d-%b-%y"), prev.strftime("%d-%b-%y")
     except Exception:
         return None, None
@@ -201,7 +198,7 @@ SLIDE_WIDTH_INCHES = 13.333
 SLIDE_HEIGHT_INCHES = 7.5
 
 
-# "" Color Palette (matching template) """""""""""""""""""""""""""""""""""""
+# â”€â”€ Color Palette (matching template) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 HEADER_FONT_COLOR = RGBColor(0xFF, 0xFF, 0xFF)   # White
 DATA_FONT_COLOR   = RGBColor(0x00, 0x00, 0x00)   # Black
 GREEN_COLOR       = RGBColor(0x00, 0xB0, 0x50)   # Green for positive changes
@@ -217,7 +214,7 @@ NOTE_FONT_SIZE   = Pt(9)    # ~114300 EMU
 FOOTER_FONT_SIZE = Pt(8)    # ~101600 EMU
 
 
-# "" Database Functions """""""""""""""""""""""""""""""""""""""""""""""""""""
+# â”€â”€ Database Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def get_db_connection():
     """Establish and return a SQLite database connection."""
@@ -225,6 +222,7 @@ def get_db_connection():
         conn = sqlite3.connect(DB_PATH)
         return conn
     except Exception as e:
+        print(f"Database connection failed: {e}")
         sys.exit(1)
 
 
@@ -235,7 +233,7 @@ def fetch_table_data(conn, table_name: str, schema: str = "public") -> pd.DataFr
         df = pd.read_sql_query(query, conn)
         return df
     except Exception as e:
-        print(f"     Error reading table '{table_name}': {e}")
+        print(f"   âš ï¸  Error reading table '{table_name}': {e}")
         return pd.DataFrame()
 
 
@@ -243,23 +241,20 @@ def _pick_latest_daterange(conn, table_name: str, schema: str = "public", bu_id:
     """Return the latest DateRange value for a table if the column exists."""
     try:
         cur = conn.cursor()
-        cur.execute(f"PRAGMA table_info(\"{table_name}\")")
+        cur.execute(f'PRAGMA table_info("{table_name}")')
         cols = [r[1] for r in cur.fetchall()]
-        
         if "DateRange" not in cols:
             return None
 
-        bu_id = bu_id if bu_id is not None else _get_bu_id()
+        resolved_bu_id = bu_id if bu_id is not None else _get_bu_id()
         where_bu = ""
         if "bu_id" in cols:
-            where_bu = f"WHERE bu_id = {int(bu_id)}"
+            where_bu = f"WHERE bu_id = {int(resolved_bu_id)}"
 
-        # Simple sort for SQLite (requires a more robust way if naming is inconsistent, 
-        # but rowid or simple DESC usually works for these generated tables)
         cur.execute(
             f"""
             SELECT DateRange
-            FROM \"{table_name}\"
+            FROM "{table_name}"
             {where_bu}
             ORDER BY rowid DESC
             LIMIT 1
@@ -305,14 +300,12 @@ def fetch_table_data_latest(
     if not picked:
         return df
     try:
-        res = df[df["DateRange"].astype(str) == str(picked)].copy()
-        print(f"[PPT][DATA] Filtered {table_name}: {len(res)} rows for date {picked}")
-        return res
+        return df[df["DateRange"].astype(str) == str(picked)].copy()
     except Exception:
         return df
 
 
-# "" Helper: Set cell styling """"""""""""""""""""""""""""""""""""""""""""""
+# â”€â”€ Helper: Set cell styling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def set_cell_style(cell, text, font_size=DATA_FONT_SIZE, bold=False,
                    font_color=DATA_FONT_COLOR, bg_color=None,
@@ -505,7 +498,7 @@ def _format_pct(value):
         return s if s.endswith("%") else f"{s}%"
 
 
-# "" Slide Builders """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+# â”€â”€ Slide Builders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _ensure_table_data_row_capacity(table, data_rows_needed: int, header_rows: int = 2):
     """Ensure the table has exactly header_rows + data_rows_needed rows by
@@ -521,8 +514,6 @@ def _ensure_table_data_row_capacity(table, data_rows_needed: int, header_rows: i
         while len(table.rows) < total_needed:
             try:
                 tbl = table._tbl
-                if not tbl.tr_lst:
-                    break
                 last_tr = tbl.tr_lst[-1]
                 new_tr = copy.deepcopy(last_tr)
                 tbl.append(new_tr)
@@ -533,7 +524,7 @@ def _ensure_table_data_row_capacity(table, data_rows_needed: int, header_rows: i
             try:
                 tbl = table._tbl
                 tr_list = tbl.tr_lst
-                if len(tr_list) <= header_rows or not tr_list:
+                if len(tr_list) <= header_rows:
                     break
                 tbl.remove(tr_list[-1])
             except Exception:
@@ -547,89 +538,36 @@ def add_blank_slide(prs):
     return prs.slides.add_slide(slide_layout)
 
 def _delete_slides(prs, idxs):
-    """Delete slides by indices (descending) from a Presentation safely."""
+    """Delete slides by indices (descending) from a Presentation."""
     try:
-        # Sort indices descending to avoid shifting issues
-        indices = sorted(set(idxs), reverse=True)
-        for i in indices:
-            if i < 0 or i >= len(prs.slides):
-                continue
-            
-            # Simplified deletion that is often more stable with python-pptx
-            # We remove the slide from the internal SlideIdList
-            # and then also attempt to drop the relationship to keep the file clean
-            try:
-                slide_id = prs.slides._sldIdLst[i]
-                rel_id = slide_id.rId
-                prs.slides._sldIdLst.remove(slide_id)
-                prs.part.drop_rel(rel_id)
-            except Exception:
-                # If relationship dropping fails, we still removed it from the list
-                pass
-                
-        print(f"   OK Successfully removed {len(indices)} slides.")
-    except Exception as e:
-        print(f"   WARNING Error in _delete_slides: {e}")
+        sldIdLst = prs.slides._sldIdLst
+        slide_ids = list(sldIdLst)
+        for i in sorted(set([i for i in idxs if 0 <= i < len(slide_ids)]), reverse=True):
+            sldIdLst.remove(slide_ids[i])
+    except Exception:
+        pass
 
 
-
-def _find_slide_by_title(prs, title_text: str, must_have_table: bool = False, is_toc_search: bool = False):
-    if not title_text: return None
-    want = " ".join(str(title_text).split()).strip().lower()
-    
-    best_match = None
+def _find_slide_by_title(prs, title_text: str):
+    """Find a slide whose TITLE placeholder text matches title_text (case-insensitive)."""
+    if not title_text:
+        return None
+    def _norm(s: str) -> str:
+        return " ".join(str(s or "").split()).strip().lower()
+    want = _norm(title_text)
     for slide in prs.slides:
-        is_toc = False
-        # Check for title shape "Table of Contents" or "Index"
-        for shape in slide.shapes:
-            if hasattr(shape, "text_frame"):
-                txt = (shape.text_frame.text or "").lower()
-                if "table of contents" in txt or "index" in txt:
-                    is_toc = True
-                    break
-        
-        # Check for 2-column table list (TOC layout)
-        if not is_toc:
-            for tbl in _iter_tables(slide):
-                try:
-                    if len(tbl.columns) == 2 and len(tbl.rows) >= 5:
-                        is_toc = True
-                        break
-                except: pass
-                    
-        if is_toc and not is_toc_search:
-            continue
-            
-        found = False
-        # Match Title placeholder
-        for shape in slide.shapes:
-            if getattr(shape, "is_placeholder", False) and hasattr(shape, "text_frame"):
-                if shape.placeholder_format.type == 1: 
-                    txt = " ".join((shape.text_frame.text or "").split()).strip().lower()
-                    if want == txt or want in txt or txt in want:
-                        found = True
-                        break
-        
-        # Match any text frame
-        if not found:
+        try:
             for shape in slide.shapes:
-                if hasattr(shape, "text_frame"):
-                    txt = " ".join((shape.text_frame.text or "").split()).strip().lower()
-                    if want == txt or want in txt or txt in want:
-                        found = True
-                        break
-                        
-        if found:
-            # For data slides, we MUST have a reasonable table
-            tbl = _get_best_table(slide)
-            if tbl is not None and len(tbl.columns) >= 7:
-                print(f"[PPT][TRACE] Match found on slide index {prs.slides.index(slide)}")
-                return slide
-            if not must_have_table:
-                # If no table requirement, return first match
-                best_match = slide
-            
-    return best_match
+                if getattr(shape, "is_placeholder", False):
+                    phf = shape.placeholder_format
+                    if hasattr(phf, "type") and phf.type == PP_PLACEHOLDER.TITLE and hasattr(shape, "text_frame"):
+                        txt = shape.text_frame.text or ""
+                        txtn = _norm(txt)
+                        if txtn == want or want in txtn:
+                            return slide
+        except Exception:
+            continue
+    return None
 
 def _table_header_signature(tbl) -> str:
     """Return a normalized signature string for the first two rows and first 8 columns of a table."""
@@ -923,59 +861,55 @@ def _get_first_table(slide):
     return None
 
 def _get_best_table(slide):
-    """Return the most likely data table on the slide: max columns and rows.
-    Recurses into grouped shapes to find nested tables.
-    """
+    """Return the most likely data table on the slide: max columns and rows."""
     best = None
-    best_score = (-1, -1, -1)
-    
-    def _scan_shapes(shapes):
-        nonlocal best, best_score
-        for shape in shapes:
-            try:
-                # If it's a table, evaluate it
-                if getattr(shape, "has_table", False):
-                    tbl = shape.table
-                    try:
-                        area = int(getattr(shape, "width", 0)) * int(getattr(shape, "height", 0))
-                    except Exception:
-                        area = 0
-                    # Score based on (columns, rows, area)
-                    score = (len(tbl.columns), len(tbl.rows), area)
-                    # print(f"      [DEBUG] Found table: {len(tbl.columns)} cols, {len(tbl.rows)} rows")
-                    if score > best_score:
-                        best = tbl
-                        best_score = score
-                
-                # If it's a group shape, recurse into it
-                if shape.shape_type == 6: # MSO_SHAPE_TYPE.GROUP
-                    _scan_shapes(shape.shapes)
-            except Exception:
-                continue
-
+    best_score = (-1, -1)
+    queue = []
     try:
-        _scan_shapes(slide.shapes)
+        queue = list(getattr(slide, "shapes", []))
     except Exception:
-        pass
-        
+        queue = []
+    while queue:
+        shape = queue.pop(0)
+        try:
+            if getattr(shape, "has_table", False):
+                tbl = shape.table
+                try:
+                    area = int(getattr(shape, "width", 0)) * int(getattr(shape, "height", 0))
+                except Exception:
+                    area = 0
+                score = (len(tbl.columns), len(tbl.rows), area)
+                if score > best_score:
+                    best = tbl
+                    best_score = score
+            if hasattr(shape, "shapes"):
+                try:
+                    queue.extend(list(shape.shapes))
+                except Exception:
+                    pass
+        except Exception:
+            continue
     return best
 
 def _iter_tables(slide):
     """Yield all table objects on a slide, including inside group shapes."""
-    def _get_shapes(shp_col):
-        for shape in shp_col:
-            try:
-                if getattr(shape, "has_table", False):
-                    yield shape.table
-                if shape.shape_type == 6: # Group shape
-                    yield from _get_shapes(shape.shapes)
-            except Exception:
-                continue
-    
+    queue = []
     try:
-        yield from _get_shapes(slide.shapes)
+        queue = list(getattr(slide, "shapes", []))
     except Exception:
-        pass
+        queue = []
+    while queue:
+        shape = queue.pop(0)
+        try:
+            if getattr(shape, "has_table", False):
+                yield shape.table
+            if hasattr(shape, "shapes"):
+                try:
+                    queue.extend(list(shape.shapes))
+                except Exception:
+                    pass
+        except Exception:
+            continue
 
 def _collect_header_tokens(table, header_rows: int = 2, max_cols: int = 10):
     tokens = set()
@@ -1002,12 +936,70 @@ def _collect_header_tokens(table, header_rows: int = 2, max_cols: int = 10):
     return tokens
 
 def _find_target_table(slide, mode: str):
-    """Find the data table by heavily prioritizing size."""
-    best = _get_best_table(slide)
-    if best is not None: return best
+    """Find the Buyers/Sellers data table by matching known header words.
+
+    mode: 'buyers' or 'sellers'
+    """
+    mode = (mode or "").strip().lower()
+    want_acq = (mode == "buyers")
+    want_sold = (mode == "sellers")
+
     for tbl in _iter_tables(slide):
-        return tbl
-    return None
+        # Build a concatenated header text from top 2 rows, first ~10 columns
+        header_lines = []
+        try:
+            cols = len(tbl.columns)
+        except Exception:
+            cols = 0
+        scan_cols = min(10, cols if cols else 0)
+        try:
+            total_rows = len(tbl.rows)
+        except Exception:
+            total_rows = 0
+        scan_rows = min(2, total_rows)
+        for r in range(scan_rows):
+            parts = []
+            for c in range(scan_cols):
+                try:
+                    parts.append((tbl.cell(r, c).text or "").strip())
+                except Exception:
+                    parts.append("")
+            header_lines.append(" ".join([p for p in parts if p]))
+        header_text = " ".join(header_lines).strip().lower()
+
+        toks = _collect_header_tokens(tbl, header_rows=2, max_cols=10)
+
+        # Shared expectations
+        has_rank = "rank" in toks
+        has_name = ("shareholder" in toks) or ("name" in toks)
+        has_cat = "category" in toks
+        # Either holding or % of share capital tokens usually appear
+        has_hold = ("holding" in toks) or ("%" in header_text and "capital" in header_text)
+
+        # Buyers vs Sellers specific header phrase
+        buyers_phrase = "shares acquired during the week"
+        sellers_phrase = "shares sold during the week"
+        has_acq_phrase = buyers_phrase in header_text or "acquired" in header_text or "bought" in header_text
+        has_sold_phrase = sellers_phrase in header_text or "sold" in header_text
+
+        # Strong filters: 8 columns expected and at least ~22 rows (2 headers + 20 data)
+        col_ok = (cols == 8)
+        rows_ok = (total_rows >= 20)
+
+        # If report dates are available, require both to appear in header text
+        try:
+            req_dates_ok = True
+            if CURRENT_WEEK_DATE and PREVIOUS_WEEK_DATE:
+                if isinstance(CURRENT_WEEK_DATE, str) and isinstance(PREVIOUS_WEEK_DATE, str):
+                    req_dates_ok = (CURRENT_WEEK_DATE.strip().lower() in header_text) and (PREVIOUS_WEEK_DATE.strip().lower() in header_text)
+        except Exception:
+            req_dates_ok = True
+
+        if has_rank and has_name and has_cat and has_hold and col_ok and rows_ok and req_dates_ok:
+            if (want_acq and has_acq_phrase) or (want_sold and has_sold_phrase):
+                return tbl
+    # Fallback to best or first
+    return _get_best_table(slide) or _get_first_table(slide)
 
 def _set_cell_text_safe(table, r, c, value):
     if not (0 <= r < len(table.rows) and 0 <= c < len(table.columns)):
@@ -1019,53 +1011,97 @@ def _set_cell_text_safe(table, r, c, value):
         return False
 
 def _fit_table_rows_to_shape_height(table, shape_height_emu: int, header_rows: int) -> bool:
+    """Force table row heights to fit within a given shape height.
+
+    This mimics manual drag-resize in PowerPoint (rows scale) which shape resizing alone
+    may not reliably trigger in some templates.
+    """
     try:
         total_h = int(shape_height_emu)
     except Exception:
         return False
     try:
         hr = max(0, int(header_rows))
+    except Exception:
+        hr = 0
+
+    try:
         n_rows = len(table.rows)
-        if n_rows <= 0: return False
+        if n_rows <= 0:
+            return False
         hr = min(hr, n_rows)
         data_rows = max(0, n_rows - hr)
-        if data_rows <= 0: return True
+        if data_rows <= 0:
+            return True
+
+        # Sum header heights (fallback to 0 if missing)
         header_sum = 0
         for r in range(hr):
             try:
                 h = int(table.rows[r].height)
-                if h > 0: header_sum += h
-            except Exception: continue
+                if h > 0:
+                    header_sum += h
+            except Exception:
+                continue
+
         avail = max(0, int(total_h) - int(header_sum))
         per = max(1, int(avail // data_rows))
+
         for r in range(hr, n_rows):
             try:
-                table.rows[r].height = per
-                tr = table._tbl.tr_lst[r]
-                tr.set('h', str(int(per)))
-            except Exception: continue
+                target_h = int(per)
+                table.rows[r].height = target_h
+                try:
+                    tr = table._tbl.tr_lst[r]
+                    tr.set('h', str(int(target_h)))
+                except Exception:
+                    pass
+            except Exception:
+                continue
+        try:
+            print(f"[PPT] Fit data row heights to shape: header_sum_emu={header_sum}, per_data_row_emu={per}", flush=True)
+        except Exception:
+            pass
         return True
     except Exception:
         return False
 
 def _disable_table_autofit(table, start_row: int = 0):
+    """Disable PowerPoint text autofit for table cells so row heights can be enforced."""
     try:
         sr = max(0, int(start_row))
+    except Exception:
+        sr = 0
+    try:
         for r in range(sr, len(table.rows)):
             for c in range(len(table.columns)):
                 try:
                     cell = table.cell(r, c)
                     tf = getattr(cell, "text_frame", None)
-                    if tf is not None:
+                    if tf is None:
+                        continue
+                    try:
                         tf.auto_size = MSO_AUTO_SIZE.NONE
-                except Exception: pass
+                    except Exception:
+                        pass
+                except Exception:
+                    continue
+        try:
+            print(f"[PPT] Disabled autofit for table cells (rows={sr}..{len(table.rows)-1})", flush=True)
+        except Exception:
+            pass
         return True
     except Exception:
         return False
 
-def _find_footer_legend_top(slide):
+def _find_footer_legend_top(slide) -> Optional[int]:
+    """Return top EMU of the footer legend textbox (FIIs/FPIs/DIIs...) if present."""
     try:
-        queue = list(getattr(slide, "shapes", []))
+        queue = []
+        try:
+            queue = list(getattr(slide, "shapes", []))
+        except Exception:
+            queue = []
         best_top = None
         while queue:
             shp = queue.pop(0)
@@ -1077,227 +1113,562 @@ def _find_footer_legend_top(slide):
                         if best_top is None or t < best_top:
                             best_top = t
                 if hasattr(shp, "shapes"):
-                    queue.extend(list(shp.shapes))
-            except Exception: continue
+                    try:
+                        queue.extend(list(shp.shapes))
+                    except Exception:
+                        pass
+            except Exception:
+                continue
         return best_top
     except Exception:
         return None
 
 def _set_table_height_to_avoid_footer(slide, table, top_inches: float, gap_inches: float = 0.06) -> bool:
+    """Set table top (inches) and set height so bottom stays above the footer legend."""
     try:
         top_emu = Inches(float(top_inches))
         gap_emu = Inches(float(gap_inches))
-        footer_top = _find_footer_legend_top(slide)
-        if footer_top is None: return False
-        target_h_emu = max(0, int(footer_top) - int(top_emu) - int(gap_emu))
-        _set_table_shape_top(slide, table, top_inches=top_inches)
-        _set_table_shape_height(slide, table, height_inches=float(target_h_emu) / 914400.0)
-        return True
     except Exception:
         return False
 
-def _set_table_shape_bbox(slide, table, top_inches, bottom_margin_inches):
+    footer_top = _find_footer_legend_top(slide)
+    if footer_top is None:
+        return False
+
+    target_h_emu = max(0, int(footer_top) - int(top_emu) - int(gap_emu))
+    try:
+        _set_table_shape_top(slide, table, top_inches=top_inches)
+    except Exception:
+        pass
+    try:
+        _set_table_shape_height(slide, table, height_inches=float(target_h_emu) / 914400.0)
+    except Exception:
+        return False
+    try:
+        print(
+            f"[PPT] Set table height to avoid footer: top_in={top_inches} footer_top_emu={int(footer_top)} -> height_in={target_h_emu/914400:.3f}",
+            flush=True,
+        )
+    except Exception:
+        pass
+    return True
+
+def _set_table_shape_bbox(slide, table, top_inches: float, bottom_margin_inches: float):
+    """Set table shape top and height so bottom stays above slide footer area.
+
+    Height is computed as: slide_height - top - bottom_margin.
+    Also updates the parent group transform if the table is inside a group.
+    """
     try:
         top_emu = Inches(float(top_inches))
         bottom_emu = Inches(float(bottom_margin_inches))
-    except Exception: return False
+    except Exception:
+        return False
+
+    # Determine slide height (EMU)
     slide_h = None
     try:
         slide_h = int(getattr(getattr(slide, "part", None), "presentation", None).slide_height)
-    except Exception: slide_h = int(Inches(7.5))
-    target_h = max(0, int(slide_h) - int(top_emu) - int(bottom_emu))
-    def _is_same_table(shp, tbl):
+    except Exception:
+        slide_h = None
+    if not slide_h:
         try:
-            if not getattr(shp, "has_table", False): return False
+            # Fallback to common widescreen height
+            slide_h = int(Inches(7.5))
+        except Exception:
+            return False
+
+    target_h = max(0, int(slide_h) - int(top_emu) - int(bottom_emu))
+
+    def _is_same_table(shp, tbl) -> bool:
+        try:
+            if not getattr(shp, "has_table", False):
+                return False
             st = getattr(shp, "table", None)
+            if st is None:
+                return False
             return getattr(st, "_tbl", None) is getattr(tbl, "_tbl", None)
-        except Exception: return False
+        except Exception:
+            return False
+
     try:
-        queue = [(shp, None) for shp in list(getattr(slide, "shapes", []))]
+        try:
+            queue = [(shp, None) for shp in list(getattr(slide, "shapes", []))]
+        except Exception:
+            queue = []
         found = False
         while queue:
             shp, parent = queue.pop(0)
             try:
                 if _is_same_table(shp, table):
-                    try: shp.top = int(top_emu)
-                    except Exception: pass
-                    try: shp.height = int(target_h)
-                    except Exception: pass
+                    # Apply on table shape
+                    try:
+                        shp.top = int(top_emu)
+                    except Exception:
+                        pass
+                    try:
+                        shp.height = int(target_h)
+                    except Exception:
+                        pass
                     try:
                         xfrm = getattr(getattr(shp, "_element", None), "xfrm", None)
                         if xfrm is not None:
-                            if hasattr(xfrm, "off") and hasattr(xfrm.off, "y"): xfrm.off.y = int(top_emu)
-                            if hasattr(xfrm, "cy"): xfrm.cy = int(target_h)
-                    except Exception: pass
-                    if parent is not None:
-                        try: parent.top = int(top_emu)
-                        except Exception: pass
-                        try: parent.height = int(target_h)
-                        except Exception: pass
-                        try:
-                            px = getattr(getattr(parent, "_element", None), "xfrm", None)
-                            if px is not None:
-                                if hasattr(px, "off") and hasattr(px.off, "y"): px.off.y = int(top_emu)
-                                if hasattr(px, "cy"): px.cy = int(target_h)
-                        except Exception: pass
+                            if hasattr(xfrm, "off") and hasattr(xfrm.off, "y"):
+                                xfrm.off.y = int(top_emu)
+                            if hasattr(xfrm, "cy"):
+                                xfrm.cy = int(target_h)
+                    except Exception:
+                        pass
+
+                    # Apply on parent group if present
+                    try:
+                        if parent is not None:
+                            try:
+                                parent.top = int(top_emu)
+                            except Exception:
+                                pass
+                            try:
+                                parent.height = int(target_h)
+                            except Exception:
+                                pass
+                            try:
+                                px = getattr(getattr(parent, "_element", None), "xfrm", None)
+                                if px is not None:
+                                    if hasattr(px, "off") and hasattr(px.off, "y"):
+                                        px.off.y = int(top_emu)
+                                    if hasattr(px, "cy"):
+                                        px.cy = int(target_h)
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
+
+                    try:
+                        print(
+                            f"[PPT] Set table bbox top={top_inches}in bottom_margin={bottom_margin_inches}in -> height_in={target_h/914400:.3f}",
+                            flush=True,
+                        )
+                    except Exception:
+                        pass
                     found = True
                     break
+
                 if hasattr(shp, "shapes"):
-                    queue.extend([(ch, shp) for ch in list(shp.shapes)])
-            except Exception: continue
+                    try:
+                        queue.extend([(ch, shp) for ch in list(shp.shapes)])
+                    except Exception:
+                        pass
+            except Exception:
+                continue
+        if not found:
+            try:
+                print("[PPT][WARN] Table shape not found for setting bbox", flush=True)
+            except Exception:
+                pass
         return True
-    except Exception: return False
+    except Exception:
+        return False
 
 def _nudge_table_shape_up(slide, table, delta_inches: float):
+    """Move the table shape up by delta_inches (and its parent group if grouped)."""
     try:
         delta = Inches(float(delta_inches))
-    except Exception: return False
-    def _is_same_table(shp, tbl):
+    except Exception:
+        return False
+
+    def _is_same_table(shp, tbl) -> bool:
         try:
-            if not getattr(shp, "has_table", False): return False
+            if not getattr(shp, "has_table", False):
+                return False
             st = getattr(shp, "table", None)
+            if st is None:
+                return False
             return getattr(st, "_tbl", None) is getattr(tbl, "_tbl", None)
-        except Exception: return False
+        except Exception:
+            return False
+
     try:
-        queue = [(shp, None) for shp in list(getattr(slide, "shapes", []))]
+        try:
+            queue = [(shp, None) for shp in list(getattr(slide, "shapes", []))]
+        except Exception:
+            queue = []
+        found = False
         while queue:
             shp, parent = queue.pop(0)
             try:
                 if _is_same_table(shp, table):
-                    new_top = max(0, int(shp.top) - int(delta))
-                    shp.top = new_top
-                    if parent is not None: parent.top = new_top
+                    try:
+                        new_top = max(0, int(shp.top) - int(delta))
+                    except Exception:
+                        new_top = None
+                    if new_top is not None:
+                        try:
+                            shp.top = new_top
+                        except Exception:
+                            pass
+                        try:
+                            xfrm = getattr(getattr(shp, "_element", None), "xfrm", None)
+                            if xfrm is not None and hasattr(xfrm, "off") and hasattr(xfrm.off, "y"):
+                                xfrm.off.y = int(new_top)
+                        except Exception:
+                            pass
+                        try:
+                            if parent is not None:
+                                parent.top = new_top
+                                try:
+                                    px = getattr(getattr(parent, "_element", None), "xfrm", None)
+                                    if px is not None and hasattr(px, "off") and hasattr(px.off, "y"):
+                                        px.off.y = int(new_top)
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
+                        try:
+                            print(f"[PPT] Nudged table up by {delta_inches} in (new_top_emu={int(new_top)})", flush=True)
+                        except Exception:
+                            pass
+                    found = True
                     break
-                if hasattr(shp, "shapes"): queue.extend([(ch, shp) for ch in list(shp.shapes)])
-            except Exception: continue
+                if hasattr(shp, "shapes"):
+                    try:
+                        queue.extend([(ch, shp) for ch in list(shp.shapes)])
+                    except Exception:
+                        pass
+            except Exception:
+                continue
+        if not found:
+            try:
+                print("[PPT][WARN] Table shape not found for nudging up", flush=True)
+            except Exception:
+                pass
         return True
-    except Exception: return False
+    except Exception:
+        return False
 
 def _enable_table_text_to_fit(table, start_row: int = 0):
+    """Enable 'Text to fit shape' for table cells so content shrinks into a fixed table size."""
     try:
         sr = max(0, int(start_row))
+    except Exception:
+        sr = 0
+    try:
         for r in range(sr, len(table.rows)):
             for c in range(len(table.columns)):
                 try:
                     cell = table.cell(r, c)
                     tf = getattr(cell, "text_frame", None)
-                    if tf is not None: tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
-                except Exception: pass
+                    if tf is None:
+                        continue
+                    try:
+                        tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
+                    except Exception:
+                        pass
+                except Exception:
+                    continue
+        try:
+            print(f"[PPT] Enabled text-to-fit for table cells (rows={sr}..{len(table.rows)-1})", flush=True)
+        except Exception:
+            pass
         return True
-    except Exception: return False
+    except Exception:
+        return False
 
 def _shrink_column_fonts(table, col_index: int, start_row: int, base_pt: int = 10, min_pt: int = 6):
+    """Shrink font size for a specific table column starting at start_row to reduce wrapping."""
     try:
         sr = max(0, int(start_row))
+    except Exception:
+        sr = 0
+    try:
         ci = int(col_index)
+    except Exception:
+        return False
+    if ci < 0:
+        return False
+    try:
         for r in range(sr, len(table.rows)):
-            if ci >= len(table.columns): break
+            if ci >= len(table.columns):
+                break
             try:
                 cell = table.cell(r, ci)
                 tf = getattr(cell, "text_frame", None)
-                if tf is None: continue
-                tf.word_wrap = False
-                ln = len(" ".join((tf.text or "").split()))
+                if tf is None:
+                    continue
+                # Keep no-wrap to avoid multi-line forcing row expansion
+                try:
+                    tf.word_wrap = False
+                except Exception:
+                    pass
+                txt = ""
+                try:
+                    txt = " ".join((tf.text or "").split())
+                except Exception:
+                    txt = str(tf.text or "")
+                ln = len(txt)
                 size = int(base_pt)
-                if ln > 70: size = max(min_pt, base_pt - 5)
-                elif ln > 60: size = max(min_pt, base_pt - 4)
-                elif ln > 50: size = max(min_pt, base_pt - 3)
-                elif ln > 42: size = max(min_pt, base_pt - 2)
-                elif ln > 34: size = max(min_pt, base_pt - 1)
+                # More aggressive than default: target single-line names
+                if ln > 70:
+                    size = max(min_pt, base_pt - 5)
+                elif ln > 60:
+                    size = max(min_pt, base_pt - 4)
+                elif ln > 50:
+                    size = max(min_pt, base_pt - 3)
+                elif ln > 42:
+                    size = max(min_pt, base_pt - 2)
+                elif ln > 34:
+                    size = max(min_pt, base_pt - 1)
                 for para in getattr(tf, "paragraphs", []):
-                    para.font.size = Pt(size)
-                    for run in para.runs:
-                        run.font.size = Pt(size)
-                        run.font.name = "Arial"
-            except Exception: continue
+                    try:
+                        para.font.size = Pt(size)
+                    except Exception:
+                        pass
+                    for run in getattr(para, "runs", []):
+                        try:
+                            run.font.size = Pt(size)
+                            run.font.name = "Arial"
+                        except Exception:
+                            pass
+                # Update underlying XML so selection reflects size
+                try:
+                    tx_body = tf._txBody
+                    for elem in tx_body.iter():
+                        if elem.tag in (qn('a:rPr'), qn('a:defRPr'), qn('a:endParaRPr')):
+                            elem.set('sz', str(int(size * 100)))
+                except Exception:
+                    pass
+            except Exception:
+                continue
+        try:
+            print(f"[PPT] Shrunk column {ci} fonts from row {sr} (base={base_pt}, min={min_pt})", flush=True)
+        except Exception:
+            pass
         return True
-    except Exception: return False
+    except Exception:
+        return False
 
 def _enforce_table_font_size(table, start_row: int, font_size_pt: int = 10):
+    """Force all runs in data rows of a table to a fixed font size (e.g., 10pt)."""
     try:
         sr = max(0, int(start_row))
+    except Exception:
+        sr = 0
+    try:
         for r in range(sr, len(table.rows)):
             for c in range(len(table.columns)):
                 try:
                     cell = table.cell(r, c)
                     tf = getattr(cell, "text_frame", None)
-                    if tf is None: continue
-                    for para in tf.paragraphs:
-                        para.font.size = Pt(font_size_pt)
-                        if not para.runs: para.add_run().text = ""
-                        for run in para.runs:
-                            run.font.size = Pt(font_size_pt)
-                            run.font.name = "Arial"
-                except Exception: continue
+                    if tf is None:
+                        continue
+                    for para in getattr(tf, "paragraphs", []):
+                        # Set paragraph-level font size so selection reflects 10pt consistently
+                        try:
+                            para.font.size = Pt(font_size_pt)
+                        except Exception:
+                            pass
+                        runs = list(getattr(para, "runs", []))
+                        # Ensure at least one run exists so PowerPoint reflects uniform size
+                        if not runs:
+                            try:
+                                new_run = para.add_run()
+                                new_run.text = ""
+                                new_run.font.size = Pt(font_size_pt)
+                                new_run.font.name = "Arial"
+                            except Exception:
+                                pass
+                            runs = list(getattr(para, "runs", []))
+                        for run in runs:
+                            try:
+                                run.font.size = Pt(font_size_pt)
+                                run.font.name = "Arial"
+                            except Exception:
+                                pass
+
+                    # Also update underlying XML run properties so whole-table selection shows this size
+                    try:
+                        tx_body = tf._txBody
+                        for elem in tx_body.iter():
+                            if elem.tag in (qn('a:rPr'), qn('a:defRPr'), qn('a:endParaRPr')):
+                                elem.set('sz', str(int(font_size_pt * 100)))
+                    except Exception:
+                        pass
+                except Exception:
+                    continue
         return True
-    except Exception: return False
+    except Exception:
+        return False
 
 def _enforce_column_font_size(table, col_index: int, start_row: int, font_size_pt: int = 9):
+    """Force a specific table column to a fixed font size, including XML run properties."""
     try:
         sr = max(0, int(start_row))
+    except Exception:
+        sr = 0
+    try:
         ci = int(col_index)
+    except Exception:
+        return False
+    if ci < 0:
+        return False
+    try:
         for r in range(sr, len(table.rows)):
-            if ci >= len(table.columns): break
+            if ci >= len(table.columns):
+                break
             try:
                 cell = table.cell(r, ci)
                 tf = getattr(cell, "text_frame", None)
-                if tf is None: continue
-                tf.auto_size = MSO_AUTO_SIZE.NONE
-                tf.word_wrap = False
-                for para in tf.paragraphs:
-                    para.font.size = Pt(font_size_pt)
-                    if not para.runs: para.add_run().text = ""
-                    for run in para.runs:
-                        run.font.size = Pt(font_size_pt)
-                        run.font.name = "Arial"
-            except Exception: continue
+                if tf is None:
+                    continue
+                try:
+                    tf.auto_size = MSO_AUTO_SIZE.NONE
+                except Exception:
+                    pass
+                try:
+                    tf.word_wrap = False
+                except Exception:
+                    pass
+                for para in getattr(tf, "paragraphs", []):
+                    try:
+                        para.font.size = Pt(font_size_pt)
+                    except Exception:
+                        pass
+                    runs = list(getattr(para, "runs", []))
+                    if not runs:
+                        try:
+                            new_run = para.add_run()
+                            new_run.text = ""
+                            new_run.font.size = Pt(font_size_pt)
+                            new_run.font.name = "Arial"
+                        except Exception:
+                            pass
+                        runs = list(getattr(para, "runs", []))
+                    for run in runs:
+                        try:
+                            run.font.size = Pt(font_size_pt)
+                            run.font.name = "Arial"
+                        except Exception:
+                            pass
+                try:
+                    tx_body = tf._txBody
+                    for elem in tx_body.iter():
+                        if elem.tag in (qn('a:rPr'), qn('a:defRPr'), qn('a:endParaRPr')):
+                            elem.set('sz', str(int(font_size_pt * 100)))
+                    body_pr = getattr(tx_body, 'bodyPr', None)
+                    if body_pr is not None:
+                        try:
+                            body_pr.set('wrap', 'none')
+                        except Exception:
+                            pass
+                    norm_text = " ".join((tf.text or "").split())
+                    if norm_text != (tf.text or ""):
+                        try:
+                            tf.clear()
+                            p = tf.paragraphs[0]
+                            p.alignment = PP_ALIGN.LEFT
+                            rr = p.add_run()
+                            rr.text = norm_text
+                            rr.font.size = Pt(font_size_pt)
+                            rr.font.name = "Arial"
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+            except Exception:
+                continue
         return True
-    except Exception: return False
+    except Exception:
+        return False
 
 def _set_header_row_height(table, header_rows: int, height_inches: float):
+    """Set a uniform height (in inches) for the header rows (0..header_rows-1)."""
     try:
         hr = max(0, int(header_rows))
-        target_h = Inches(height_inches)
-        for r in range(min(hr, len(table.rows))):
-            try:
-                table.rows[r].height = target_h
-                tr = table._tbl.tr_lst[r]
-                tr.set('h', str(int(target_h)))
-            except Exception: continue
+    except Exception:
+        hr = 0
+    if hr <= 0:
         return True
-    except Exception: return False
+    try:
+        try:
+            target_h = Inches(height_inches)
+        except Exception:
+            return False
+        rows_to_set = min(hr, len(table.rows))
+        for r in range(rows_to_set):
+            try:
+                row = table.rows[r]
+                row.height = target_h
+                try:
+                    tr = table._tbl.tr_lst[r]
+                    tr.set('h', str(int(target_h)))
+                except Exception:
+                    pass
+            except Exception:
+                continue
+        try:
+            print(f"[PPT] Header row heights set: rows=0..{rows_to_set-1}, h_in={height_inches}", flush=True)
+        except Exception:
+            pass
+        return True
+    except Exception:
+        return False
 
 def _set_table_shape_top(slide, table, top_inches: float):
     """Position the table's shape from the top of the slide (in inches)."""
     try:
         target_t = Inches(top_inches)
-        def _is_same_table(shp, tbl) -> bool:
-            try:
-                if not getattr(shp, "has_table", False): return False
-                st = getattr(shp, "table", None)
-                if st is None: return False
-                return getattr(st, "_tbl", None) is getattr(tbl, "_tbl", None)
-            except Exception: return False
+    except Exception:
+        return False
 
-        queue = list(getattr(slide, "shapes", []))
+    def _is_same_table(shp, tbl) -> bool:
+        try:
+            if not getattr(shp, "has_table", False):
+                return False
+            st = getattr(shp, "table", None)
+            if st is None:
+                return False
+            # Compare underlying XML table nodes; object identity may differ
+            return getattr(st, "_tbl", None) is getattr(tbl, "_tbl", None)
+        except Exception:
+            return False
+
+    try:
+        queue = []
+        try:
+            queue = list(getattr(slide, "shapes", []))
+        except Exception:
+            queue = []
         found = False
         while queue:
             shp = queue.pop(0)
             try:
                 if _is_same_table(shp, table):
                     shp.top = target_t
+                    # Defensive: also set underlying transform offset if available
                     try:
                         xfrm = getattr(getattr(shp, "_element", None), "xfrm", None)
                         if xfrm is not None and hasattr(xfrm, "off") and hasattr(xfrm.off, "y"):
                             xfrm.off.y = int(target_t)
-                    except Exception: pass
+                    except Exception:
+                        pass
+                    try:
+                        print(f"[PPT] Set table top to {top_inches} in (EMU={int(target_t)})", flush=True)
+                    except Exception:
+                        pass
                     found = True
                     break
                 if hasattr(shp, "shapes"):
-                    queue.extend(list(shp.shapes))
+                    try:
+                        queue.extend(list(shp.shapes))
+                    except Exception:
+                        pass
             except Exception:
                 continue
-        return found
+        if not found:
+            try:
+                print("[PPT][WARN] Table shape not found for setting top", flush=True)
+            except Exception:
+                pass
+        return True
     except Exception:
         return False
 
@@ -1328,7 +1699,7 @@ def _compact_data_rows(table, header_rows: int):
                         except Exception:
                             pass
                 except Exception:
-                    pass
+                    continue
         return True
     except Exception:
         return False
@@ -1339,18 +1710,42 @@ def _set_data_row_height(table, header_rows: int, height_inches: float):
     This is used to compress data rows on dense tables (like Top 20 Buyers/Sellers)
     so that all rows fit comfortably within the slide while preserving headers.
     """
-def _set_data_row_height(table, header_rows: int, height_inches: float):
     try:
         hr = max(0, int(header_rows))
+    except Exception:
+        hr = 0
+    try:
         target_h = Inches(height_inches)
+    except Exception:
+        return False
+    try:
         for r in range(hr, len(table.rows)):
             try:
                 row = table.rows[r]
+                # Set python-pptx row height
                 row.height = target_h
-                tr = table._tbl.tr_lst[r]
-                tr.set('h', str(int(target_h)))
+                # Also force the underlying XML row height attribute
+                try:
+                    tr = table._tbl.tr_lst[r]
+                    tr.set('h', str(int(target_h)))
+                except Exception:
+                    pass
             except Exception:
-                pass
+                continue
+        # Defensive: force the XML tr heights for all data rows even if row objects are quirky
+        try:
+            tr_lst = getattr(table._tbl, "tr_lst", [])
+            for r in range(hr, min(len(tr_lst), len(table.rows))):
+                try:
+                    tr_lst[r].set('h', str(int(target_h)))
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            print(f"[PPT] Data row heights set: rows={hr}..{len(table.rows)-1}, h_in={height_inches}", flush=True)
+        except Exception:
+            pass
         return True
     except Exception:
         return False
@@ -1410,10 +1805,10 @@ def _set_table_shape_height(slide, table, height_inches: float):
                                 pass
                     except Exception:
                         pass
-                if _is_same_table(shp, table):
-                    shp.height = target_h
-                    if parent is not None:
-                        parent.height = target_h
+                    try:
+                        print(f"[PPT] Set table height to {height_inches} in (EMU={int(target_h)})", flush=True)
+                    except Exception:
+                        pass
                     found = True
                     break
                 if hasattr(shp, "shapes"):
@@ -1422,8 +1817,13 @@ def _set_table_shape_height(slide, table, height_inches: float):
                     except Exception:
                         pass
             except Exception:
+                continue
+        if not found:
+            try:
+                print("[PPT][WARN] Table shape not found for setting height", flush=True)
+            except Exception:
                 pass
-        return found
+        return True
     except Exception:
         return False
 
@@ -1437,11 +1837,11 @@ def update_insurance_pf_table_on_template(prs: Presentation, df: pd.DataFrame):
       - % of Share Capital -> % of Sh. Cap (Previous)/(Current)
       - Change in holding shares -> MoM change in holdings
     """
-    # Insurance & PFs slide is at index 8 (0-based)
+    # Prefer slide 10 (0-based index 9)
     slide = None
     try:
-        if len(prs.slides) > 8:
-            slide = prs.slides[8]
+        if len(prs.slides) > 9:
+            slide = prs.slides[9]
     except Exception:
         slide = None
     if slide is None:
@@ -1450,7 +1850,7 @@ def update_insurance_pf_table_on_template(prs: Presentation, df: pd.DataFrame):
             "Top 10 DII - Insurance & PFs",
             "Top 10 Insurance & PFs",
             "Top 10 DII - PFs",
-            "Top 10 DII - Insurance & PFs",
+            "Top 10 DII â€“ Insurance & PFs",
         ]
         for title in candidates:
             sld = _find_slide_by_title(prs, title)
@@ -1490,18 +1890,18 @@ def update_insurance_pf_table_on_template(prs: Presentation, df: pd.DataFrame):
                 slide_idx = i
                 break
         if slide_idx is not None:
-            print(f"    Updating 'Top 10 DII - Insurance & PFs' on slide #{slide_idx + 1}")
+            print(f"   â„¹ï¸ Updating 'Top 10 DII - Insurance & PFs' on slide #{slide_idx + 1}")
     except Exception:
-        return False
+        pass
 
     table = _get_best_table(slide) or _get_first_table(slide)
-    print(f"[PPT][TRACE] Table found: {table is not None}")
     if table is None:
         return False
-    # Removed strict column count validation to support flexible table structures
+    if len(table.columns) < 7:
+        return False
 
     # Column mappings
-    rank_col = _ci_col(df, ["Sr.No", "Sr No", "serial.no", "Serial. No", "Serial No", "Rank"]) or None
+    rank_col = _ci_col(df, ["serial.no", "Serial. No", "Serial No", "Sr.No", "Sr. No", "Sr No", "Rank"]) or None
     name_col = _ci_col(df, ["Institution", "Shareholder Name"]) or None
     prev_hold_col, curr_hold_col = _find_two_latest_date_columns(df)
     prev_pct_col = _ci_col(df, ["% of Sh. Cap (previous)", "% of Sh. Cap (Previous)"])
@@ -1520,20 +1920,18 @@ def update_insurance_pf_table_on_template(prs: Presentation, df: pd.DataFrame):
     buy_pps_col  = _ci_col(df, ["Buy (pps)", "Buy pps", "Buy"]) or None
     sell_pps_col = _ci_col(df, ["Sell (pps)", "Sell pps", "Sell"]) or None
 
-    header_rows = 1
-    if len(table.rows) > 1:
-        if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(6, len(table.columns)))):
-            header_rows = 2
-    left_is_prev = False
-    try:
-        hdr_left_txt = (table.cell(0, 2).text or "").strip() if len(table.columns) > 2 else ""
-        hdr_right_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
-        dl = _parse_date_label_to_dt(hdr_left_txt)
-        dr = _parse_date_label_to_dt(hdr_right_txt)
-        if dl and dr:
-            left_is_prev = dl < dr
-    except Exception:
-        pass
+    header_rows = 2 if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(6, len(table.columns)))) else 1
+    left_is_prev = False if _force_current_left() else True
+    if not _force_current_left():
+        try:
+            hdr_left_txt = (table.cell(0, 2).text or "").strip() if len(table.columns) > 2 else ""
+            hdr_right_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
+            dl = _parse_date_label_to_dt(hdr_left_txt)
+            dr = _parse_date_label_to_dt(hdr_right_txt)
+            if dl and dr:
+                left_is_prev = dl < dr
+        except Exception:
+            pass
     try:
         if left_is_prev:
             _apply_header_date_labels(table, 2, 4, prev_hold_col, curr_hold_col)
@@ -1553,13 +1951,17 @@ def update_insurance_pf_table_on_template(prs: Presentation, df: pd.DataFrame):
                 pass
 
     max_rows = len(table.rows) - start_row
+    try:
+        df = _sort_df_rankwise(df)
+    except Exception:
+        pass
     n = min(max_rows, len(df)) if max_rows > 0 else 0
     for i in range(n):
         row = df.iloc[i]
         r = start_row + i
 
         # Rank
-        val_rank = i + 1
+        val_rank = row[rank_col] if (rank_col is not None and rank_col in df.columns) else (i + 1)
         _write_data_cell(table, r, 0, val_rank, align=PP_ALIGN.CENTER, font_size_pt=10, word_wrap=False)
 
         # Shareholder Name
@@ -1615,11 +2017,11 @@ def update_aif_table_on_template(prs: Presentation, df: pd.DataFrame):
       - % of Share Capital -> % of Sh. Cap (Previous)/(Current)
       - Change in holding shares -> MoM change in holdings
     """
-    # AIF slide is at index 9 (0-based)
+    # Prefer slide 11 (0-based index 10)
     slide = None
     try:
-        if len(prs.slides) > 9:
-            slide = prs.slides[9]
+        if len(prs.slides) > 10:
+            slide = prs.slides[10]
     except Exception:
         slide = None
     if slide is None:
@@ -1627,7 +2029,7 @@ def update_aif_table_on_template(prs: Presentation, df: pd.DataFrame):
         candidates = [
             "Top 10 DII - AIFs",
             "Top 10 AIFs",
-            "Top 10 DII - AIFs",
+            "Top 10 DII â€“ AIFs",
         ]
         for title in candidates:
             sld = _find_slide_by_title(prs, title)
@@ -1635,14 +2037,21 @@ def update_aif_table_on_template(prs: Presentation, df: pd.DataFrame):
                 slide = sld
                 break
     if slide is None:
-        # Scan ALL shapes including TextBox (not just title placeholders) for 'aif'
+        # Any slide whose TITLE placeholder or any text contains 'aif'
         for s in prs.slides:
             try:
                 for shp in s.shapes:
-                    if hasattr(shp, "has_text_frame") and shp.has_text_frame:
+                    if getattr(shp, "is_placeholder", False):
+                        phf = shp.placeholder_format
+                        if hasattr(phf, "type") and phf.type == PP_PLACEHOLDER.TITLE and hasattr(shp, "text_frame"):
+                            txt = (" ".join(shp.text_frame.text.split()).strip().lower())
+                            if ("aif" in txt):
+                                slide = s
+                                break
+                    if hasattr(shp, "has_text_frame") and shp.has_text_frame and slide is None:
                         raw = (shp.text_frame.text or "").strip().lower()
                         txt = " ".join(raw.split())
-                        if "aif" in txt:
+                        if ("aif" in txt):
                             slide = s
                             break
                 if slide is not None:
@@ -1660,18 +2069,18 @@ def update_aif_table_on_template(prs: Presentation, df: pd.DataFrame):
                 slide_idx = i
                 break
         if slide_idx is not None:
-            print(f"    Updating 'Top 10 DII - AIFs' on slide #{slide_idx + 1}")
+            print(f"   â„¹ï¸ Updating 'Top 10 DII - AIFs' on slide #{slide_idx + 1}")
     except Exception:
         pass
 
     table = _get_best_table(slide) or _get_first_table(slide)
-    print(f"[PPT][TRACE] Table found: {table is not None}")
     if table is None:
         return False
-    # Removed strict column count validation to support flexible table structures
+    if len(table.columns) < 7:
+        return False
 
     # Column mappings
-    rank_col = _ci_col(df, ["Sr.No", "Sr No", "serial.no", "Serial. No", "Serial No", "Rank"]) or None
+    rank_col = _ci_col(df, ["serial.no", "Serial. No", "Serial No", "Sr.No", "Sr. No", "Sr No", "Rank"]) or None
     name_col = _ci_col(df, ["Institution", "Shareholder Name"]) or None
     prev_hold_col, curr_hold_col = _find_two_latest_date_columns(df)
     prev_pct_col = _ci_col(df, ["% of Sh. Cap (previous)", "% of Sh. Cap (Previous)"])
@@ -1679,20 +2088,18 @@ def update_aif_table_on_template(prs: Presentation, df: pd.DataFrame):
     buy_pps_col  = _ci_col(df, ["Buy"]) or None
     sell_pps_col = _ci_col(df, ["Sell"]) or None
 
-    header_rows = 1
-    if len(table.rows) > 1:
-        if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(6, len(table.columns)))):
-            header_rows = 2
-    left_is_prev = False
-    try:
-        hdr_left_txt = (table.cell(0, 2).text or "").strip() if len(table.columns) > 2 else ""
-        hdr_right_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
-        dl = _parse_date_label_to_dt(hdr_left_txt)
-        dr = _parse_date_label_to_dt(hdr_right_txt)
-        if dl and dr:
-            left_is_prev = dl < dr
-    except Exception:
-        pass
+    header_rows = 2 if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(6, len(table.columns)))) else 1
+    left_is_prev = False if _force_current_left() else True
+    if not _force_current_left():
+        try:
+            hdr_left_txt = (table.cell(0, 2).text or "").strip() if len(table.columns) > 2 else ""
+            hdr_right_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
+            dl = _parse_date_label_to_dt(hdr_left_txt)
+            dr = _parse_date_label_to_dt(hdr_right_txt)
+            if dl and dr:
+                left_is_prev = dl < dr
+        except Exception:
+            pass
     try:
         if left_is_prev:
             _apply_header_date_labels(table, 2, 4, prev_hold_col, curr_hold_col)
@@ -1711,13 +2118,17 @@ def update_aif_table_on_template(prs: Presentation, df: pd.DataFrame):
                 pass
 
     max_rows = len(table.rows) - start_row
+    try:
+        df = _sort_df_rankwise(df)
+    except Exception:
+        pass
     n = min(max_rows, len(df)) if max_rows > 0 else 0
     for i in range(n):
         row = df.iloc[i]
         r = start_row + i
 
         # Rank
-        val_rank = i + 1
+        val_rank = row[rank_col] if (rank_col is not None and rank_col in df.columns) else (i + 1)
         _write_data_cell(table, r, 0, val_rank, align=PP_ALIGN.CENTER, font_size_pt=10, word_wrap=False)
 
         # Shareholder Name
@@ -1763,11 +2174,11 @@ def update_aif_table_on_template(prs: Presentation, df: pd.DataFrame):
     return True
 
 def update_mf_tables_on_template(prs: Presentation, df_active: pd.DataFrame, df_passive: pd.DataFrame):
-    # MF slide is at index 7 (0-based)
+    # Prefer explicit slide index 9 (0-based 8) as requested
     slide = None
     try:
-        if len(prs.slides) > 7:
-            slide = prs.slides[7]
+        if len(prs.slides) > 8:
+            slide = prs.slides[8]
     except Exception:
         slide = None
     if slide is None:
@@ -1792,15 +2203,15 @@ def update_mf_tables_on_template(prs: Presentation, df_active: pd.DataFrame, df_
                 continue
     if slide is None:
         # Fallback B: scan any text frame for the exact title or DII/MF keywords
-        want = "mf"
+        want = "top 10 dii - mfs"
         for s in prs.slides:
             try:
                 for shp in s.shapes:
                     if hasattr(shp, "has_text_frame") and shp.has_text_frame:
                         raw = (shp.text_frame.text or "").strip().lower()
                         txt = " ".join(raw.split())
-                        txt = txt.replace(""", "-").replace(""", "-").replace("", "'")
-                        if "mf" in txt or "mutual fund" in txt:
+                        txt = txt.replace("â€“", "-").replace("â€”", "-").replace("â€™", "'")
+                        if txt == want or ("dii" in txt and "mf" in txt):
                             slide = s
                             break
                 if slide is not None:
@@ -1809,7 +2220,7 @@ def update_mf_tables_on_template(prs: Presentation, df_active: pd.DataFrame, df_
                 continue
     if slide is None:
         try:
-            print("     Could not find 'Top 10 DII - MFs' slide by title or text search")
+            print("   âš ï¸  Could not find 'Top 10 DII - MFs' slide by title or text search")
         except Exception:
             pass
         return False
@@ -1822,7 +2233,7 @@ def update_mf_tables_on_template(prs: Presentation, df_active: pd.DataFrame, df_
                 slide_idx = i
                 break
         if slide_idx is not None:
-            print(f"    Updating 'Top 10 DII - MFs' on slide #{slide_idx + 1}")
+            print(f"   â„¹ï¸ Updating 'Top 10 DII - MFs' on slide #{slide_idx + 1}")
     except Exception:
         pass
 
@@ -1853,7 +2264,7 @@ def update_mf_tables_on_template(prs: Presentation, df_active: pd.DataFrame, df_
             continue
     if len(tables) == 0:
         try:
-            print("     No tables detected on 'Top 10 DII - MFs' slide")
+            print("   âš ï¸  No tables detected on 'Top 10 DII - MFs' slide")
         except Exception:
             pass
         return False
@@ -1861,14 +2272,12 @@ def update_mf_tables_on_template(prs: Presentation, df_active: pd.DataFrame, df_
     table_active = tables[0][0]
     table_passive = tables[1][0] if len(tables) >= 2 else None
 
-    def _update_7col_table(table, df, squeeze: bool = False):
+    def _update_7col_table(table, df: pd.DataFrame, squeeze: bool = False):
         if table is None or df is None or df.empty:
             return False
-        pass # Removed strict column check
-        header_rows = 1
-        if len(table.rows) > 1:
-            if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(6, len(table.columns)))):
-                header_rows = 2
+        if len(table.columns) < 7:
+            return False
+        header_rows = 2 if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(6, len(table.columns)))) else 1
         try:
             df = df.head(10).copy()
         except Exception:
@@ -1877,23 +2286,24 @@ def update_mf_tables_on_template(prs: Presentation, df_active: pd.DataFrame, df_
             _ensure_table_data_row_capacity(table, len(df), header_rows=header_rows)
         except Exception:
             pass
-        left_is_prev = False
-        try:
-            hdr_left_txt = (table.cell(0, 2).text or "").strip() if len(table.columns) > 2 else ""
-            hdr_right_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
-            dl = _parse_date_label_to_dt(hdr_left_txt)
-            dr = _parse_date_label_to_dt(hdr_right_txt)
-            if dl and dr:
-                left_is_prev = dl < dr
-        except Exception:
-            pass
+        left_is_prev = False if _force_current_left() else True
+        if not _force_current_left():
+            try:
+                hdr_left_txt = (table.cell(0, 2).text or "").strip() if len(table.columns) > 2 else ""
+                hdr_right_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
+                dl = _parse_date_label_to_dt(hdr_left_txt)
+                dr = _parse_date_label_to_dt(hdr_right_txt)
+                if dl and dr:
+                    left_is_prev = dl < dr
+            except Exception:
+                pass
         for r in range(header_rows, len(table.rows)):
             for c in range(len(table.columns)):
                 try:
                     table.cell(r, c).text = ""
                 except Exception:
                     pass
-        rank_col = _ci_col(df, ["Sr.No", "Sr No", "serial.no", "Serial. No", "Serial No", "Rank"]) or None
+        rank_col = _ci_col(df, ["serial.no", "Serial. No", "Serial No", "Sr.No", "Sr. No", "Sr No", "Rank"]) or None
         name_col = _ci_col(df, ["Institution", "Shareholder Name", "Short Name", "Name of Holder"]) or None
         prev_hold_col, curr_hold_col = _find_two_latest_date_columns(df)
         prev_pct_col = _ci_col(df, ["% of Sh. Cap (previous)", "% of Sh. Cap (Previous)"])
@@ -1909,11 +2319,15 @@ def update_mf_tables_on_template(prs: Presentation, df_active: pd.DataFrame, df_
             pass
         start_row = header_rows
         max_rows = len(table.rows) - start_row
+        try:
+            df = _sort_df_rankwise(df)
+        except Exception:
+            pass
         n = min(max_rows, len(df)) if max_rows > 0 else 0
         for i in range(n):
             row = df.iloc[i]
             r = start_row + i
-            val_rank = i + 1
+            val_rank = row[rank_col] if (rank_col is not None and rank_col in df.columns) else (i + 1)
             _write_data_cell(table, r, 0, val_rank, align=PP_ALIGN.CENTER, font_size_pt=10, word_wrap=False)
             name_val = row[name_col] if name_col in df.columns else ""
             name_val = _normalize_shareholder_name(name_val)
@@ -1987,11 +2401,11 @@ def update_fii_fpi_table_on_template(prs: Presentation, df: pd.DataFrame):
     except Exception:
         pass
 
-    # FII/FPI slide is at index 6 (0-based)
+    # 1) Prefer explicit slide index 8 (0-based 7) per user instruction
     slide = None
     try:
-        if len(prs.slides) > 6:
-            slide = prs.slides[6]
+        if len(prs.slides) > 7:
+            slide = prs.slides[7]
     except Exception:
         slide = None
 
@@ -2043,13 +2457,13 @@ def update_fii_fpi_table_on_template(prs: Presentation, df: pd.DataFrame):
 
     # 2) Identify the main data table (expect 7 columns)
     table = _get_best_table(slide) or _get_first_table(slide)
-    print(f"[PPT][TRACE] Table found: {table is not None}")
     if table is None:
         return False
-    # Removed strict column count validation to support flexible table structures
+    if len(table.columns) < 7:
+        return False
 
     # 3) Resolve DF column mappings (case-insensitive exact first)
-    rank_col = _ci_col(df, ["Sr.No", "Sr No", "serial.no", "Serial. No", "Serial No", "Rank"]) or None
+    rank_col = _ci_col(df, ["serial.no", "Serial. No", "Serial No", "Sr.No", "Sr. No", "Sr No", "Rank"]) or None
     name_col = _ci_col(df, ["Institution", "Shareholder Name", "Short Name"]) or None
     prev_hold_col, curr_hold_col = _find_two_latest_date_columns(df)
     prev_pct_col = _ci_col(df, ["% of Sh. Cap (previous)", "% of Sh. Cap (Previous)"])
@@ -2059,20 +2473,18 @@ def update_fii_fpi_table_on_template(prs: Presentation, df: pd.DataFrame):
 
     # 4) Determine if the LEFT date block is previous or current by parsing header dates at top row
     #    For 7-col table, header row 0 has date labels at col 2 (current) and col 4 (previous) in our template
-    header_rows = 1
-    if len(table.rows) > 1:
-        if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(6, len(table.columns)))):
-            header_rows = 2
-    left_is_prev = False
-    try:
-        hdr_left_txt = (table.cell(0, 2).text or "").strip() if len(table.columns) > 2 else ""
-        hdr_right_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
-        dl = _parse_date_label_to_dt(hdr_left_txt)
-        dr = _parse_date_label_to_dt(hdr_right_txt)
-        if dl and dr:
-            left_is_prev = dl < dr
-    except Exception:
-        pass
+    header_rows = 2 if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(6, len(table.columns)))) else 1
+    left_is_prev = False if _force_current_left() else True
+    if not _force_current_left():
+        try:
+            hdr_left_txt = (table.cell(0, 2).text or "").strip() if len(table.columns) > 2 else ""
+            hdr_right_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
+            dl = _parse_date_label_to_dt(hdr_left_txt)
+            dr = _parse_date_label_to_dt(hdr_right_txt)
+            if dl and dr:
+                left_is_prev = dl < dr
+        except Exception:
+            pass
     try:
         if left_is_prev:
             _apply_header_date_labels(table, 2, 4, prev_hold_col, curr_hold_col)
@@ -2086,6 +2498,10 @@ def update_fii_fpi_table_on_template(prs: Presentation, df: pd.DataFrame):
     _ensure_table_data_row_capacity(table, len(df), header_rows=header_rows)
     start_row = header_rows
     max_rows = len(table.rows) - start_row
+    try:
+        df = _sort_df_rankwise(df)
+    except Exception:
+        pass
     n = min(max_rows, len(df)) if max_rows > 0 else 0
     for r in range(start_row, len(table.rows)):
         for c in range(len(table.columns)):
@@ -2098,7 +2514,7 @@ def update_fii_fpi_table_on_template(prs: Presentation, df: pd.DataFrame):
         row = df.iloc[i]
         r = start_row + i
         # Col 0: Rank
-        val_rank = i + 1
+        val_rank = row[rank_col] if (rank_col is not None and rank_col in df.columns) else (i + 1)
         _write_data_cell(table, r, 0, val_rank, align=PP_ALIGN.CENTER, font_size_pt=10, word_wrap=False)
         # Col 1: Shareholder Name (normalized)
         name_val = row[name_col] if name_col in df.columns else ""
@@ -2153,7 +2569,7 @@ def update_buyers_table_on_template(prs: Presentation, df: pd.DataFrame):
     except Exception:
         pass
     # Locate the slide by exact title first, then fallbacks
-    slide = _find_slide_by_title(prs, "Top 20 Buyers", must_have_table=True)
+    slide = _find_slide_by_title(prs, "Top 20 Buyers")
     if slide is None:
         # Fallback A: any slide whose TITLE placeholder contains 'buyers'
         for s in prs.slides:
@@ -2196,13 +2612,13 @@ def update_buyers_table_on_template(prs: Presentation, df: pd.DataFrame):
         except Exception:
             pass
         return False
-    if len(table.columns) < 7:
-        print(f"[PPT][TRACE] Warning: Buyers table has only {len(table.columns)} columns. Proceeding anyway.")
-
+    if len(table.columns) < 8:
+        # Expect 8 columns: Rank | Name | Category | Shares Acquired | (2) current | (2) previous
+        return False
 
     # Resolve column mappings from DF
-    rank_col = _ci_col(df, ["Sr.No", "Sr No", "serial.no", "Serial. No", "Serial No", "Rank"]) or None
-    name_col = _ci_col(df, ["Name of Holder", "Shareholder Name", "Institution", "Name"]) or None
+    rank_col = _ci_col(df, ["serial.no", "Serial. No", "Serial No", "Sr.No", "Sr. No", "Sr No", "Rank"]) or None
+    name_col = _ci_col(df, ["Name of Holder", "Shareholder Name", "Institution"]) or None
     cat_label_col = _ci_col(df, ["Category Label", "Category"]) or None
     buy_shares_col = _ci_col(df, ["Buy Shares", "Shares Acquired during the Week", "Shares Bought", "Shares Acquired"]) or None
     prev_hold_col, curr_hold_col = _find_two_latest_date_columns(df)
@@ -2210,22 +2626,20 @@ def update_buyers_table_on_template(prs: Presentation, df: pd.DataFrame):
     curr_pct_col = _ci_col(df, ["% of Sh. Cap (current)", "% of Sh. Cap (Current)"])
 
     # Determine header rows count
-    header_rows = 1
-    if len(table.rows) > 1:
-        if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(7, len(table.columns)))):
-            header_rows = 2
+    header_rows = 2 if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(7, len(table.columns)))) else 1
 
     # Infer which side is current/previous by parsing header row dates (expected at col 4 and 6)
-    left_is_prev = False  # default to current on left like template
-    try:
-        hdr_left_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
-        hdr_right_txt = (table.cell(0, 6).text or "").strip() if len(table.columns) > 6 else ""
-        dl = _parse_date_label_to_dt(hdr_left_txt)
-        dr = _parse_date_label_to_dt(hdr_right_txt)
-        if dl and dr:
-            left_is_prev = dl < dr
-    except Exception:
-        pass
+    left_is_prev = False if _force_current_left() else True
+    if not _force_current_left():
+        try:
+            hdr_left_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
+            hdr_right_txt = (table.cell(0, 6).text or "").strip() if len(table.columns) > 6 else ""
+            dl = _parse_date_label_to_dt(hdr_left_txt)
+            dr = _parse_date_label_to_dt(hdr_right_txt)
+            if dl and dr:
+                left_is_prev = dl < dr
+        except Exception:
+            pass
     try:
         if left_is_prev:
             _apply_header_date_labels(table, 4, 6, prev_hold_col, curr_hold_col)
@@ -2239,11 +2653,11 @@ def update_buyers_table_on_template(prs: Presentation, df: pd.DataFrame):
     # Ensure table has exactly header_rows + len(df) rows so extra blank rows don't stretch height
     _ensure_table_data_row_capacity(table, len(df), header_rows=header_rows)
     max_rows = len(table.rows) - start_row
+    try:
+        df = _sort_df_rankwise(df)
+    except Exception:
+        pass
     n = min(max_rows, len(df)) if max_rows > 0 else 0
-    
-    # DEBUG: Log table and data info
-    print(f"[PPT][DEBUG] Buyers Table: rows={len(table.rows)}, cols={len(table.columns)}, header_rows={header_rows}, start_row={start_row}, max_rows={max_rows}, df_rows={len(df)}, writing_n={n}")
-    print(f"[PPT][DEBUG] Buyers Column Mappings - name_col={name_col}, buy_shares_col={buy_shares_col}, prev_hold_col={prev_hold_col}, curr_hold_col={curr_hold_col}")
 
     # Clear all data rows first
     for r in range(start_row, len(table.rows)):
@@ -2257,9 +2671,9 @@ def update_buyers_table_on_template(prs: Presentation, df: pd.DataFrame):
         row = df.iloc[i]
         r = start_row + i
         # Col 0: Rank (center)
-        val_rank = i + 1
+        val_rank = row[rank_col] if (rank_col is not None and rank_col in df.columns) else (i + 1)
         _write_data_cell(table, r, 0, val_rank, align=PP_ALIGN.CENTER, font_size_pt=10, word_wrap=False)
-        # Col 1: Shareholder Name (left, shrink) - enforce 10pt baseline like Institutional
+        # Col 1: Shareholder Name (left, shrink) — enforce 10pt baseline like Institutional
         name_val = row[name_col] if name_col in df.columns else ""
         name_val = _normalize_shareholder_name(name_val)
         _write_data_cell(table, r, 1, name_val, align=PP_ALIGN.LEFT, font_size_pt=9, allow_shrink=False, word_wrap=False)
@@ -2320,7 +2734,7 @@ def update_sellers_table_on_template(prs: Presentation, df: pd.DataFrame):
     except Exception:
         pass
     # Locate slide
-    slide = _find_slide_by_title(prs, "Top 20 Sellers", must_have_table=True)
+    slide = _find_slide_by_title(prs, "Top 20 Sellers")
     if slide is None:
         for s in prs.slides:
             try:
@@ -2360,11 +2774,12 @@ def update_sellers_table_on_template(prs: Presentation, df: pd.DataFrame):
         except Exception:
             pass
         return False
-    # Removed strict column count validation to support flexible table structures
+    if len(table.columns) < 8:
+        return False
 
     # Column mappings
-    rank_col = _ci_col(df, ["Sr.No", "Sr No", "serial.no", "Serial. No", "Serial No", "Rank"]) or None
-    name_col = _ci_col(df, ["Name of Holder", "Shareholder Name", "Institution", "Name"]) or None
+    rank_col = _ci_col(df, ["serial.no", "Serial. No", "Serial No", "Sr.No", "Sr. No", "Sr No", "Rank"]) or None
+    name_col = _ci_col(df, ["Name of Holder", "Shareholder Name", "Institution"]) or None
     cat_label_col = _ci_col(df, ["Category Label", "Category"]) or None
     sold_shares_col = _ci_col(df, ["sold Shares", "Shares Sold during the Week", "Shares Sold"]) or None
     prev_hold_col, curr_hold_col = _find_two_latest_date_columns(df)
@@ -2372,22 +2787,20 @@ def update_sellers_table_on_template(prs: Presentation, df: pd.DataFrame):
     curr_pct_col = _ci_col(df, ["% of Sh. Cap (current)", "% of Sh. Cap (Current)"])
 
     # Header rows
-    header_rows = 1
-    if len(table.rows) > 1:
-        if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(7, len(table.columns)))):
-            header_rows = 2
+    header_rows = 2 if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(7, len(table.columns)))) else 1
 
     # Determine date block side by header dates at cols 4 and 6
-    left_is_prev = False
-    try:
-        hdr_left_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
-        hdr_right_txt = (table.cell(0, 6).text or "").strip() if len(table.columns) > 6 else ""
-        dl = _parse_date_label_to_dt(hdr_left_txt)
-        dr = _parse_date_label_to_dt(hdr_right_txt)
-        if dl and dr:
-            left_is_prev = dl < dr
-    except Exception:
-        pass
+    left_is_prev = False if _force_current_left() else True
+    if not _force_current_left():
+        try:
+            hdr_left_txt = (table.cell(0, 4).text or "").strip() if len(table.columns) > 4 else ""
+            hdr_right_txt = (table.cell(0, 6).text or "").strip() if len(table.columns) > 6 else ""
+            dl = _parse_date_label_to_dt(hdr_left_txt)
+            dr = _parse_date_label_to_dt(hdr_right_txt)
+            if dl and dr:
+                left_is_prev = dl < dr
+        except Exception:
+            pass
     try:
         if left_is_prev:
             _apply_header_date_labels(table, 4, 6, prev_hold_col, curr_hold_col)
@@ -2398,6 +2811,10 @@ def update_sellers_table_on_template(prs: Presentation, df: pd.DataFrame):
 
     start_row = header_rows
     max_rows = len(table.rows) - start_row
+    try:
+        df = _sort_df_rankwise(df)
+    except Exception:
+        pass
     n = min(max_rows, len(df)) if max_rows > 0 else 0
 
     # Clear data rows
@@ -2412,9 +2829,9 @@ def update_sellers_table_on_template(prs: Presentation, df: pd.DataFrame):
         row = df.iloc[i]
         r = start_row + i
         # Rank
-        val_rank = i + 1
+        val_rank = row[rank_col] if (rank_col is not None and rank_col in df.columns) else (i + 1)
         _write_data_cell(table, r, 0, val_rank, align=PP_ALIGN.CENTER, font_size_pt=10, word_wrap=False)
-        # Name - enforce 10pt baseline like Institutional
+        # Name — enforce 10pt baseline like Institutional
         name_val = row[name_col] if name_col in df.columns else ""
         name_val = _normalize_shareholder_name(name_val)
         _write_data_cell(table, r, 1, name_val, align=PP_ALIGN.LEFT, font_size_pt=9, allow_shrink=False, word_wrap=False)
@@ -2609,7 +3026,7 @@ def _write_data_cell(table, r: int, c: int, value, align=PP_ALIGN.CENTER, font_s
             pass
         return True
     except Exception:
-        pass
+        return False
 
 def _ci_col(df: pd.DataFrame, names):
     """Case-insensitive exact match for any of the candidate names in df.columns."""
@@ -2637,7 +3054,7 @@ def _find_two_latest_date_columns(df: pd.DataFrame):
     date_cols = []
     for c in df.columns:
         s = str(c).strip()
-        # Accept mm/dd/YYYY or mm/dd/YY
+        # Fast-path: Accept mm/dd/YYYY or mm/dd/YY
         if re.match(r"^\d{1,2}/\d{1,2}/\d{2,4}$", s):
             try:
                 from datetime import datetime as _dt
@@ -2650,8 +3067,16 @@ def _find_two_latest_date_columns(df: pd.DataFrame):
                     except Exception:
                         continue
             except Exception:
-                continue
-                continue
+                pass
+            continue
+
+        # General-path: try parsing column name like '06-Mar-26' / '06 Mar 2026' etc.
+        try:
+            dt = _parse_date_label_to_dt(s)
+            if dt is not None:
+                date_cols.append((dt, c))
+        except Exception:
+            pass
     if len(date_cols) < 2:
         return None, None
     date_cols.sort(key=lambda x: x[0])
@@ -2665,7 +3090,12 @@ def _parse_date_label_to_dt(s: str):
         s = str(s or "").strip()
         if not s:
             return None
-        for fmt in ("%d-%b-%y", "%d-%b-%Y", "%m/%d/%Y", "%m/%d/%y", "%d/%m/%Y", "%d/%m/%y"):
+        for fmt in (
+            "%d-%b-%y", "%d-%b-%Y",
+            "%d %b %y", "%d %b %Y",
+            "%m/%d/%Y", "%m/%d/%y",
+            "%d/%m/%Y", "%d/%m/%y",
+        ):
             try:
                 return datetime.strptime(s, fmt)
             except Exception:
@@ -2677,6 +3107,14 @@ def _parse_date_label_to_dt(s: str):
 
 def _format_header_date_label(value) -> str:
     """Format a dataframe/header date value into PPT label style like '26-Dec-25'."""
+    try:
+        s0 = str(value or "").strip()
+        if s0.lower() in ("current", "curr"):
+            return _format_header_date_label(CURRENT_WEEK_DATE)
+        if s0.lower() in ("previous", "prev"):
+            return _format_header_date_label(PREVIOUS_WEEK_DATE)
+    except Exception:
+        pass
     try:
         dt = _parse_date_label_to_dt(value)
         if dt is not None:
@@ -2700,26 +3138,43 @@ def _apply_header_date_labels(table, left_col: int, right_col: int, left_value, 
     except Exception:
         return False
 
+
+def _force_current_left() -> bool:
+    raw = (_get_env("WSHP_FORCE_CURRENT_LEFT", "1") or "1").strip().lower()
+    return raw not in ("0", "false", "no", "off")
+
+
+def _sort_df_rankwise(df: pd.DataFrame) -> pd.DataFrame:
+    try:
+        if df is None or df.empty:
+            return df
+    except Exception:
+        return df
+    try:
+        rank_col = _ci_col(df, [
+            "rank",
+            "serial.no",
+            "serial no",
+            "serial. no",
+            "sr.no",
+            "sr no",
+            "sr. no",
+            "s.no",
+            "sno",
+        ])
+        if not rank_col:
+            return df
+        out = df.copy()
+        out["__rank_sort__"] = pd.to_numeric(out[rank_col], errors="coerce")
+        out = out.sort_values(by=["__rank_sort__"], ascending=True, na_position="last")
+        out = out.drop(columns=["__rank_sort__"], errors="ignore")
+        return out
+    except Exception:
+        return df
+
 def update_institutional_table_on_template(prs: Presentation, df: pd.DataFrame):
     """Update the 'Top 20 Institutional Shareholders' table on the template slide with DB data."""
-    # DEBUG: List all slide titles
-    print(f"[PPT][DEBUG] Available slides:")
-    for idx, s in enumerate(prs.slides):
-        try:
-            title_txt = ""
-            for shp in s.shapes:
-                if getattr(shp, "is_placeholder", False):
-                    phf = shp.placeholder_format
-                    if hasattr(phf, "type") and phf.type == PP_PLACEHOLDER.TITLE:
-                        title_txt = shp.text_frame.text or ""
-                        break
-            print(f"[PPT][DEBUG]   Slide {idx}: '{title_txt}'")
-        except:
-            pass
-    
-    # Prefer explicit slide search for a slide that HAS a large table
-    slide = _find_slide_by_title(prs, "Top 20 Institutional Shareholders", must_have_table=True)
-    print(f"[PPT][TRACE] Searching for Institutional slide... Found: {slide is not None}")
+    slide = _find_slide_by_title(prs, "Top 20 Institutional Shareholders")
     if slide is None:
         # Fallback A: any slide whose TITLE placeholder contains 'institutional'
         for s in prs.slides:
@@ -2749,19 +3204,20 @@ def update_institutional_table_on_template(prs: Presentation, df: pd.DataFrame):
                     break
             except Exception:
                 continue
-    if slide is None and len(prs.slides) > 2:
-        # Fallback C: default to the 3rd slide (index 2) per template instruction
-        slide = prs.slides[2]
+    if slide is None and len(prs.slides) > 1:
+        # Fallback C: default to the 2nd slide per template instruction
+        slide = prs.slides[1]
     if slide is None:
         return False
     table = _get_best_table(slide) or _get_first_table(slide)
-    print(f"[PPT][TRACE] Table found: {table is not None}")
     if table is None:
         return False
-    # Removed strict column count validation to support flexible table structures
+    # Expect at least 8 columns for this table
+    if len(table.columns) < 7:
+        return False
 
     # Resolve column mappings from DF
-    rank_col = _ci_col(df, ["Sr.No", "Sr No", "Serial. No", "Serial No", "Rank"]) or None
+    rank_col = _ci_col(df, ["Serial. No", "Serial No", "Sr.No", "Sr. No", "Sr No", "Rank"]) or None
     name_col = _ci_col(df, ["Institution", "Shareholder Name"]) or None
     cat_label_col = _ci_col(df, ["Category Label"]) or None
     prev_hold_col, curr_hold_col = _find_two_latest_date_columns(df)
@@ -2770,18 +3226,12 @@ def update_institutional_table_on_template(prs: Presentation, df: pd.DataFrame):
     change_col = _ci_col(df, ["MoM change in holdings", "MoM change in holding", "Change in Holding", "Change"])
     buy_pps_col  = _ci_col(df, ["Buy"]) or None
     sell_pps_col = _ci_col(df, ["Sell"]) or None
-    
-    # DEBUG: Log column mappings
-    print(f"[PPT][DEBUG] Column Mappings - name_col={name_col}, prev_hold_col={prev_hold_col}, curr_hold_col={curr_hold_col}, df.columns={list(df.columns)}")
 
     # Determine header rows count (1 or 2). If second row has any text in header area, assume 2.
-    header_rows = 1
-    if len(table.rows) > 1:
-        if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(6, len(table.columns)))):
-            header_rows = 2
+    header_rows = 2 if any(len((table.cell(1, c).text or "").strip()) > 0 for c in range(min(6, len(table.columns)))) else 1
     # Default mapping: assume current date block is on the LEFT like the template screenshot
     # We'll refine using header date labels when available
-    left_is_prev = False
+    left_is_prev = not _force_current_left()
     # Infer from top-level headers if available by parsing dates
     try:
         hdr_left_txt = (table.cell(0, 3).text or "").strip() if len(table.columns) > 3 else ""
@@ -2804,11 +3254,11 @@ def update_institutional_table_on_template(prs: Presentation, df: pd.DataFrame):
     # Write rows (preserve formatting). Assume 2 header rows.
     start_row = header_rows
     max_rows = len(table.rows) - start_row
+    try:
+        df = _sort_df_rankwise(df)
+    except Exception:
+        pass
     n = min(max_rows, len(df)) if max_rows > 0 else 0
-    
-    # DEBUG: Log table and data info
-    print(f"[PPT][DEBUG] Institutional Table: rows={len(table.rows)}, cols={len(table.columns)}, header_rows={header_rows}, start_row={start_row}, max_rows={max_rows}, df_rows={len(df)}, writing_n={n}")
-    
     # Clear all data rows first
     for r in range(start_row, len(table.rows)):
         for c in range(len(table.columns)):
@@ -2821,7 +3271,7 @@ def update_institutional_table_on_template(prs: Presentation, df: pd.DataFrame):
         row = df.iloc[i]
         r = start_row + i
         # Col 0: Rank
-        val_rank = i + 1
+        val_rank = row[rank_col] if (rank_col is not None and rank_col in df.columns) else (i + 1)
         _write_data_cell(table, r, 0, val_rank, align=PP_ALIGN.CENTER, font_size_pt=10, word_wrap=False)
         # Col 1: Shareholder Name
         name_val = row[name_col] if name_col in df.columns else ""
@@ -2873,7 +3323,7 @@ def update_institutional_table_on_template(prs: Presentation, df: pd.DataFrame):
 
     return True
 
-def build_title_slide(prs):
+def build_title_slide(prs, bu_name: Optional[str] = None):
     """Update only the existing standalone date text on slide 1, preserving title layout."""
     slide = prs.slides[0] if len(prs.slides) > 0 else add_blank_slide(prs)
 
@@ -2907,6 +3357,133 @@ def build_title_slide(prs):
     except Exception:
         pass
 
+    try:
+        if bu_name:
+            for shape in slide.shapes:
+                try:
+                    if not (hasattr(shape, "has_text_frame") and shape.has_text_frame):
+                        continue
+                    tf = shape.text_frame
+                    txt = (tf.text or "").strip()
+                    low = " ".join(txt.split()).lower()
+                    if "weekly" in low and "shareholder" in low and "movement" in low:
+                        new_txt = f"{bu_name} | Weekly Shareholder Movement"
+                        try:
+                            tf.clear()
+                        except Exception:
+                            pass
+                        try:
+                            # Keep the title on one line; allow auto-fit to shrink text if needed.
+                            tf.word_wrap = False
+                        except Exception:
+                            pass
+                        try:
+                            # Some templates ignore TEXT_TO_FIT_SHAPE for placeholders.
+                            # Use explicit font sizing and keep auto-size disabled.
+                            tf.auto_size = MSO_AUTO_SIZE.NONE
+                        except Exception:
+                            pass
+                        try:
+                            tf.vertical_anchor = MSO_ANCHOR.TOP
+                        except Exception:
+                            pass
+                        try:
+                            p = tf.paragraphs[0]
+                        except Exception:
+                            continue
+                        try:
+                            p.alignment = PP_ALIGN.RIGHT
+                        except Exception:
+                            pass
+                        r = p.add_run()
+                        r.text = new_txt
+                        try:
+                            r.font.name = "Arial"
+                        except Exception:
+                            pass
+                        try:
+                            # Heuristic sizing: shrink if the string is long enough to wrap.
+                            ln = len(new_txt)
+                            sz = 18
+                            if ln >= 85:
+                                sz = 11
+                            elif ln >= 70:
+                                sz = 12
+                            elif ln >= 55:
+                                sz = 13
+                            elif ln >= 45:
+                                sz = 14
+                            r.font.size = Pt(sz)
+                        except Exception:
+                            pass
+
+                        # Enforce the font settings across all runs to avoid theme/master overrides.
+                        try:
+                            for pp in tf.paragraphs:
+                                try:
+                                    pp.alignment = PP_ALIGN.RIGHT
+                                except Exception:
+                                    pass
+                                for rr in pp.runs:
+                                    try:
+                                        rr.font.name = "Arial"
+                                    except Exception:
+                                        pass
+                                    try:
+                                        rr.font.size = Pt(sz)
+                                    except Exception:
+                                        pass
+                        except Exception:
+                            pass
+                        break
+                except Exception:
+                    continue
+    except Exception:
+        pass
+
+    try:
+        def _norm(s: str) -> str:
+            return " ".join(str(s or "").split()).strip().lower()
+
+        for shp in list(slide.shapes):
+            try:
+                # PowerPoint may render slide-number placeholders at open time even if
+                # text_frame.text is empty here; remove by placeholder type as well.
+                if getattr(shp, "is_placeholder", False):
+                    try:
+                        phf = shp.placeholder_format
+                        if hasattr(phf, "type") and phf.type == PP_PLACEHOLDER.SLIDE_NUMBER:
+                            try:
+                                slide.shapes._spTree.remove(shp._element)
+                                continue
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
+
+                try:
+                    nm = _norm(getattr(shp, "name", ""))
+                    if "slide number" in nm or nm == "slidenumber":
+                        try:
+                            slide.shapes._spTree.remove(shp._element)
+                            continue
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
+                if getattr(shp, "has_text_frame", False):
+                    txt = _norm(shp.text_frame.text)
+                    if txt in ("slidenumber", "slide number"):
+                        try:
+                            slide.shapes._spTree.remove(shp._element)
+                        except Exception:
+                            pass
+            except Exception:
+                continue
+    except Exception:
+        pass
+
     return slide
 
 
@@ -2916,7 +3493,7 @@ def update_toc_on_template(prs, toc_items):
     none exists, adds a new 2-column table to that slide.
     """
     # Locate the TOC slide by title or by scanning text
-    slide = _find_slide_by_title(prs, "Table of Contents", is_toc_search=True)
+    slide = _find_slide_by_title(prs, "Table of Contents")
     if slide is None:
         for s in prs.slides:
             try:
@@ -3040,10 +3617,10 @@ def build_toc_slide(prs):
         "Top 20 Buyers",
         "Top 20 Sellers",
         "New Entry / Exits",
-        "Top 10 FII's & FPI's",
-        "Top 10 MF's",
-        "Top 10 Insurance & PF's",
-        "Top 10 AIF's",
+        "Top 10 FII’s & FPI’s",
+        "Top 10 MF’s",
+        "Top 10 Insurance & PF’s",
+        "Top 10 AIF’s",
     ]
 
     num_rows = len(toc_items)
@@ -3448,7 +4025,7 @@ def _add_footer_textbox(slide, footer_text):
             run.font.color.rgb = RGBColor(0x1B, 0x3A, 0x5C)
 
 
-# "" Individual Slide Builders """"""""""""""""""""""""""""""""""""""""""""""
+# â”€â”€ Individual Slide Builders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def build_top20_institutional_slide(prs, df):
     """Slide: Top 20 Institutional Shareholders (8 columns)."""
@@ -3524,7 +4101,7 @@ def build_top20_buyers_slide(prs, df):
         for c in range(num_cols):
             set_cell_border(table.cell(r, c), border_color="FFFFFF")
 
-    # Data rows (no dedicated "change" column for buyers " all black)
+    # Data rows (no dedicated "change" column for buyers â€” all black)
     _fill_data_rows_8col(table, df, start_row=2, change_col_idx=-1)
 
     _add_footer_textbox(slide,
@@ -3618,7 +4195,7 @@ def build_top10_mf_slide(prs, df_active, df_passive):
     _add_title_textbox(slide, "Top 10 MFs")
     _add_note_textbox(slide, "Note: Shares in Lakhs")
 
-    # "" Active MF sub-header ""
+    # â”€â”€ Active MF sub-header â”€â”€
     txBox_active = slide.shapes.add_textbox(
         Emu(348016), Emu(823344), Emu(11521440), Emu(258532)
     )
@@ -3655,7 +4232,7 @@ def build_top10_mf_slide(prs, df_active, df_passive):
 
     _fill_data_rows_7col(table_a, df_active, start_row=2, change_col_idx=6)
 
-    # "" Passive MF sub-header ""
+    # â”€â”€ Passive MF sub-header â”€â”€
     txBox_passive = slide.shapes.add_textbox(
         Emu(348016), Emu(3670823), Emu(11521440), Emu(258532)
     )
@@ -3813,283 +4390,19 @@ def build_thankyou_slide(prs):
     return slide
 
 
-# "" Main Orchestrator """"""""""""""""""""""""""""""""""""""""""""""""""""""
-
-def main():
-    print("=" * 65)
-    print("  Weekly Shareholder Movement ' PowerPoint Report Generator")
-    print("=" * 65)
-
-    # 1. Connect to database
-    conn = get_db_connection()
-
-    try:
-        print(f"\nFetching data from tables...")
-
-        bu_id = _get_bu_id()
-        date_range_label = _get_date_range_label()
-        try:
-            print(f"   [DEBUG] Using bu_id={bu_id} | DateRange={date_range_label}", flush=True)
-        except Exception:
-            pass
-
-        # 2. Fetch data from each table
-        # Top tables may be append-only with DateRange; auto-filter to latest snapshot.
-        df_institutional = fetch_table_data_latest(conn, TABLE_NAMES["top_20_institutional"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
-        df_buyers        = fetch_table_data_latest(conn, TABLE_NAMES["top_20_buyers"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
-        df_sellers       = fetch_table_data_latest(conn, TABLE_NAMES["top_20_sellers"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
-        df_fii_fpi       = fetch_table_data_latest(conn, TABLE_NAMES["top_10_fii_fpi"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
-        df_mf_active     = fetch_table_data_latest(conn, TABLE_NAMES["top_10_mf_active"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
-        df_mf_passive    = fetch_table_data_latest(conn, TABLE_NAMES["top_10_mf_passive"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
-        df_insurance_pf  = fetch_table_data_latest(conn, TABLE_NAMES["top_10_insurance_pf"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
-        df_aif           = fetch_table_data_latest(conn, TABLE_NAMES["top_10_aif"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
-        df_entry         = fetch_table_data_latest(conn, TABLE_NAMES["entry"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
-        df_exit          = fetch_table_data_latest(conn, TABLE_NAMES["exit"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
-        try:
-            print(f"   [DEBUG] Entry rows fetched: {len(df_entry)} | Exit rows fetched: {len(df_exit)}", flush=True)
-        except Exception:
-            pass
-
-        # 3. Create presentation from template when available
-        tpl_path = TEMPLATE_PPT
-        # If relative path, resolve against this script's directory
-        if tpl_path and not os.path.isabs(tpl_path):
-            candidate = os.path.join(os.path.dirname(os.path.abspath(__file__)), tpl_path)
-            if os.path.exists(candidate):
-                tpl_path = candidate
-        prs = None
-        if tpl_path and os.path.exists(tpl_path):
-            try:
-                prs = Presentation(tpl_path)
-            except Exception as e:
-                print(f"  Could not open template at '{tpl_path}': {e}. Falling back to a blank presentation.")
-        if prs is None:
-            prs = Presentation()
-            # Ensure dimensions match expected if using blank
-            prs.slide_width = Inches(SLIDE_WIDTH_INCHES)
-            prs.slide_height = Inches(SLIDE_HEIGHT_INCHES)
-
-        print(f"\n-  Building slides...")
-
-        # Update-only flow: attempt to update Institutional, Buyers, Sellers, and FIIs & FPIs tables on their template slides
-        updated_inst = update_institutional_table_on_template(prs, df_institutional)
-        if updated_inst:
-            print("    Updated template slide: Top 20 Institutional Shareholders")
-        else:
-            print("     Could not locate/update the institutional table on the template")
-
-        updated_buy = update_buyers_table_on_template(prs, df_buyers)
-        if updated_buy:
-            print("    Updated template slide: Top 20 Buyers")
-        else:
-            print("     Could not locate/update the buyers table on the template")
-
-        # Update Top 20 Sellers per user request
-        updated_sell = update_sellers_table_on_template(prs, df_sellers)
-        if updated_sell:
-            print("    Updated template slide: Top 20 Sellers")
-        else:
-            print("     Could not locate/update the sellers table on the template")
-
-        # Update Top 10 FIIs & FPIs per user request
-        updated_fii = update_fii_fpi_table_on_template(prs, df_fii_fpi)
-        if updated_fii:
-            print("    Updated template slide: Top 10 FIIs & FPIs")
-        else:
-            print("     Could not locate/update the FIIs & FPIs table on the template")
-
-        # Update Top 10 DII - MFs (Active + Passive) per user request
-        updated_mf = update_mf_tables_on_template(prs, df_mf_active, df_mf_passive)
-        if updated_mf:
-            print("    Updated template slide: Top 10 DII - MFs (Active & Passive)")
-        else:
-            print("     Could not locate/update the 'Top 10 DII - MFs' tables on the template")
-
-        # Update Top 10 DII - Insurance & PFs per user request (slide #10)
-        updated_ins_pf = update_insurance_pf_table_on_template(prs, df_insurance_pf)
-        if updated_ins_pf:
-            print("    Updated template slide: Top 10 DII - Insurance & PFs")
-        else:
-            print("     Could not locate/update the 'Top 10 DII - Insurance & PFs' table on the template")
-
-        # Update Top 10 DII - AIFs per user request (slide #11)
-        updated_aif = update_aif_table_on_template(prs, df_aif)
-        if updated_aif:
-            print("    Updated template slide: Top 10 DII - AIFs")
-        else:
-            print("     Could not locate/update the 'Top 10 DII - AIFs' table on the template")
-
-        updated_entry_exit = update_new_entry_exits_on_template(prs, df_entry, df_exit)
-        if updated_entry_exit:
-            print("    Updated template slide: New Entry / Exits")
-        else:
-            print("     Could not locate/update the 'New Entry / Exits' tables on the template")
-
-
-        try:
-            # Safer deletion: only delete the end slides if they exist
-            # Avoiding index 1 which might be causing issues if it's the TOC or something central
-            count = len(prs.slides)
-            to_delete = []
-            if count > 12: to_delete.append(12)
-            if count > 11: to_delete.append(11)
-            # if count > 1: to_delete.append(1) # Skipping index 1 for now to prevent corruption
-            if to_delete:
-                _delete_slides(prs, to_delete)
-        except Exception:
-            pass
-
-        # Update existing Table of Contents slide with current sections
-        try:
-            toc_items = [
-                "Top 20 Institutional Shareholders",
-                "Top 20 Buyers",
-                "Top 20 Sellers",
-                "New Entry / Exits",
-                "Top 10 FIIs & FPIs",
-                "Top 10 DII - MFs (Active & Passive)",
-                "Top 10 DII - Insurance & PFs",
-                "Top 10 DII - AIFs",
-            ]
-            ok_toc = update_toc_on_template(prs, toc_items)
-            if not ok_toc:
-                # Fallback: add a fresh TOC slide and move it to index 1 (after title)
-                build_toc_slide(prs)
-        except Exception:
-            pass
-
-        try:
-            build_title_slide(prs)
-        except Exception:
-            pass
-
-        output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_PPT_FILENAME)
-        try:
-            prs.save(output_path)
-        except MemoryError:
-            try:
-                import gc
-                gc.collect()
-            except Exception:
-                pass
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            alt_name = f"{Path(OUTPUT_PPT_FILENAME).stem}_{ts}{Path(OUTPUT_PPT_FILENAME).suffix}"
-            alt_output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), alt_name)
-            try:
-                print("   Warning: MemoryError during save. Retrying with:", alt_output_path)
-            except Exception:
-                pass
-            prs.save(alt_output_path)
-            output_path = alt_output_path
-        print(f"\n{'=' * 65}")
-        print(f"   SUCCESS!")
-        print(f" - Output: {output_path}")
-        print(f"{'=' * 65}")
-        return
-
-        # 3a. If template has >= 2 slides (title + thank you), use Slide 1 as-is.
-        #     Move the LAST slide (Thank You) to the very end of our deck.
-        #     We achieve this by inserting our new slides at index 1 (between Title and Thank You).
-        #     This avoids deleting slides, which causes corruption in python-pptx.
-        using_template_title = False
-        if len(prs.slides) >= 1:
-            using_template_title = True
-            print("    Using template Slide 1 as-is")
-        else:
-            build_title_slide(prs)
-            print("    Slide 1: Title")
-
-        # We will insert new slides at this index (after title)
-        insert_idx = 1
-
-        #  Slide 2: Table of Contents
-        build_toc_slide(prs)
-        if using_template_title and len(prs.slides) > insert_idx:
-             # Move the newly added slide (which is at the end) to insert_idx
-             insert_idx += 1
-        print("    Slide 2: Table of Contents")
-
-        #  Slide 3: Top 20 Institutional Shareholders
-        build_top20_institutional_slide(prs, df_institutional)
-        if using_template_title and len(prs.slides) > insert_idx:
-             insert_idx += 1
-        print("    Slide 3: Top 20 Institutional Shareholders")
-
-        #  Slide 4: Top 20 Buyers
-        build_top20_buyers_slide(prs, df_buyers)
-        if using_template_title and len(prs.slides) > insert_idx:
-             insert_idx += 1
-        print("    Slide 4: Top 20 Buyers")
-
-        #  Slide 5: Top 20 Sellers
-        build_top20_sellers_slide(prs, df_sellers)
-        if using_template_title and len(prs.slides) > insert_idx:
-             insert_idx += 1
-        print("    Slide 5: Top 20 Sellers")
-
-        #  Slide 6: Top 10 FII's & FPI's
-        build_top10_fii_fpi_slide(prs, df_fii_fpi)
-        if using_template_title and len(prs.slides) > insert_idx:
-             insert_idx += 1
-        print("    Slide 6: Top 10 FII's & FPI's")
-
-        #  Slide 7: Top 10 MF's (Active + Passive)
-        build_top10_mf_slide(prs, df_mf_active, df_mf_passive)
-        if using_template_title and len(prs.slides) > insert_idx:
-             insert_idx += 1
-        print("    Slide 7: Top 10 MF's")
-
-        #  Slide 8: Top 10 Insurance & PF's
-        build_top10_insurance_pf_slide(prs, df_insurance_pf)
-        if using_template_title and len(prs.slides) > insert_idx:
-             insert_idx += 1
-        print("    Slide 8: Top 10 Insurance & PF's")
-
-        #  Slide 9: Top 10 AIF's
-        build_top10_aif_slide(prs, df_aif)
-        if using_template_title and len(prs.slides) > insert_idx:
-             insert_idx += 1
-        print("    Slide 9: Top 10 AIF's")
-
-        #  If we used the template, the original Thank You slide is now at the end (since we inserted before it).
-        #  If no template, build one.
-        if not using_template_title:
-             build_thankyou_slide(prs)
-             print("    Final Slide: Thank You")
-        else:
-             print("    Final Slide: Thank You (kept from template at end)")
-
-        # 5. Save the presentation
-        output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_PPT_FILENAME)
-        prs.save(output_path)
-
-        print(f"\n{'=' * 65}")
-        print(f"   SUCCESS!")
-        print(f" - Total slides: 10")
-        print(f" - Output: {output_path}")
-        print(f"{'=' * 65}")
-
-    except Exception as e:
-        print(f"\n Error during report generation: {e}")
-        import traceback
-        traceback.print_exc()
-    finally:
-        conn.close()
-        print("\nDatabase connection closed.")
-
+# â”€â”€ Main Orchestrator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def generate_report(template_path: str, db_path: str, date_input: Optional[str], bu_id: int) -> tuple:
     """Library entry point to generate the PPT report.
     Returns: (pptx_bytes: bytes, display_date: str)
     """
-    # Force use the provided DB path
-    global DB_PATH
+    global DB_PATH, TEMPLATE_PPT
     DB_PATH = db_path
-    
+    TEMPLATE_PPT = template_path
+
     conn = get_db_connection()
     bu_name = "Adani Portfolio"
     try:
-        # Fetch BU Name dynamically
         try:
             cur = conn.cursor()
             cur.execute("SELECT bu_name FROM bu_details WHERE bu_id = ?", (bu_id,))
@@ -4098,34 +4411,62 @@ def generate_report(template_path: str, db_path: str, date_input: Optional[str],
                 bu_name = row[0]
         except Exception:
             pass
-        # Date determination logic (similar to derived logic but prioritizing input)
+
         date_range_label = date_input
         if not date_range_label or date_range_label == "latest":
             date_range_label = _pick_latest_daterange(conn, TABLE_NAMES["top_20_institutional"], bu_id=bu_id)
-        
-        # Ensure we have date strings for the slide headers
-        d1, d2 = "N/A", "N/A"
-        if date_range_label and " vs " in date_range_label:
-            d2, d1 = date_range_label.split(" vs ") # previous vs current
-        
-        # Fetch Data
-        df_institutional = fetch_table_data_latest(conn, TABLE_NAMES["top_20_institutional"], date_range=date_range_label, bu_id=bu_id)
-        df_buyers        = fetch_table_data_latest(conn, TABLE_NAMES["top_20_buyers"], date_range=date_range_label, bu_id=bu_id)
-        df_sellers       = fetch_table_data_latest(conn, TABLE_NAMES["top_20_sellers"], date_range=date_range_label, bu_id=bu_id)
-        df_fii_fpi       = fetch_table_data_latest(conn, TABLE_NAMES["top_10_fii_fpi"], date_range=date_range_label, bu_id=bu_id)
-        df_mf_active     = fetch_table_data_latest(conn, TABLE_NAMES["top_10_mf_active"], date_range=date_range_label, bu_id=bu_id)
-        df_mf_passive    = fetch_table_data_latest(conn, TABLE_NAMES["top_10_mf_passive"], date_range=date_range_label, bu_id=bu_id)
-        df_insurance_pf  = fetch_table_data_latest(conn, TABLE_NAMES["top_10_insurance_pf"], date_range=date_range_label, bu_id=bu_id)
-        df_aif           = fetch_table_data_latest(conn, TABLE_NAMES["top_10_aif"], date_range=date_range_label, bu_id=bu_id)
-        df_entry         = fetch_table_data_latest(conn, TABLE_NAMES["entry"], date_range=date_range_label, bu_id=bu_id)
-        df_exit          = fetch_table_data_latest(conn, TABLE_NAMES["exit"], date_range=date_range_label, bu_id=bu_id)
 
-        # Build Presentation
+        # Keep date strings consistent across the deck.
+        # DateRange label is stored as: "<previous> vs <current>".
+        d1, d2 = "N/A", "N/A"  # d1=current, d2=previous
+        if date_range_label and " vs " in date_range_label:
+            prev_s, cur_s = date_range_label.split(" vs ")
+            d2, d1 = prev_s.strip(), cur_s.strip()
+
+        # Ensure global dates used by slide builders match the selected DateRange.
+        # (These globals are referenced widely in existing helper functions.)
+        global CURRENT_WEEK_DATE, PREVIOUS_WEEK_DATE
+        if d1 != "N/A":
+            CURRENT_WEEK_DATE = d1
+        if d2 != "N/A":
+            PREVIOUS_WEEK_DATE = d2
+
+        df_institutional = fetch_table_data_latest(conn, TABLE_NAMES["top_20_institutional"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
+        df_buyers = fetch_table_data_latest(conn, TABLE_NAMES["top_20_buyers"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
+        df_sellers = fetch_table_data_latest(conn, TABLE_NAMES["top_20_sellers"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
+        df_fii_fpi = fetch_table_data_latest(conn, TABLE_NAMES["top_10_fii_fpi"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
+        df_mf_active = fetch_table_data_latest(conn, TABLE_NAMES["top_10_mf_active"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
+        df_mf_passive = fetch_table_data_latest(conn, TABLE_NAMES["top_10_mf_passive"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
+        df_insurance_pf = fetch_table_data_latest(conn, TABLE_NAMES["top_10_insurance_pf"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
+        df_aif = fetch_table_data_latest(conn, TABLE_NAMES["top_10_aif"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
+        df_entry = fetch_table_data_latest(conn, TABLE_NAMES["entry"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
+        df_exit = fetch_table_data_latest(conn, TABLE_NAMES["exit"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
+
         import io
-        from pptx import Presentation
         prs = Presentation(template_path)
-        
-        # Update slides (using existing functions)
+
+        # Restore missing template orchestration:
+        # - Update Title slide date (and keep its layout)
+        # - Update Table of Contents slide content
+        try:
+            build_title_slide(prs, bu_name=bu_name)
+        except Exception:
+            pass
+        try:
+            toc_items = [
+                "Top 20 Institutional Shareholders",
+                "Top 20 Buyers",
+                "Top 20 Sellers",
+                "New Entry / Exits",
+                "Top 10 FIIs & FPIs",
+                "Top 10 MFs",
+                "Top 10 Insurance & PFs",
+                "Top 10 AIFs",
+            ]
+            update_toc_on_template(prs, toc_items)
+        except Exception:
+            pass
+
         ok1 = update_institutional_table_on_template(prs, df_institutional)
         ok2 = update_buyers_table_on_template(prs, df_buyers)
         ok3 = update_sellers_table_on_template(prs, df_sellers)
@@ -4134,38 +4475,73 @@ def generate_report(template_path: str, db_path: str, date_input: Optional[str],
         ok6 = update_mf_tables_on_template(prs, df_mf_active, df_mf_passive)
         ok7 = update_insurance_pf_table_on_template(prs, df_insurance_pf)
         ok8 = update_aif_table_on_template(prs, df_aif)
-
         print(f"[PPT][GEN] Updates: Inst={ok1}, Buy={ok2}, Sell={ok3}, EntryExit={ok4}, FII={ok5}, MF={ok6}, Ins={ok7}, AIF={ok8}")
-        
-        # Update titles/dates
-        try:
-            # Commenting out deletion to prevent ZIP corruption until safer method verified
-            # _delete_slides(prs, [1, 11, 12]) 
-            pass
-        except Exception:
-            pass
+
+        raw_delete = (_get_env("WSHP_DELETE_SLIDES", "3,12,13") or "").strip()
+        if raw_delete:
+            try:
+                def _norm_txt(s: str) -> str:
+                    return " ".join(str(s or "").split()).strip().lower()
+
+                def _slide_title_text(slide) -> str:
+                    try:
+                        for shp in getattr(slide, "shapes", []):
+                            try:
+                                if getattr(shp, "has_text_frame", False):
+                                    t = _norm_txt(shp.text_frame.text)
+                                    if t:
+                                        return t
+                            except Exception:
+                                continue
+                    except Exception:
+                        pass
+                    return ""
+
+                protected_keywords = [
+                    "new entry",
+                    "new entries",
+                    "exit",
+                    "exits",
+                    "entry / exits",
+                    "entry/exits",
+                    "entry",
+                ]
+
+                one_based = [int(x.strip()) for x in raw_delete.split(",") if x.strip()]
+                cand = [i - 1 for i in one_based if i > 0]
+                # Never delete slide #7 (1-based), i.e. index 6 (0-based)
+                cand = [i for i in cand if i != 6]
+                safe = []
+                for idx in cand:
+                    try:
+                        if idx < 0 or idx >= len(prs.slides):
+                            continue
+                        title_txt = _slide_title_text(prs.slides[idx])
+                        if any(k in title_txt for k in protected_keywords):
+                            continue
+                        safe.append(idx)
+                    except Exception:
+                        continue
+                if safe:
+                    _delete_slides(prs, safe)
+            except Exception:
+                pass
 
         for slide in prs.slides:
-            # Simple heuristic to update Portfolio name or Date
             try:
                 for shape in slide.shapes:
                     if hasattr(shape, "text_frame"):
-                        txt = (shape.text_frame.text or "")
-                        # Update "Adani Portfolio" or similar to actual BU Name
+                        txt = shape.text_frame.text or ""
                         if "Portfolio" in txt or "PORTFOLIO" in txt or "Adani" in txt:
-                            # Replace generic names with actual BU Name
                             new_txt = txt.replace("Adani Portfolio", bu_name).replace("ADANI PORTFOLIO", bu_name.upper())
-                            # If it's JUST "Adani Portfolio", replace it entirely
                             if txt.strip() in ["Adani Portfolio", "ADANI PORTFOLIO"]:
                                 new_txt = bu_name
-                            
                             if new_txt != txt:
                                 shape.text_frame.text = new_txt
-                        
-                        # Update Date placeholders
                         if "[Date]" in txt or "(Date)" in txt or "DATE" in txt:
-                             shape.text_frame.text = txt.replace("[Date]", d1).replace("(Date)", d1).replace("DATE", d1)
-            except: pass
+                            shape.text_frame.text = txt.replace("[Date]", d1).replace("(Date)", d1).replace("DATE", d1)
+            except Exception:
+                pass
 
         output = io.BytesIO()
         prs.save(output)
@@ -4173,24 +4549,24 @@ def generate_report(template_path: str, db_path: str, date_input: Optional[str],
     finally:
         conn.close()
 
+
 def main():
-    """Standalone CLI entry point."""
     print(f"\n{'=' * 65}")
-    print(f"  POWERPOINT REPORT GENERATOR (SQLite)")
+    print("  POWERPOINT REPORT GENERATOR (SQLite)")
     print(f"{'=' * 65}")
-    
+
     bu_id = _get_bu_id()
-    date_range = _get_date_range_label() # WSHP_DATE1 / WSHP_DATE2
-    
+    date_range = _get_date_range_label()
     pptx_bytes, display_date = generate_report(TEMPLATE_PPT, DB_PATH, date_range, bu_id)
-    
+
     output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_PPT_FILENAME)
     with open(output_path, "wb") as f:
         f.write(pptx_bytes)
-        
-    print(f"  OK SUCCESS!")
+
+    print("  OK SUCCESS!")
     print(f"   Output: {output_path}")
     print(f"{'=' * 65}\n")
+
 
 if __name__ == "__main__":
     main()

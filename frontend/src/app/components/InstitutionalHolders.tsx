@@ -391,7 +391,7 @@ export function InstitutionalHolders({
               />
 
               {/* Background Track Bar */}
-              <Bar dataKey="activeValTrack" fill="var(--muted)" fillOpacity={0.05} barSize={barSize + 8} radius={[0, 6, 6, 0]} isAnimationActive={false} />
+              <Bar dataKey="activeValTrack" fill="var(--muted)" fillOpacity={0.05} barSize={barSize + 8} radius={[0, 6, 6, 0]} isAnimationActive={false} tooltipType="none" />
 
               <Bar
                 dataKey="activeVal"

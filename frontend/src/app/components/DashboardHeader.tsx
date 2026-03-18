@@ -305,7 +305,7 @@ export function DashboardHeader({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-xl border-gray-100 dark:border-slate-800 shadow-xl">
-                {[5, 10, 15, 20, 30, 50].map(n => <SelectItem key={n} value={n.toString()} className="text-xs">{n}</SelectItem>)}
+                {[5, 10, 15, 20].map(n => <SelectItem key={n} value={n.toString()} className="text-xs">{n}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
