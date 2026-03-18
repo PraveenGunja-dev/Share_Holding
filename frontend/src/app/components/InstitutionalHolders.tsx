@@ -19,6 +19,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { cn, formatDateRange , formatName} from "./ui/utils";
 import { useTheme } from '../context/ThemeContext';
 import { getCategoryColor } from '../constants/colors';
+import { RankedInstitutionalBars } from './RankedInstitutionalBars';
 
 interface InstitutionalHoldersProps {
   selectedCategories: string[];
@@ -323,133 +324,18 @@ export function InstitutionalHolders({
             </div>
           </div>
 
-          <ResponsiveContainer width="100%" height={chartHeight} className="w-full">
-            <BarChart
-              data={chartData}
-              layout="vertical"
-              margin={chartMargin}
-              style={{ overflow: 'visible' }}
-              onMouseMove={(state) => {
-                if (state && state.activePayload && state.activePayload.length > 0) {
-                  const name = state.activePayload[0].payload.name;
-                  const idx = filteredData.findIndex(d => d.name === name);
-                  setActiveRank(idx !== -1 ? idx : null);
-                }
-              }}
-              onMouseLeave={() => setActiveRank(null)}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={true} vertical={false} opacity={0.3} />
-              <XAxis
-                type="number"
-                domain={[0, (dataMax: number) => Math.ceil(dataMax * (metricView === 'all' ? 1.4 : 1.15))]}
-                tick={{ fontSize: 13, fontWeight: 900, fill: theme === 'dark' ? '#ffffff' : '#475569' }}
-                axisLine={{ stroke: 'var(--border)', strokeWidth: 0.5 }}
-                tickLine={false}
-              >
-                <Label
-                  value={(metricView === 'percentage' ? '% Share Capital' : metricView === 'change' ? 'Change in Shares' : 'Lakhs Owned (Scale)').toUpperCase()}
-                  offset={-15}
-                  position="insideBottom"
-                  style={{ fontSize: '11px', fontWeight: 900, fill: theme === 'dark' ? '#ffffff' : '#475569', letterSpacing: '0.1em' }}
-                />
-              </XAxis>
-              <YAxis
-                dataKey="name"
-                type="category"
-                width={yAxisWidth}
-                tick={({ x, y, payload, index }: any) => {
-                  let text = payload.value;
-                  const maxLen = dimensions.width < 768 ? 12 : dimensions.width < 1024 ? 24 : 35;
-                  if (text.length > maxLen) {
-                    text = text.substring(0, maxLen) + '...';
-                  }
-                  const fontSize = 13;
-                  return (
-                    <g transform={`translate(${x},${y})`}>
-                      <text x={-12} y={4} dominantBaseline="central" textAnchor="end" fontSize={fontSize} fontWeight={500} fill={theme === 'dark' ? '#38bdf8' : '#00205B'} style={{ letterSpacing: '0.01em' }}>
-                        {text.toUpperCase()}
-                      </text>
-                    </g>
-                  );
-                }}
-                axisLine={false}
-                tickLine={false}
-                interval={0}
-              >
-                <Label
-                  value="INSTITUTIONAL SHAREHOLDERS"
-                  angle={-90}
-                  position="insideLeft"
-                  offset={-15}
-                  style={{ textAnchor: 'middle', fontSize: 13, fontWeight: 500, fill: 'var(--muted-foreground)', opacity: 0.7 }}
-                />
-              </YAxis>
-              <Tooltip
-                cursor={{ fill: 'var(--muted)', opacity: 0.2 }}
-                content={({ active, payload }: any) => {
-                  if (active && payload && payload.length) {
-                    const data = payload.find((p: any) => p.dataKey === 'activeVal')?.payload;
-                    if (!data) return null;
-                    return (
-                      <div className="bg-card border border-border rounded-xl p-4 shadow-xl backdrop-blur-md bg-opacity-90 min-w-[200px]">
-                        <div className="text-[11px] font-bold text-muted-foreground mb-2 tracking-widest uppercase opacity-70 border-b border-border/50 pb-1">{data.category}</div>
-                        <div className="text-[13px] font-black text-primary dark:text-sky-400 mb-3 leading-tight uppercase">{data.name}</div>
-                        <div className="flex flex-col gap-1.5">
-                          <div className="flex justify-between items-center text-[11px] font-bold">
-                            <span className="text-muted-foreground uppercase tracking-wider">Total Holding</span>
-                            <span className="text-foreground">{data.lakhs.toLocaleString()} L</span>
-                          </div>
-                          <div className="flex justify-between items-center text-[11px] font-bold">
-                            <span className="text-muted-foreground uppercase tracking-wider">Equity Stake</span>
-                            <span className="text-foreground">{data.percent.toFixed(2)}%</span>
-                          </div>
-                          {data.change !== 0 && (
-                            <div className="flex justify-between items-center text-[11px] font-bold border-t border-border/50 pt-1.5 mt-1">
-                              <span className="text-muted-foreground uppercase tracking-wider">WoW Change</span>
-                              <span className={cn(data.change > 0 ? "text-emerald-500" : "text-rose-500", "flex items-center gap-1")}>
-                                {data.change > 0 ? '+' : ''}{data.change.toLocaleString()} L
-                                {data.change > 0 ? '▲' : '▼'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
+          <div className="mt-4">
+            <RankedInstitutionalBars 
+              data={filteredData.map(sh => ({
+                name: sh.name,
+                category: sh.category,
+                lakhs: sh.latestHoldings,
+                percent: sh.latestPercent,
+                change: sh.wowChangeValue
+              }))} 
+            />
+          </div>
 
-              {/* Background Track Bar */}
-              <Bar dataKey="activeValTrack" fill="var(--muted)" fillOpacity={0.05} barSize={barSize + 8} radius={[0, 6, 6, 0]} isAnimationActive={false} tooltipType="none" />
-
-              <Bar
-                dataKey="activeVal"
-                fill={theme === 'dark' ? '#ffffff' : '#475569'}
-                name={metricView === 'percentage' ? '% Share Capital' : metricView === 'change' ? 'Change in Holding' : 'Holdings (Lakhs)'}
-                radius={[0, 4, 4, 0]}
-                onClick={handleBarClick}
-                cursor="pointer"
-                barSize={barSize}
-                animationDuration={1000}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getCategoryColor(entry.category)} style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))' }} />
-                ))}
-                <LabelList
-                  dataKey="label"
-                  position="right"
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    fill: 'var(--foreground)',
-                  }}
-                  offset={10}
-                />
-              </Bar>
-              <ReferenceLine x={0} stroke="var(--border)" strokeWidth={1} />
-            </BarChart>
-          </ResponsiveContainer>
         </Card>
 
         <Card className="col-span-12 p-3 2xl:p-4 bg-card border-border shadow-[0_4px_20px_-4px_rgba(0,32,91,0.08)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]">
@@ -458,22 +344,22 @@ export function InstitutionalHolders({
           </div>
 
           <div className="border border-border rounded-xl shadow-md flex flex-col bg-card overflow-hidden">
-            <div className="flex-1 max-h-[500px] overflow-y-auto custom-scrollbar relative">
-              <Table>
-                <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-20 shadow-sm">
+            <div className="flex-1 max-h-[500px] overflow-auto custom-scrollbar relative">
+              <Table className="relative">
+                <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-30 shadow-sm">
                   <TableRow className="hover:bg-transparent border-b border-white/10">
-                    <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 uppercase">Rank</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 uppercase">Shareholder Name</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 uppercase">Category</TableHead>
-                    <TableHead colSpan={2} className={cn("text-center text-white font-bold border-r border-white/5 transition-colors", (metricView === 'holdings' || metricView === 'percentage' || metricView === 'all') ? "bg-white/20" : "bg-white/10")}>{detectedDates.latest}</TableHead>
-                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5">{detectedDates.prev}</TableHead>
-                    <TableHead rowSpan={2} className={cn("text-center text-white font-bold transition-colors", metricView === 'change' ? "bg-white/20" : "")}>Change in Holding Shares</TableHead>
+                    <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 text-[13px] font-['Adani']">Rank</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 text-[13px] font-['Adani']">Shareholder Name</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 text-[13px] font-['Adani'] w-24">Category</TableHead>
+                    <TableHead colSpan={2} className={cn("text-center text-white font-bold border-r border-white/5 transition-colors text-[13px] font-['Adani']", (metricView === 'holdings' || metricView === 'percentage' || metricView === 'all') ? "bg-white/20" : "bg-white/10")}>{detectedDates.latest}</TableHead>
+                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 text-[13px] font-['Adani']">{detectedDates.prev}</TableHead>
+                    <TableHead rowSpan={2} className={cn("text-center text-white font-bold transition-colors text-[13px] font-['Adani']", metricView === 'change' ? "bg-white/20" : "")}>Change in Holding Shares</TableHead>
                   </TableRow>
                   <TableRow className="hover:bg-transparent border-b border-white/10">
-                    <TableHead className={cn("text-center text-white font-bold border-r border-white/5 text-[10px] uppercase py-1 transition-all", metricView === 'holdings' || metricView === 'all' ? "bg-sky-400/20 shadow-[inset_0_0_10px_rgba(255,255,255,0.1)]" : "")}>Holding</TableHead>
-                    <TableHead className={cn("text-center text-white font-bold border-r border-white/5 text-[10px] uppercase py-1 transition-all", metricView === 'percentage' || metricView === 'all' ? "bg-sky-400/20 shadow-[inset_0_0_10px_rgba(255,255,255,0.1)]" : "")}>% of Share Capital</TableHead>
-                    <TableHead className="text-center text-white font-bold border-r border-white/5 text-[10px] uppercase py-1">Holding</TableHead>
-                    <TableHead className="text-center text-white font-bold text-[10px] uppercase py-1">% of Share Capital</TableHead>
+                    <TableHead className={cn("text-center text-white font-bold border-r border-white/5 text-[13px] font-['Adani'] py-1 transition-all", metricView === 'holdings' || metricView === 'all' ? "bg-sky-400/20 shadow-[inset_0_0_10px_rgba(255,255,255,0.1)]" : "")}>Holdings (L)</TableHead>
+                    <TableHead className={cn("text-center text-white font-bold border-r border-white/5 text-[13px] font-['Adani'] py-1 transition-all", metricView === 'percentage' || metricView === 'all' ? "bg-sky-400/20 shadow-[inset_0_0_10px_rgba(255,255,255,0.1)]" : "")}>% of Share Capital</TableHead>
+                    <TableHead className="text-center text-white font-bold border-r border-white/5 text-[13px] font-['Adani'] py-1">Holdings (L)</TableHead>
+                    <TableHead className="text-center text-white font-bold text-[13px] font-['Adani'] py-1">% of Share Capital</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="bg-card">
@@ -490,14 +376,14 @@ export function InstitutionalHolders({
                       <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-4 whitespace-normal">
                         {index + 1}
                       </TableCell>
-                      <TableCell className="py-2 border-r border-border max-w-[140px] sm:max-w-[180px] lg:max-w-[220px] 2xl:max-w-[300px]">
-                        <div className="font-black text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 truncate uppercase" title={row.name}>
-                          {row.name}
+                      <TableCell className="py-2 border-r border-border min-w-[200px] max-w-[300px]">
+                        <div className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 whitespace-normal leading-tight" title={row.name}>
+                          {formatName(row.name)}
                         </div>
                       </TableCell>
                       <TableCell className="border-r border-border py-2">
                         <div
-                          className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] 2xl:text-[11px] font-black tracking-tighter shadow-sm uppercase"
+                          className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-black tracking-tighter shadow-sm"
                           style={{ backgroundColor: `${getCategoryColor(row.category)}15`, color: getCategoryColor(row.category) }}
                         >
                           {row.category}

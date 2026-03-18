@@ -39,6 +39,8 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
   const [slides, setSlides] = useState<string[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [buName, setBuName] = useState('Adani');
+  const [slideData, setSlideData] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<'image' | 'web'>('image');
   const [showEmail, setShowEmail] = useState(false);
   const [showDownloadChoice, setShowDownloadChoice] = useState(false);
   const [emailStatus, setEmailStatus] = useState<EmailStatus>('idle');
@@ -141,9 +143,29 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
           setSlides(data.slides);
           setBuName(data.bu_name || 'Adani');
           setCurrentSlide(0);
+          setViewMode('image');
+          setStage('viewing');
+        } else if (data.data) {
+          setSlideData(data.data);
+          setBuName(data.bu_name || 'Adani');
+          // Mock slides based on data presence
+          const mockSlides = ['Title', 'TOC'];
+          if (data.data.institutional?.length) mockSlides.push('Institutional');
+          if (data.data.buyers?.length) mockSlides.push('Buyers');
+          if (data.data.sellers?.length) mockSlides.push('Sellers');
+          if (data.data.entry?.length || data.data.exit?.length) mockSlides.push('EntryExit');
+          if (data.data.fii_fpi?.length) mockSlides.push('FII');
+          if (data.data.mf_active?.length || data.data.mf_passive?.length) mockSlides.push('MF');
+          if (data.data.insurance_pf?.length) mockSlides.push('Insurance');
+          if (data.data.aif?.length) mockSlides.push('AIF');
+          mockSlides.push('ThankYou');
+          
+          setSlides(mockSlides);
+          setCurrentSlide(0);
+          setViewMode('web');
           setStage('viewing');
         } else {
-          throw new Error('No slides generated');
+          throw new Error('No slides or data generated');
         }
       } else {
         // Just triggering generation logic if needed, but 'view' handles the slide logic now
@@ -376,13 +398,22 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
                 </Button>
              </div>
 
-             {/* Slide Image Wrapper */}
+             {/* Slide Image / Web Content Wrapper */}
              <div className="w-full max-w-5xl bg-white shadow-2xl rounded-lg overflow-hidden border border-slate-200 aspect-[16/9] relative">
-                <img 
-                  src={`data:image/png;base64,${slides[currentSlide]}`} 
-                  alt={`Slide ${currentSlide + 1}`}
-                  className="w-full h-full object-contain select-none pointer-events-none"
-                />
+                {viewMode === 'image' ? (
+                  <img 
+                    src={`data:image/png;base64,${slides[currentSlide]}`} 
+                    alt={`Slide ${currentSlide + 1}`}
+                    className="w-full h-full object-contain select-none pointer-events-none"
+                  />
+                ) : (
+                  <WebSlidePreview 
+                    type={slides[currentSlide]} 
+                    data={slideData} 
+                    buName={buName} 
+                    displayDate={displayDate}
+                  />
+                )}
              </div>
 
              {/* Slide Indicators */}
@@ -506,4 +537,116 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
       </Dialog>
     </div>
   );
+}
+
+function WebSlidePreview({ type, data, buName, displayDate }: { type: string, data: any, buName: string, displayDate: string }) {
+  const renderTable = (rows: any[], columns: string[], title: string) => (
+    <div className="w-full h-full flex flex-col p-8 bg-white">
+      <div className="bg-[#002B5C] text-white p-4 mb-4 flex justify-between items-center h-12">
+        <h3 className="text-sm font-bold uppercase tracking-widest">{title}</h3>
+        <span className="text-[10px] opacity-70">{displayDate}</span>
+      </div>
+      <div className="flex-1 overflow-hidden border border-slate-200">
+        <table className="w-full text-[9px] border-collapse">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              {columns.map(col => (
+                <th key={col} className="p-1.5 text-left font-black text-[#002B5C] uppercase">{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.slice(0, 20).map((row, i) => (
+              <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                {columns.map(col => {
+                  const val = row[col] || row[col.replace(/ /g, '')] || '';
+                  const isChange = col.toLowerCase().includes('change') || col.toLowerCase().includes('bought') || col.toLowerCase().includes('sold');
+                  const colorClass = isChange ? (parseFloat(val) > 0 ? 'text-green-600' : parseFloat(val) < 0 ? 'text-red-600' : '') : '';
+                  return <td key={col} className={cn("p-1 font-medium", colorClass)}>{val}</td>;
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-4 flex justify-between items-end border-t border-slate-100 pt-2 h-8">
+        <span className="text-[8px] font-bold text-[#002B5C]">{buName} Portfolio</span>
+        <span className="text-[8px] text-slate-400">Page 1</span>
+      </div>
+    </div>
+  );
+
+  switch (type) {
+    case 'Title':
+      return (
+        <div className="w-full h-full flex flex-col items-center justify-center p-20 bg-gradient-to-br from-[#002B5C] to-[#001a4d] text-white text-center">
+          <div className="w-24 h-24 mb-10 bg-white/10 rounded-full flex items-center justify-center">
+            <Sparkles className="w-12 h-12 text-white/50" />
+          </div>
+          <h1 className="text-4xl font-black mb-4 tracking-tighter uppercase">{buName} Portfolio</h1>
+          <h2 className="text-xl font-bold opacity-60 uppercase tracking-[0.3em]">Weekly Shareholder Movement</h2>
+          <div className="mt-20 px-8 py-3 bg-white/10 rounded-full text-sm font-black tracking-widest">
+            {displayDate}
+          </div>
+        </div>
+      );
+    case 'TOC':
+      return (
+        <div className="w-full h-full p-16 bg-white">
+          <h3 className="text-2xl font-black text-[#002B5C] mb-10 pb-4 border-b-4 border-slate-100">Table of Contents</h3>
+          <div className="space-y-4">
+            {['Top 20 Institutional Shareholders', 'Top 20 Buyers', 'Top 20 Sellers', 'New Entry / Exits', 'Top 10 FIIs & FPIs', 'Top 10 MFs', 'Top 10 Insurance & PFs', 'Top 10 AIFs'].map((item, i) => (
+              <div key={i} className="flex items-center gap-4 group">
+                <span className="w-8 h-8 rounded bg-[#002B5C]/10 flex items-center justify-center text-[#002B5C] font-black text-xs">{i+1}</span>
+                <span className="text-lg font-bold text-slate-700">{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    case 'Institutional':
+      return renderTable(data.institutional || [], ['Rank', 'Shareholder Name', 'Category', 'Holding %', 'Change %'], 'Top 20 Institutional Shareholders');
+    case 'Buyers':
+      return renderTable(data.buyers || [], ['Rank', 'Shareholder Name', 'Category', 'Shares Bought', 'Current%'], 'Top 20 Buyers During the Week');
+    case 'Sellers':
+      return renderTable(data.sellers || [], ['Rank', 'Shareholder Name', 'Category', 'Shares Sold', 'Current%'], 'Top 20 Sellers During the Week');
+    case 'EntryExit':
+       return (
+         <div className="w-full h-full flex flex-col p-8 bg-white overflow-hidden">
+            <div className="bg-[#002B5C] text-white p-4 mb-4 h-12 flex items-center"><h3 className="text-sm font-bold uppercase tracking-widest">New Entry / Exits</h3></div>
+            <div className="flex gap-4 flex-1 min-h-0">
+               <div className="flex-1 flex flex-col min-w-0">
+                  <h4 className="text-[10px] font-black uppercase text-green-600 mb-2">New Entries</h4>
+                  <div className="flex-1 border border-slate-100 overflow-hidden text-[8px] p-2">
+                     {data.entry?.map((e:any, i:number) => <div key={i} className="py-1 border-b">{e.ShareholderName || e.Name}</div>)}
+                  </div>
+               </div>
+               <div className="flex-1 flex flex-col min-w-0">
+                  <h4 className="text-[10px] font-black uppercase text-red-600 mb-2">New Exits</h4>
+                  <div className="flex-1 border border-slate-100 overflow-hidden text-[8px] p-2">
+                     {data.exit?.map((e:any, i:number) => <div key={i} className="py-1 border-b">{e.ShareholderName || e.Name}</div>)}
+                  </div>
+               </div>
+            </div>
+         </div>
+       );
+    case 'FII':
+      return renderTable(data.fii_fpi || [], ['Rank', 'Shareholder Name', 'Holding %', 'Change %'], "Top 10 FII's & FPI's");
+    case 'MF':
+      return renderTable(data.mf_active || [], ['Rank', 'Shareholder Name', 'Holding %', 'Change %'], "Top 10 MF's (Active & Passive)");
+    case 'Insurance':
+      return renderTable(data.insurance_pf || [], ['Rank', 'Shareholder Name', 'Holding %', 'Change %'], "Top 10 Insurance & PFs");
+    case 'AIF':
+      return renderTable(data.aif || [], ['Rank', 'Shareholder Name', 'Holding %', 'Change %'], "Top 10 AIFs");
+    case 'ThankYou':
+      return (
+        <div className="w-full h-full flex flex-col items-center justify-center p-20 bg-[#002B5C] text-white text-center">
+          <h1 className="text-6xl font-black mb-4 italic tracking-tighter uppercase">Thank You</h1>
+          <div className="w-20 h-1 bg-white/30 my-6"></div>
+          <p className="text-sm font-bold opacity-60 tracking-[0.5em] uppercase">{buName} Investor Relations</p>
+        </div>
+      );
+    default:
+      return <div className="p-20 text-center">Loading Preview...</div>;
+  }
 }

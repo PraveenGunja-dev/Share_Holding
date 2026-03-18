@@ -121,8 +121,18 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
   const activeChartData = activeData.sort((a, b) => b.holdings - a.holdings).slice(0, topN);
   const passiveChartData = passiveData.sort((a, b) => b.holdings - a.holdings).slice(0, topN);
 
-  const activePalette = ['#f59e0b', '#d97706', '#b45309', '#92400e', '#78350f', '#fbbf24', '#fcd34d', '#fde68a', '#fef3c7', '#451a03'];
-  const passivePalette = ['#10b981', '#059669', '#047857', '#065f46', '#064e3b', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5', '#022c22'];
+  const activePalette = [
+    '#0088CC', '#E91E63', '#F59E0B', '#7B1FA2', '#00897B',
+    '#EF5350', '#FF6D00', '#5C6BC0', '#43A047', '#C62828',
+    '#0097A7', '#8D6E63', '#3949AB', '#00ACC1', '#D81B60',
+    '#7CB342', '#F4511E', '#1E88E5', '#FDD835', '#6D4C41'
+  ];
+  const passivePalette = [
+    '#00897B', '#7B1FA2', '#0088CC', '#EF5350', '#F59E0B',
+    '#43A047', '#E91E63', '#5C6BC0', '#FF6D00', '#0097A7',
+    '#C62828', '#3949AB', '#8D6E63', '#D81B60', '#00ACC1',
+    '#F4511E', '#7CB342', '#1E88E5', '#6D4C41', '#FDD835'
+  ];
 
 
   return (
@@ -174,15 +184,13 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
         </div>
       </div>
 
-      <Card className="p-3 bg-card shadow-xl border-border">
-        <div className="w-full mb-6 px-2">
-          <h3 className="text-sm 2xl:text-base font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest uppercase border-l-4 border-primary dark:border-sky-500 pl-3">MUTUAL FUND INVESTMENT DISTRIBUTION</h3>
-        </div>
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-4 gap-y-6 w-full">
+      {/* SECTION 1: ACTIVE MUTUAL FUNDS */}
+      <div className="space-y-6">
+        <Card className="p-4 bg-card shadow-xl border-border">
+          <div className="w-full mb-6 px-2 flex justify-between items-center">
+            <h3 className="text-sm 2xl:text-base font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest uppercase border-l-4 border-blue-500 pl-3">TOP ACTIVE MF INVESTORS - DISTRIBUTION</h3>
+          </div>
           <div className={cn("relative w-full flex flex-col items-center", isLargeTopN ? "h-auto" : pieRadii.containerH)}>
-            <div className="absolute top-0 w-full flex justify-center z-10 pointer-events-none py-1 text-center">
-              <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest">Top Active MF Investors</h3>
-            </div>
             <div className={cn("w-full shrink-0", pieRadii.containerH)}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -208,7 +216,7 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(v: any, name: string) => [`${v.toLocaleString()} Lakhs`, name]}
+                    formatter={(v: any, name: string) => [`${v.toLocaleString()} Lakhs`, formatName(name)]}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', padding: '8px 12px' }}
                     itemStyle={{ fontSize: '13px', fontWeight: 500 }}
                   />
@@ -227,18 +235,86 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                     onMouseLeave={() => setActiveHoverIndex(null)}
                   >
                     <div className={cn("w-2.5 h-2.5 rounded-full shrink-0 transition-all", activeHoverIndex === idx ? "scale-125 shadow-md" : "")} style={{ backgroundColor: activePalette[idx % activePalette.length] }} />
-                    <span className={cn("truncate flex-1 transition-colors", activeHoverIndex === idx ? "text-sky-700 dark:text-sky-400" : "")}>{item.name}</span>
+                    <span className={cn("truncate flex-1 transition-colors", activeHoverIndex === idx ? "text-sky-700 dark:text-sky-400" : "")}>{formatName(item.name)}</span>
                     <span className={cn("transition-all", activeHoverIndex === idx ? "text-sky-700 dark:text-sky-400 font-black scale-105" : "text-primary dark:text-sky-400")}>{item.holdings.toLocaleString()}L</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
+        </Card>
 
-          <div className={cn("relative w-full flex flex-col items-center", isLargeTopN ? "h-auto" : pieRadii.containerH)}>
-            <div className="absolute top-0 w-full flex justify-center z-10 pointer-events-none py-1 text-center">
-              <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest">Top Passive MF Investors</h3>
+        <Card className="p-4 md:p-6 bg-card shadow-xl border-border">
+          <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest border-l-4 border-blue-500 pl-3 mb-4">Top {topN} Active MF Investors - Rankings</h3>
+          <div className="border border-border rounded-xl shadow-xl overflow-hidden flex flex-col">
+            <div className="w-full max-h-[500px] overflow-auto custom-scrollbar relative">
+              <Table>
+                <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-10 shadow-sm">
+                  <TableRow className="hover:bg-transparent border-b border-white/10">
+                    <TableHead className="w-14 text-center text-white font-bold border-r border-white/5 py-5 text-[13px] font-['Adani']">Rank</TableHead>
+                    <TableHead className="text-white font-bold border-r border-white/5 py-5 w-[30%] text-[13px] font-['Adani']">Shareholder Name</TableHead>
+                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2 whitespace-normal leading-tight">
+                      {detectedDates.latest}
+                    </TableHead>
+                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight">
+                      {detectedDates.prev}
+                    </TableHead>
+                    <TableHead className="text-center text-white font-bold py-5 text-[13px] font-['Adani']">Change in Holding Shares</TableHead>
+                  </TableRow>
+                  <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10 uppercase">
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20">HOLDINGS (L)</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">HOLDINGS (L)</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="bg-card">
+                    {activeChartData.map((row, idx) => (
+                      <TableRow 
+                        key={row.name} 
+                        className={cn(
+                          "hover:bg-muted/50 transition-all duration-200 border-b border-border last:border-0 group",
+                          activeHoverIndex === idx && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
+                        )}
+                        onMouseEnter={() => setActiveHoverIndex(idx)}
+                        onMouseLeave={() => setActiveHoverIndex(null)}
+                      >
+                        <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
+                        <TableCell className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%]">{formatName(row.name)}</TableCell>
+                        <TableCell className={cn(
+                          "text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-all",
+                          activeHoverIndex === idx 
+                            ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" 
+                            : "bg-sky-500/15 text-sky-700 dark:text-sky-400"
+                        )}>{row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
+                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
+                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal">
+                          {row.buy > 0 ? (
+                            <span className="text-foreground">{row.buy.toLocaleString()}</span>
+                          ) : row.sell > 0 ? (
+                            <span className="text-rose-600">{row.sell.toLocaleString()}</span>
+                          ) : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
             </div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="h-4" /> {/* Spacer */}
+
+      {/* SECTION 2: PASSIVE MUTUAL FUNDS */}
+      <div className="space-y-6">
+        <Card className="p-4 bg-card shadow-xl border-border">
+          <div className="w-full mb-6 px-2">
+            <h3 className="text-sm 2xl:text-base font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest uppercase border-l-4 border-emerald-500 pl-3">TOP PASSIVE MF INVESTORS - DISTRIBUTION</h3>
+          </div>
+          <div className={cn("relative w-full flex flex-col items-center", isLargeTopN ? "h-auto" : pieRadii.containerH)}>
             <div className={cn("w-full shrink-0", pieRadii.containerH)}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -290,140 +366,69 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
               </div>
             )}
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      <Card className="p-4 md:p-6 bg-card shadow-xl border-border">
-        <div className="grid grid-cols-1 2xl:grid-cols-2 gap-12 w-full">
-          <div className="space-y-4">
-            <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest border-l-4 border-blue-500 pl-3">Top {topN} Active MF Investors</h3>
-            <div className="border border-border rounded-xl shadow-xl overflow-hidden flex flex-col">
-              <div className="w-full max-h-[500px] overflow-y-auto custom-scrollbar relative">
-                <Table>
-                  <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-10 shadow-sm">
-                    <TableRow className="hover:bg-transparent border-b border-white/10">
-                      <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-4 uppercase">Rank</TableHead>
-                      <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 whitespace-normal py-4 w-[30%] uppercase">Shareholder Name</TableHead>
-                      <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2 whitespace-normal leading-tight uppercase">
-                        {detectedDates.latest}
-                      </TableHead>
-                      <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight uppercase">
-                        {detectedDates.prev}
-                      </TableHead>
-                      <TableHead rowSpan={2} className="text-center text-white font-bold py-4 whitespace-normal leading-tight uppercase">Change in Holding Shares</TableHead>
+        <Card className="p-4 md:p-6 bg-card shadow-xl border-border">
+          <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest border-l-4 border-emerald-500 pl-3 mb-4">Top {topN} Passive MF Investors - Rankings</h3>
+          <div className="border border-border rounded-xl shadow-xl overflow-hidden flex flex-col">
+            <div className="w-full max-h-[500px] overflow-auto custom-scrollbar relative">
+              <Table>
+                <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-10 shadow-sm">
+                  <TableRow className="hover:bg-transparent border-b border-white/10">
+                    <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-4 uppercase">Rank</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 whitespace-normal py-4 w-[30%] uppercase">Shareholder Name</TableHead>
+                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/20 py-2 whitespace-normal leading-tight uppercase">
+                      {detectedDates.latest}
+                    </TableHead>
+                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight uppercase">
+                      {detectedDates.prev}
+                    </TableHead>
+                    <TableHead rowSpan={2} className="text-center text-white font-bold py-4 whitespace-normal leading-tight uppercase">Change in Holding Share</TableHead>
+                  </TableRow>
+                  <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10 uppercase">
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20">HOLDINGS (L)</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">HOLDINGS (L)</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="bg-card">
+                  {passiveChartData.map((row, idx) => (
+                    <TableRow 
+                      key={row.name} 
+                      className={cn(
+                        "hover:bg-muted/50 transition-all duration-200 border-b border-border last:border-0 group",
+                        passiveHoverIndex === idx && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
+                      )}
+                      onMouseEnter={() => setPassiveHoverIndex(idx)}
+                      onMouseLeave={() => setPassiveHoverIndex(null)}
+                    >
+                      <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
+                      <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%] uppercase">{row.name}</TableCell>
+                      <TableCell className={cn(
+                        "text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-all",
+                        passiveHoverIndex === idx 
+                          ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" 
+                          : "bg-sky-500/15 text-sky-700 dark:text-sky-400"
+                      )}>{row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal">
+                        {row.buy > 0 ? (
+                          <span className="text-foreground">{row.buy.toLocaleString()}</span>
+                        ) : row.sell > 0 ? (
+                          <span className="text-rose-600">{row.sell.toLocaleString()}</span>
+                        ) : '-'}
+                      </TableCell>
                     </TableRow>
-                    <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10 uppercase">
-                      <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20">HOLDINGS (L)</TableHead>
-                      <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
-                      <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">HOLDINGS (L)</TableHead>
-                      <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody className="bg-card">
-                      {activeChartData.map((row, idx) => (
-                        <TableRow 
-                          key={row.name} 
-                          className={cn(
-                            "hover:bg-muted/50 transition-all duration-200 border-b border-border last:border-0 group",
-                            activeHoverIndex === idx && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
-                          )}
-                          onMouseEnter={() => setActiveHoverIndex(idx)}
-                          onMouseLeave={() => setActiveHoverIndex(null)}
-                        >
-                          <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
-                          <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%] uppercase">{row.name}</TableCell>
-
-                          <TableCell className={cn(
-                            "text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-all",
-                            activeHoverIndex === idx 
-                              ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" 
-                              : "bg-sky-500/15 text-sky-700 dark:text-sky-400"
-                          )}>{row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
-                          <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
-
-                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
-                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
-
-                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal">
-                          {row.buy > 0 ? (
-                            <span className="text-foreground">{row.buy.toLocaleString()}</span>
-                          ) : row.sell > 0 ? (
-                            <span className="text-rose-600">{row.sell.toLocaleString()}</span>
-                          ) : '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </div>
-
-          <div className="space-y-4">
-            <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest border-l-4 border-emerald-500 pl-3">Top {topN} Passive MF Investors</h3>
-            <div className="border border-border rounded-xl shadow-xl overflow-hidden flex flex-col">
-              <div className="w-full max-h-[500px] overflow-y-auto custom-scrollbar relative">
-                <Table>
-                  <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-10 shadow-sm">
-                    <TableRow className="hover:bg-transparent border-b border-white/10">
-                      <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-4 uppercase">Rank</TableHead>
-                      <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 whitespace-normal py-4 w-[30%] uppercase">Shareholder Name</TableHead>
-                      <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/20 py-2 whitespace-normal leading-tight uppercase">
-                        {detectedDates.latest}
-                      </TableHead>
-                      <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight uppercase">
-                        {detectedDates.prev}
-                      </TableHead>
-                      <TableHead rowSpan={2} className="text-center text-white font-bold py-4 whitespace-normal leading-tight uppercase">Change in Holding Share</TableHead>
-                    </TableRow>
-                    <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10 uppercase">
-                      <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20">HOLDINGS (L)</TableHead>
-                      <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
-                      <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">HOLDINGS (L)</TableHead>
-                      <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody className="bg-card">
-                    {passiveChartData.map((row, idx) => (
-                      <TableRow 
-                        key={row.name} 
-                        className={cn(
-                          "hover:bg-muted/50 transition-all duration-200 border-b border-border last:border-0 group",
-                          passiveHoverIndex === idx && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
-                        )}
-                        onMouseEnter={() => setPassiveHoverIndex(idx)}
-                        onMouseLeave={() => setPassiveHoverIndex(null)}
-                      >
-                        <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
-                        <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%] uppercase">{row.name}</TableCell>
-
-                        <TableCell className={cn(
-                          "text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-all",
-                          passiveHoverIndex === idx 
-                            ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" 
-                            : "bg-sky-500/15 text-sky-700 dark:text-sky-400"
-                        )}>{row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
-                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
-
-                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
-                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
-
-                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal">
-                          {row.buy > 0 ? (
-                            <span className="text-foreground">{row.buy.toLocaleString()}</span>
-                          ) : row.sell > 0 ? (
-                            <span className="text-rose-600">{row.sell.toLocaleString()}</span>
-                          ) : '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -96,32 +96,26 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
               <div className="flex-1 max-h-[400px] overflow-y-auto custom-scrollbar relative">
                 <Table>
                   <TableHeader className="bg-primary dark:bg-slate-900 sticky top-0 z-20 shadow-sm">
-                    <TableRow className="hover:bg-transparent border-b border-white/10 text-white uppercase">
-                      <TableHead className="w-[100px] text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Category</TableHead>
-                      <TableHead className="text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Shareholder Name</TableHead>
-                      <TableHead className="w-[120px] text-right text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Shares (Lakhs)</TableHead>
-                      <TableHead className="w-[140px] text-right text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white py-2 whitespace-nowrap">% of Share Capital</TableHead>
+                    <TableRow className="hover:bg-transparent border-b border-white/10 text-white">
+                      <TableHead className="w-16 font-bold text-white text-center border-r border-white/5 py-4 text-[13px] font-['Adani']">#</TableHead>
+                      <TableHead className="font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Category</TableHead>
+                      <TableHead className="font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Shareholder Name</TableHead>
+                      <TableHead className="text-right font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Shares (L)</TableHead>
+                      <TableHead className="text-right font-bold text-white py-4 text-[13px] font-['Adani']">% Stake</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredNewEntries.map((entry, index) => (
-                      <TableRow key={index} className="hover:bg-emerald-500/5 dark:hover:bg-emerald-400/5 border-b border-border last:border-0 transition-colors">
-                        <TableCell className="border-r border-border py-2">
-                          <Badge
-                            variant="outline"
-                            className="text-[8px] 2xl:text-[10px] font-black tracking-tighter h-5 px-2 shadow-sm"
-                            style={{
-                              backgroundColor: `${getCategoryColor(entry.category)}15`,
-                              color: getCategoryColor(entry.category),
-                              borderColor: `${getCategoryColor(entry.category)}30`
-                            }}
-                          >
+                    {filteredNewEntries.map((entry, idx) => (
+                      <TableRow key={idx} className="hover:bg-emerald-500/5 dark:hover:bg-emerald-400/5 border-b border-border last:border-0 transition-colors">
+                        <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-2">{idx + 1}</TableCell>
+                        <TableCell className="py-2 border-r border-border">
+                          <Badge variant="outline" className="text-[10px] font-bold border-sky-500/30 text-sky-600 dark:text-sky-400 bg-sky-500/5">
                             {entry.category}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border whitespace-normal break-words leading-tight py-2 uppercase">{entry.shareholder}</TableCell>
-                        <TableCell className="text-right font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-2">{entry.shares.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-mono font-black text-[12px] 2xl:text-[14px] text-foreground py-2">{entry.percent.toFixed(2)}%</TableCell>
+                        <TableCell className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 border-r border-border whitespace-normal break-words leading-tight py-2">{formatName(entry.shareholder)}</TableCell>
+                        <TableCell className="text-right font-mono font-black text-[13px] font-['Adani'] text-foreground border-r border-border py-2">{entry.shares.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono font-black text-[13px] font-['Adani'] text-foreground py-2">{entry.percent.toFixed(2)}%</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -154,32 +148,26 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
               <div className="flex-1 max-h-[400px] overflow-y-auto custom-scrollbar relative">
                 <Table>
                   <TableHeader className="bg-primary dark:bg-slate-900 sticky top-0 z-20 shadow-sm">
-                    <TableRow className="hover:bg-transparent border-b border-white/10 text-white uppercase">
-                      <TableHead className="w-[100px] text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Category</TableHead>
-                      <TableHead className="text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Shareholder Name</TableHead>
-                      <TableHead className="w-[120px] text-right text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white border-r border-white/5 py-2">Shares (Lakhs)</TableHead>
-                      <TableHead className="w-[140px] text-right text-[9px] 2xl:text-[11px] font-bold tracking-wider text-white py-2 whitespace-nowrap">% of Share Capital</TableHead>
+                    <TableRow className="hover:bg-transparent border-b border-white/10 text-white">
+                      <TableHead className="w-16 font-bold text-white text-center border-r border-white/5 py-4 text-[13px] font-['Adani']">#</TableHead>
+                      <TableHead className="font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Category</TableHead>
+                      <TableHead className="font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Shareholder Name</TableHead>
+                      <TableHead className="text-right font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Shares (L)</TableHead>
+                      <TableHead className="text-right font-bold text-white py-4 text-[13px] font-['Adani']">% Stake</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredExits.map((exit, index) => (
-                      <TableRow key={index} className="hover:bg-sky-500/5 dark:hover:bg-sky-400/5 border-b border-border last:border-0 transition-colors">
-                        <TableCell className="border-r border-border py-2">
-                          <Badge
-                            variant="outline"
-                            className="text-[8px] 2xl:text-[10px] font-black tracking-tighter h-5 px-2 shadow-sm"
-                            style={{
-                              backgroundColor: `${getCategoryColor(exit.category)}15`,
-                              color: getCategoryColor(exit.category),
-                              borderColor: `${getCategoryColor(exit.category)}30`
-                            }}
-                          >
+                    {filteredExits.map((exit, idx) => (
+                      <TableRow key={idx} className="hover:bg-sky-500/5 dark:hover:bg-sky-400/5 border-b border-border last:border-0 transition-colors">
+                        <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-2">{idx + 1}</TableCell>
+                        <TableCell className="py-2 border-r border-border">
+                          <Badge variant="outline" className="text-[10px] font-bold border-sky-500/30 text-sky-600 dark:text-sky-400 bg-sky-500/5">
                             {exit.category}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border whitespace-normal break-words leading-tight py-2 uppercase">{exit.shareholder}</TableCell>
-                        <TableCell className="text-right font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-2">{exit.shares.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-mono font-black text-[12px] 2xl:text-[14px] text-foreground py-2">{exit.percent.toFixed(2)}%</TableCell>
+                        <TableCell className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 border-r border-border whitespace-normal break-words leading-tight py-2">{formatName(exit.shareholder)}</TableCell>
+                        <TableCell className="text-right font-mono font-black text-[13px] font-['Adani'] text-foreground border-r border-border py-2">{exit.shares.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono font-black text-[13px] font-['Adani'] text-foreground py-2">{exit.percent.toFixed(2)}%</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

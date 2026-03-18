@@ -22,19 +22,47 @@ export function formatDateRange(range: string) {
 
 export function formatName(name: string) {
   if (!name || name === '—' || name === 'Unknown') return name;
+  
+  // List of abbreviations that should ALWAYS remain uppercase
+  const ABBREVIATIONS = new Set([
+    'GQG', 'FII', 'FPI', 'SWF', 'MF', 'SBI', 'LIC', 'HSBC', 'SEBI', 'DII', 
+    'AIF', 'PF', 'EPS', 'ETF', 'PLC', 'ADR', 'GDR', 'NSE', 'BSE', 'USA', 
+    'UK', 'JP', 'FR', 'DE', 'EU', 'UCITS', 'SICAV', 'P-NOTE', 'P-NOTE', 'EM',
+    'FTSE', 'MSC', 'MSCI', 'ETFS', 'UTI', 'HDFC', 'ICICI', 'ABSL', 'IDFC',
+    'AUT', 'A/C', 'AIA', 'BP', 'CP', 'GP', 'LP', 'LLP', 'SPV'
+  ]);
+
   return name
     .split(' ')
     .map((word) => {
-      // Keep things like (P-Note), (incl. etc if they have leading punctuation by just lowercasing the word, but we usually upper the first letter
       if (word.length === 0) return '';
-      // Let's grab the first alpha character to capitalize it and lower the rest
-      const match = word.match(/[a-zA-Z]/);
-      if (match && match.index !== undefined) {
-         const idx = match.index;
-         return word.substring(0, idx) + word[idx].toUpperCase() + word.substring(idx + 1).toLowerCase();
+      
+      // Remove surrounding punctuation for abbreviation check (like brackets or quotes)
+      const cleanWord = word.replace(/[^a-zA-Z0-9\-\/]/g, '').toUpperCase();
+      
+      if (ABBREVIATIONS.has(cleanWord)) {
+        return word.toUpperCase();
       }
+
+      // Special case: Starts with a bracket but has an alpha
+      // Handle words like "(INCL." -> "(Incl." or "(GQG" -> "(GQG"
+      const firstAlphaIndex = word.search(/[a-zA-Z]/);
+      if (firstAlphaIndex !== -1) {
+        const prefix = word.substring(0, firstAlphaIndex);
+        const core = word.substring(firstAlphaIndex);
+        
+        // Check if the alpha part is an abbreviation
+        const alphaClean = core.replace(/[^a-zA-Z0-9\-\/]/g, '').toUpperCase();
+        if (ABBREVIATIONS.has(alphaClean)) {
+           return prefix + core.toUpperCase();
+        }
+
+        return prefix + core.charAt(0).toUpperCase() + core.substring(1).toLowerCase();
+      }
+
       return word.toLowerCase();
     })
     .join(' ')
     .trim();
 }
+

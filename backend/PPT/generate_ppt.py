@@ -4442,6 +4442,21 @@ def generate_report(template_path: str, db_path: str, date_input: Optional[str],
         df_entry = fetch_table_data_latest(conn, TABLE_NAMES["entry"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
         df_exit = fetch_table_data_latest(conn, TABLE_NAMES["exit"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
 
+        report_data = {
+            "institutional": df_institutional.to_dict(orient="records") if not df_institutional.empty else [],
+            "buyers": df_buyers.to_dict(orient="records") if not df_buyers.empty else [],
+            "sellers": df_sellers.to_dict(orient="records") if not df_sellers.empty else [],
+            "fii_fpi": df_fii_fpi.to_dict(orient="records") if not df_fii_fpi.empty else [],
+            "mf_active": df_mf_active.to_dict(orient="records") if not df_mf_active.empty else [],
+            "mf_passive": df_mf_passive.to_dict(orient="records") if not df_mf_passive.empty else [],
+            "insurance_pf": df_insurance_pf.to_dict(orient="records") if not df_insurance_pf.empty else [],
+            "aif": df_aif.to_dict(orient="records") if not df_aif.empty else [],
+            "entry": df_entry.to_dict(orient="records") if not df_entry.empty else [],
+            "exit": df_exit.to_dict(orient="records") if not df_exit.empty else [],
+            "bu_name": bu_name,
+            "display_date": d1
+        }
+
         import io
         prs = Presentation(template_path)
 
@@ -4545,7 +4560,7 @@ def generate_report(template_path: str, db_path: str, date_input: Optional[str],
 
         output = io.BytesIO()
         prs.save(output)
-        return output.getvalue(), d1
+        return output.getvalue(), d1, report_data
     finally:
         conn.close()
 

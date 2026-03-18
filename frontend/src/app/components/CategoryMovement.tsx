@@ -1,5 +1,5 @@
 import { Card } from './ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { ArrowUp, ArrowDown, TrendingUp } from 'lucide-react';
 import { kpiData, categoryMovementData } from '../data';
@@ -100,12 +100,22 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
             <YAxis
               dataKey="category"
               type="category"
-              width={160}
-              tick={{ fontSize: 13, fontWeight: 500, fontFamily: 'inherit', fill: 'var(--foreground)' }}
-              tickFormatter={(v: string) => v.toUpperCase()}
+              width={480}
+              tick={(props: any) => {
+                const { x, y, payload } = props;
+                return (
+                  <g transform={`translate(${x},${y})`}>
+                    <text x={-25} y={4} textAnchor="end" fontSize={13} fontWeight={900} fill="var(--foreground)" style={{ fontFamily: 'Adani' }}>
+                      {payload.value.toUpperCase()}
+                    </text>
+                  </g>
+                );
+              }}
               axisLine={false}
               tickLine={false}
-            />
+            >
+              <Label value="SHAREHOLDER CATEGORIES" angle={-90} position="insideLeft" offset={-15} style={{ textAnchor: 'middle', fontSize: 13, fontWeight: 900, fontFamily: 'Adani', fill: 'var(--muted-foreground)', opacity: 0.7 }} />
+            </YAxis>
             <Tooltip
               cursor={{ fill: 'var(--primary)', opacity: 0.05 }}
               contentStyle={{

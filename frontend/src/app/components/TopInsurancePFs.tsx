@@ -203,20 +203,19 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
         </div>
 
         <div className="border border-border rounded-xl shadow-2xl flex flex-col bg-card overflow-hidden">
-          <div className="flex-1 max-h-[500px] overflow-y-auto custom-scrollbar relative">
-            <div className="overflow-x-auto">
+          <div className="flex-1 max-h-[500px] overflow-auto custom-scrollbar relative">
               <Table>
                 <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-20 shadow-sm">
-                  <TableRow className="hover:bg-transparent border-b border-white/10 uppercase">
-                    <TableHead rowSpan={2} className="w-16 text-center text-white font-bold border-r border-white/5 py-4">Rank</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 min-w-[300px] py-4">Shareholder Name</TableHead>
-                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2">
-                      {detectedDates.latest}
-                    </TableHead>
-                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2">
-                      {detectedDates.prev}
-                    </TableHead>
-                    <TableHead rowSpan={2} className="text-center text-white font-bold py-4">Change in Holding Shares</TableHead>
+                  <TableRow className="hover:bg-transparent border-b border-white/10">
+                        <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-4 text-[13px] font-['Adani']">Rank</TableHead>
+                        <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 whitespace-normal py-4 text-[13px] font-['Adani']">Shareholder Name</TableHead>
+                        <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2 whitespace-normal leading-tight text-[13px] font-['Adani']">
+                          {detectedDates.latest}
+                        </TableHead>
+                        <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight text-[13px] font-['Adani']">
+                          {detectedDates.prev}
+                        </TableHead>
+                        <TableHead rowSpan={2} className="text-center text-white font-bold py-4 whitespace-normal leading-tight text-[13px] font-['Adani']">Change in Holding Shares</TableHead>
                   </TableRow>
                   <TableRow className="hover:bg-transparent text-[10px] 2xl:text-[11px] border-b border-white/10 uppercase">
                     <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2">Holding (L)</TableHead>
@@ -230,8 +229,8 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
                     <TableRow key={row.name} className={cn(
                       "hover:bg-muted/50 transition-colors border-b border-border last:border-0 group"
                     )}>
-                      <TableCell className="text-center font-black text-muted-foreground text-[12px] 2xl:text-[14px] border-r border-border py-4">{idx + 1}</TableCell>
-                      <TableCell className="font-bold text-[13px] 2xl:text-[15px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight uppercase">{row.name}</TableCell>
+                      <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-4">{idx + 1}</TableCell>
+                      <TableCell className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal">{formatName(row.name)}</TableCell>
                       <TableCell className="text-center font-mono font-bold text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4">{row.holdings.toLocaleString()}</TableCell>
                       <TableCell className="text-center font-mono font-bold text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4">{row.percent.toFixed(2)}%</TableCell>
                       <TableCell className="text-center font-mono font-bold text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4">{row.prevHoldings.toLocaleString()}</TableCell>
@@ -246,8 +245,7 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
-            </div>
+            </Table>
           </div>
         </div>
       </Card>

@@ -155,9 +155,9 @@ export function SharePriceMovement({ dateRange }: SharePriceProps) {
       <Card className="p-4 2xl:p-6 bg-card shadow-2xl border-border">
         <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-300 mb-6 uppercase tracking-widest opacity-90 border-l-4 border-indigo-500 pl-3">Daily Price & Volume Data</h3>
         <div className="border border-border rounded-xl overflow-hidden shadow-xl bg-card">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
+          <div className="overflow-auto max-h-[500px] custom-scrollbar">
+            <table className="w-full text-left relative">
+              <thead className="sticky top-0 z-20 shadow-sm">
                 <tr className="bg-primary dark:bg-slate-900 border-b border-white/10 transition-colors">
                   <th className="py-5 px-6 text-[10px] 2xl:text-[12px] font-black text-white uppercase tracking-widest">Date</th>
                   <th className="text-right py-5 px-6 text-[10px] 2xl:text-[12px] font-black text-white uppercase tracking-widest">APL Price</th>

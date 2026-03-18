@@ -104,7 +104,7 @@ def _get_db_path() -> str:
 
 
 def get_report_metadata(date_iso: Optional[str], bu_id: int = 1):
-    """Returns (pptx_bytes, display_date, bu_name)"""
+    """Returns (pptx_bytes, display_date, bu_name, report_data)"""
     template_path = _get_template_path()
     db_path = _get_db_path()
 
@@ -169,15 +169,15 @@ def get_report_metadata(date_iso: Optional[str], bu_id: int = 1):
 
     # ---------- Generate Report ----------
     try:
-        pptx_bytes, target_display_date = generate_report(template_path, db_path, date_range_label, bu_id)
-        return pptx_bytes, target_display_date, bu_name
+        pptx_bytes, target_display_date, report_data = generate_report(template_path, db_path, date_range_label, bu_id)
+        return pptx_bytes, target_display_date, bu_name, report_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
 
 
 @router.get("/preview-pdf")
 async def preview_pdf(date: Optional[str] = None, bu_id: int = 1):
-    pptx_bytes, display_date, bu_name = get_report_metadata(date, bu_id)
+    pptx_bytes, display_date, bu_name, _ = get_report_metadata(date, bu_id)
     try:
         pdf_bytes = pptx_bytes_to_pdf(pptx_bytes)
         clean_bu = bu_name.replace(" ", "_")
@@ -193,9 +193,11 @@ async def preview_pdf(date: Optional[str] = None, bu_id: int = 1):
 
 @router.get("/preview-slides")
 async def preview_slides(date: Optional[str] = None, bu_id: int = 1):
-    pptx_bytes, _, bu_name = get_report_metadata(date, bu_id)
+    pptx_bytes, _, bu_name, report_data = get_report_metadata(date, bu_id)
     try:
         images_bytes = pptx_to_images(pptx_bytes)
+        if not images_bytes:
+            return {"slides": [], "data": report_data, "bu_name": bu_name}
         encoded = [base64.b64encode(img).decode('utf-8') for img in images_bytes]
         return {"slides": encoded, "bu_name": bu_name}
     except Exception as e:
@@ -205,7 +207,7 @@ async def preview_slides(date: Optional[str] = None, bu_id: int = 1):
 
 @router.get("/download-pdf")
 async def download_pdf(date: Optional[str] = None, bu_id: int = 1):
-    pptx_bytes, display_date, bu_name = get_report_metadata(date, bu_id)
+    pptx_bytes, display_date, bu_name, _ = get_report_metadata(date, bu_id)
     try:
         pdf_bytes = pptx_bytes_to_pdf(pptx_bytes)
         clean_bu = bu_name.replace(" ", "_")
@@ -222,7 +224,7 @@ async def download_pdf(date: Optional[str] = None, bu_id: int = 1):
 
 @router.get("/download-pptx")
 async def download_pptx(date: Optional[str] = None, bu_id: int = 1):
-    pptx_bytes, display_date, bu_name = get_report_metadata(date, bu_id)
+    pptx_bytes, display_date, bu_name, _ = get_report_metadata(date, bu_id)
     clean_bu = bu_name.replace(" ", "_")
     filename = f"Weekly_Report_{clean_bu}_{display_date.replace('-', '_')}.pptx"
     logger.info(f"PPTX_DOWNLOAD_SUCCESS | Date: {display_date}")
@@ -235,7 +237,7 @@ async def download_pptx(date: Optional[str] = None, bu_id: int = 1):
 
 @router.post("/send-email")
 async def send_email(req: EmailRequest, bu_id: int = 1):
-    pptx_bytes, display_date, bu_name = get_report_metadata(req.date, bu_id)
+    pptx_bytes, display_date, bu_name, _ = get_report_metadata(req.date, bu_id)
     try:
         pdf_bytes = pptx_bytes_to_pdf(pptx_bytes)
         clean_bu = bu_name.replace(" ", "_")

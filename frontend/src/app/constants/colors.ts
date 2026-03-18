@@ -1,17 +1,17 @@
 export const CATEGORY_COLORS: Record<string, string> = {
     'Promoter': '#00205B',        // Adani Navy
-    'FII': '#007FB1',             // Adani Cyan
-    'FPI': '#005072',             // Deep Ocean Blue
-    'DII-MF': '#A1005B',          // Adani Burgundy/Plum
-    'DII-Insurance': '#00827F',   // Adani Teal/Green
-    'DII-IF': '#7B2E76',          // Royal Purple
-    'DII-AIF': '#B11B58',         // Vibrant Berry
-    'FI': '#B7912B',              // Corporate Gold
-    'DII-PMS': '#3E617A',         // Slate Professional
-    'SWF': '#00A1E4',             // Bright Sky Blue
-    'DII-PF': '#442E5D',          // Deep Corporate Violet
-    'Non-Institution': '#2D2926', // Charcoal Gray
-    'Others': '#6B6D70'           // Muted Corporate Gray
+    'FII': '#0088CC',             // Cerulean Blue
+    'FPI': '#E91E63',             // Vibrant Magenta
+    'DII-MF': '#00897B',          // Emerald Teal
+    'DII-Insurance': '#F59E0B',   // Amber Gold
+    'DII-IF': '#7B1FA2',          // Deep Purple
+    'DII-AIF': '#EF5350',         // Coral Red
+    'FI': '#FF6D00',              // Tangerine Orange
+    'DII-PMS': '#0097A7',         // Bright Cyan
+    'SWF': '#43A047',             // Fresh Green
+    'DII-PF': '#C62828',          // Crimson
+    'Non-Institution': '#5C6BC0', // Indigo
+    'Others': '#78909C'           // Cool Steel
 };
 
 export const getCategoryColor = (category: string) => {
