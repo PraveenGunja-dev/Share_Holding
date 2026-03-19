@@ -356,9 +356,9 @@ export function InstitutionalHolders({
                     <TableHead rowSpan={2} className={cn("text-center text-white font-bold transition-colors text-[13px] font-['Adani']", metricView === 'change' ? "bg-white/20" : "")}>Change in Holding Shares</TableHead>
                   </TableRow>
                   <TableRow className="hover:bg-transparent border-b border-white/10">
-                    <TableHead className={cn("text-center text-white font-bold border-r border-white/5 text-[13px] font-['Adani'] py-1 transition-all", metricView === 'holdings' || metricView === 'all' ? "bg-sky-400/20 shadow-[inset_0_0_10px_rgba(255,255,255,0.1)]" : "")}>Holdings (L)</TableHead>
+                    <TableHead className={cn("text-center text-white font-bold border-r border-white/5 text-[13px] font-['Adani'] py-1 transition-all", metricView === 'holdings' || metricView === 'all' ? "bg-sky-400/20 shadow-[inset_0_0_10px_rgba(255,255,255,0.1)]" : "")}>Holding</TableHead>
                     <TableHead className={cn("text-center text-white font-bold border-r border-white/5 text-[13px] font-['Adani'] py-1 transition-all", metricView === 'percentage' || metricView === 'all' ? "bg-sky-400/20 shadow-[inset_0_0_10px_rgba(255,255,255,0.1)]" : "")}>% of Share Capital</TableHead>
-                    <TableHead className="text-center text-white font-bold border-r border-white/5 text-[13px] font-['Adani'] py-1">Holdings (L)</TableHead>
+                    <TableHead className="text-center text-white font-bold border-r border-white/5 text-[13px] font-['Adani'] py-1">Holding</TableHead>
                     <TableHead className="text-center text-white font-bold text-[13px] font-['Adani'] py-1">% of Share Capital</TableHead>
                   </TableRow>
                 </TableHeader>

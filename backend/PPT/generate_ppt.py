@@ -120,7 +120,7 @@ def _get_date_range_label() -> Optional[str]:
     return None
 
 # Load DB config from environment
-_default_db_path = str((_here.parent.parent / "WeeklyShareHolding_Update5.db").resolve())
+_default_db_path = str((_here.parent.parent / "WeeklyShareHolding_Update6.db").resolve())
 DB_PATH = _get_env("DB_PATH", _default_db_path).strip()
 if not DB_PATH:
     raise ValueError("Missing required DB env var: DB_PATH")

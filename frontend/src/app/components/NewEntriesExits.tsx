@@ -97,17 +97,15 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
                 <Table>
                   <TableHeader className="bg-primary dark:bg-slate-900 sticky top-0 z-20 shadow-sm">
                     <TableRow className="hover:bg-transparent border-b border-white/10 text-white">
-                      <TableHead className="w-16 font-bold text-white text-center border-r border-white/5 py-4 text-[13px] font-['Adani']">#</TableHead>
                       <TableHead className="font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Category</TableHead>
-                      <TableHead className="font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Shareholder Name</TableHead>
-                      <TableHead className="text-right font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Shares (L)</TableHead>
-                      <TableHead className="text-right font-bold text-white py-4 text-[13px] font-['Adani']">% Stake</TableHead>
+                      <TableHead className="font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">New Shareholder</TableHead>
+                      <TableHead className="text-right font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Shares Acquired during the Week</TableHead>
+                      <TableHead className="text-right font-bold text-white py-4 text-[13px] font-['Adani']">% of Share Capital</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredNewEntries.map((entry, idx) => (
                       <TableRow key={idx} className="hover:bg-emerald-500/5 dark:hover:bg-emerald-400/5 border-b border-border last:border-0 transition-colors">
-                        <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-2">{idx + 1}</TableCell>
                         <TableCell className="py-2 border-r border-border">
                           <Badge variant="outline" className="text-[10px] font-bold border-sky-500/30 text-sky-600 dark:text-sky-400 bg-sky-500/5">
                             {entry.category}
@@ -149,17 +147,15 @@ export function NewEntriesExits({ selectedCategories, dateRange, buId }: NewEntr
                 <Table>
                   <TableHeader className="bg-primary dark:bg-slate-900 sticky top-0 z-20 shadow-sm">
                     <TableRow className="hover:bg-transparent border-b border-white/10 text-white">
-                      <TableHead className="w-16 font-bold text-white text-center border-r border-white/5 py-4 text-[13px] font-['Adani']">#</TableHead>
                       <TableHead className="font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Category</TableHead>
-                      <TableHead className="font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Shareholder Name</TableHead>
-                      <TableHead className="text-right font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Shares (L)</TableHead>
-                      <TableHead className="text-right font-bold text-white py-4 text-[13px] font-['Adani']">% Stake</TableHead>
+                      <TableHead className="font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Exited Shareholder</TableHead>
+                      <TableHead className="text-right font-bold text-white border-r border-white/5 py-4 text-[13px] font-['Adani']">Shares Sold during the Week</TableHead>
+                      <TableHead className="text-right font-bold text-white py-4 text-[13px] font-['Adani']">% of Share Capital</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredExits.map((exit, idx) => (
                       <TableRow key={idx} className="hover:bg-sky-500/5 dark:hover:bg-sky-400/5 border-b border-border last:border-0 transition-colors">
-                        <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-2">{idx + 1}</TableCell>
                         <TableCell className="py-2 border-r border-border">
                           <Badge variant="outline" className="text-[10px] font-bold border-sky-500/30 text-sky-600 dark:text-sky-400 bg-sky-500/5">
                             {exit.category}

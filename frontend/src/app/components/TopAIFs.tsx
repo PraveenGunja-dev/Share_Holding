@@ -136,10 +136,11 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
 
   const aifPalette = [
     getCategoryColor('DII-AIF'),
-    '#0088CC', '#F59E0B', '#7B1FA2', '#00897B',
-    '#FF6D00', '#5C6BC0', '#43A047', '#E91E63', '#0097A7',
-    '#C62828', '#8D6E63', '#3949AB', '#00ACC1', '#D81B60',
-    '#7CB342', '#F4511E', '#1E88E5', '#FDD835', '#6D4C41'
+    '#6366f1', // Indigo 500
+    '#4338ca', // Indigo 700
+    '#3730a3', // Indigo 800
+    '#818cf8', // Indigo 400
+    '#c7d2fe', // Indigo 200
   ];
 
   return (
@@ -155,8 +156,8 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
           <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 min-h-[85px] h-full"
             style={{ borderRightColor: getCategoryColor('DII-AIF') }}>
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none uppercase">Total AIF holdings</div>
-            <div className="text-base 2xl:text-lg font-black" style={{ color: getCategoryColor('DII-AIF') }}>
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total AIF holdings</div>
+            <div className="text-base 2xl:text-lg font-black text-primary dark:text-indigo-400">
               {totalAIFHoldings.toLocaleString()}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
             </div>
@@ -169,7 +170,7 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
             </div>
           </Card>
           <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-blue-500 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none uppercase">Active investors</div>
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total Investors</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300">
               {activeAIFCount}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Entities</span>
@@ -237,7 +238,7 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
                     labelStyle={{ color: 'var(--primary)', fontSize: '13px', fontWeight: 500, marginBottom: '8px' }}
                     formatter={(v: any, name: any) => [
                       `${v.toLocaleString()}${metricView === 'percentage' ? '%' : ' Lakhs'}`,
-                      formatName(name)
+                      name.toUpperCase()
                     ]}
                   />
                 </PieChart>
@@ -260,10 +261,10 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
                       activeRank === idx ? "scale-125 shadow-md" : "shadow-sm"
                     )} style={{ backgroundColor: aifPalette[idx % aifPalette.length] }} />
                     <span className={cn(
-                      "text-[10px] 2xl:text-[12px] font-bold truncate max-w-[150px] 2xl:max-w-[200px] transition-colors",
+                      "text-[10px] 2xl:text-[12px] font-bold truncate max-w-[150px] 2xl:max-w-[200px] transition-colors uppercase",
                       activeRank === idx ? "text-sky-600 dark:text-sky-300" : "text-muted-foreground group-hover:text-sky-500"
                     )}>
-                      {formatName(item.name)}
+                      {item.name}
                     </span>
                     <span className={cn(
                       "text-[10px] 2xl:text-[12px] font-black ml-auto whitespace-nowrap transition-all",
@@ -280,28 +281,29 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
           {/* Right Column: Table */}
           <div className="xl:w-[72%] py-4">
             <div className="mb-4">
-              <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 mb-2 tracking-widest opacity-90 border-l-4 border-sky-500 pl-3">Top {topN} DII - AIFs​</h3>
+              <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 mb-2 tracking-widest opacity-90 border-l-4 border-sky-500 pl-3">Top {topN} DII - AIFs</h3>
             </div>
 
             <div className="border border-border rounded-xl shadow-xl flex flex-col bg-card overflow-hidden">
-              <div className="flex-1 max-h-[500px] overflow-auto custom-scrollbar relative">
+              <div className="flex-1 max-h-[500px] overflow-y-auto custom-scrollbar relative">
+                <div className="w-full min-w-[800px]">
                   <Table>
                     <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-20 shadow-sm">
                       <TableRow className="hover:bg-transparent border-b border-white/10">
-                        <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-4 text-[13px] font-['Adani']">Rank</TableHead>
-                        <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 whitespace-normal py-4 w-[25%] text-[13px] font-['Adani']">Shareholder Name</TableHead>
-                        <TableHead colSpan={2} className={cn("text-center text-white font-bold border-r border-white/5 transition-colors text-[13px] font-['Adani']", (metricView === 'holdings' || metricView === 'percentage') ? "bg-white/20" : "bg-white/10")}>
+                        <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-4 uppercase">Rank</TableHead>
+                        <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 whitespace-normal py-4 w-[25%] uppercase">Shareholder Name</TableHead>
+                        <TableHead colSpan={2} className={cn("text-center text-white font-bold border-r border-white/5 transition-colors uppercase", (metricView === 'holdings' || metricView === 'percentage') ? "bg-white/20" : "bg-white/10")}>
                           {detectedDates.latest}
                         </TableHead>
-                        <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight text-[13px] font-['Adani']">
+                        <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight uppercase">
                           {detectedDates.prev}
                         </TableHead>
-                        <TableHead rowSpan={2} className={cn("text-center text-white font-bold py-4 whitespace-normal leading-tight max-w-[100px] transition-colors text-[13px] font-['Adani']", metricView === 'change' ? "bg-white/20" : "")}>Change in Holding Shares</TableHead>
+                        <TableHead rowSpan={2} className={cn("text-center text-white font-bold py-4 whitespace-normal leading-tight max-w-[100px] transition-colors uppercase", metricView === 'change' ? "bg-white/20" : "")}>Change in Holding Shares</TableHead>
                       </TableRow>
                       <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10 uppercase">
-                        <TableHead className={cn("text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal transition-all", (metricView === 'holdings' || metricView === 'all') ? "bg-sky-400/20 shadow-inner" : "")}>Holdings (L)</TableHead>
+                        <TableHead className={cn("text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal transition-all", (metricView === 'holdings' || metricView === 'all') ? "bg-sky-400/20 shadow-inner" : "")}>Holding</TableHead>
                         <TableHead className={cn("text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight transition-all", (metricView === 'percentage' || metricView === 'all') ? "bg-sky-400/20 shadow-inner" : "")}>% of Share Capital</TableHead>
-                        <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">Holdings (L)</TableHead>
+                        <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">Holding</TableHead>
                         <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -316,8 +318,8 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
                           onMouseEnter={() => setActiveRank(idx)}
                           onMouseLeave={() => setActiveRank(null)}
                         >
-                          <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
-                          <TableCell className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[25%]">{formatName(row.name)}</TableCell>
+                          <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
+                          <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[25%] uppercase">{row.name}</TableCell>
 
                           {/* Metric Highlighting */}
                           <TableCell className={cn(
@@ -353,6 +355,7 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
                       ))}
                     </TableBody>
                   </Table>
+                </div>
               </div>
             </div>
           </div>

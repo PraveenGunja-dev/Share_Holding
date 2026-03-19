@@ -189,7 +189,7 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
       const a = document.createElement('a');
       a.href = url;
       const rangeName = overrideRange || displayDate;
-      a.download = `Weekly_Report_${rangeName?.replace(/-/g, '_') || 'latest'}.${format}`;
+      a.download = `Weekly_Report_${rangeName?.replace(/-/g, '_') || 'latest'}_${buName.replace(/ /g, '_')}.${format}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -313,7 +313,7 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Generated Output</p>
                     <p className="text-sm font-bold text-[#002B5C] dark:text-sky-400 truncate">
-                      Weekly_Report_{buName.replace(/ /g, '_')}_{displayDate?.replace(/-/g, '_') || 'latest'}.pptx
+                      Weekly_Report_{displayDate?.replace(/-/g, '_') || 'latest'}_{buName.replace(/ /g, '_')}.pptx
                     </p>
                   </div>
                </div>

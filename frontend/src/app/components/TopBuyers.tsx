@@ -1,12 +1,12 @@
 import { Card } from './ui/card';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell, Label
+  ResponsiveContainer, Cell, Label, PieChart, Pie
 } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { TrendingUp, Users, Trophy } from 'lucide-react';
 import { getTopBuyers, getTopSellers } from '../services/api';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getCategoryColor } from '../constants/colors';
 import { cn, formatName } from "./ui/utils";
 import { useTheme } from '../context/ThemeContext';
@@ -50,10 +50,6 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
     : { left: 50, right: 60, bottom: 60, top: 40 };
 
   const yAxisWidth = isMobile ? 150 : isTablet ? 320 : 430;
-
-  // Standardized height to match Institutional Bars (800px)
-  const chartH = 800;
-
 
   useEffect(() => {
     async function fetchData() {
@@ -145,20 +141,26 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
     category: d.category,
   }));
 
-  // Pad data up to topN to ensure all 20 rows are visible in the layout
-  const chartData = [...baseChartData];
-  while (chartData.length < topN) {
-    chartData.push({
-      name: `—`,
-      rank: chartData.length + 1,
-      value: 0,
-      category: 'Others'
-    });
-  }
+  const chartData = baseChartData;
 
   const fmtVal = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toLocaleString();
 
-  const maxVal = chartData.length > 0 ? Math.max(...chartData.map(d => d.value)) : 1;
+  const maxVal = Math.max(...chartData.map(d => d.value), 0);
+
+  const chartH = Math.max(200, chartData.length * 45 + 50);
+
+  const donutData = useMemo(() => {
+    const categories = Array.from(new Set(filteredData.map(d => d.category)));
+    return categories.map(cat => ({
+      name: cat === 'Alternative Investment Funds' ? 'AIF' :
+            cat === 'Sovereign Wealth Funds' ? 'SWF' :
+            cat === 'Mutual Funds' ? 'MF' : cat,
+      value: filteredData
+        .filter(d => d.category === cat)
+        .reduce((acc, curr) => acc + curr.bought, 0),
+      color: getCategoryColor(cat)
+    })).filter(d => d.value > 0);
+  }, [filteredData]);
 
   return (
     <div id="buyers" className="space-y-4 transition-all duration-300 text-slate-100">
@@ -189,7 +191,7 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
             <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 truncate uppercase" title={topBuyer?.name}>
               Top Buyer: {topBuyer?.name || '—'}
             </div>
-            <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300 leading-none">
+            <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300">
               {topBuyer ? fmtVal(topBuyer.bought) : '—'}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
             </div>
@@ -199,19 +201,52 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
 
       {/* ── Horizontal Bar Chart ── */}
       <Card className="p-4 bg-card border-border shadow-[0_8px_30px_-4px_rgba(0,32,91,0.08)] dark:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.3)]">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 border-b border-slate-100 dark:border-slate-800 pb-6">
-          <div className="border-l-4 border-primary dark:border-sky-500 pl-4">
-            <h3 className="text-sm 2xl:text-base font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest uppercase mb-1">TOP BUYING INSTITUTIONS PERFORMANCE</h3>
-            <p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold tracking-[0.2em] opacity-80 uppercase">
-              Shares acquired (in lakhs) — Ranked 1 to {topN} top to bottom
-            </p>
+        {/* Ownership Mix ribbon — matching InstitutionalHolders */}
+        <div className="flex items-center justify-between gap-4 mb-4 bg-muted/20 dark:bg-slate-900/40 p-2 rounded-xl border border-border/40 shadow-sm backdrop-blur-sm overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-3">
+            {donutData.length > 0 && (
+              <div className="h-[50px] w-[50px] 2xl:h-[65px] 2xl:w-[65px] flex-shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={donutData}
+                      innerRadius={12}
+                      outerRadius={24}
+                      paddingAngle={4}
+                      dataKey="value"
+                      stroke="none"
+                      animationDuration={1000}
+                    >
+                      {donutData.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(v: any, name: string) => [`${v.toLocaleString()} Lakhs`, name]}
+                      contentStyle={{
+                        backgroundColor: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                        padding: '8px 12px'
+                      }}
+                      itemStyle={{ fontSize: '12px', fontWeight: 500, color: 'var(--card-foreground)' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="text-[12px] 2xl:text-[14px] font-black text-primary dark:text-sky-400 tracking-[0.15em] uppercase">Ownership Mix</span>
+              <span className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold opacity-60 uppercase">Distribution by category</span>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 bg-slate-50 dark:bg-slate-800/40 px-5 py-2.5 rounded-full border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-            {Array.from(new Set(filteredData.map(d => d.category))).map(cat => (
-              <div key={cat} className="flex items-center gap-2 group cursor-default">
-                <div className="w-2.5 h-2.5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-900 group-hover:scale-125 transition-transform" style={{ backgroundColor: getCategoryColor(cat) }} />
-                <span className="text-[10px] font-black text-[#002B5C] dark:text-sky-400 tracking-wider uppercase">{cat}</span>
+          <div className="flex items-center gap-6 pr-2">
+            {donutData.map((d: any) => (
+              <div key={d.name} className="flex items-center gap-2 flex-shrink-0">
+                <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: d.color }} />
+                <span className="text-[12px] 2xl:text-[14px] font-black text-foreground whitespace-nowrap tracking-tight uppercase">{d.name}</span>
               </div>
             ))}
           </div>
@@ -355,10 +390,10 @@ export function TopBuyers({ selectedCategories, topN, dateRange, buId }: TopBuye
                   <TableHead colSpan={2} className="text-center text-white font-bold bg-white/5 py-2 text-[13px] font-['Adani']">{detectedDates.prev}</TableHead>
                 </TableRow>
                 <TableRow className="hover:bg-transparent border-b border-white/10">
-                  <TableHead className="text-center text-white font-bold border-r border-white/5 text-[10px] py-1.5 text-[13px] font-['Adani']">Holding</TableHead>
-                  <TableHead className="text-center text-white font-bold border-r border-white/5 text-[10px] py-1.5 text-[13px] font-['Adani']">% of Share Capital</TableHead>
-                  <TableHead className="text-center text-white font-bold border-r border-white/5 text-[10px] py-1.5 text-[13px] font-['Adani']">Holding</TableHead>
-                  <TableHead className="text-center text-white font-bold text-[10px] py-1.5 text-[13px] font-['Adani']">% of Share Capital</TableHead>
+                  <TableHead className="text-center text-white font-bold border-r border-white/5 py-1.5 text-[13px] font-['Adani']">Holding</TableHead>
+                  <TableHead className="text-center text-white font-bold border-r border-white/5 py-1.5 text-[13px] font-['Adani']">% of Share Capital</TableHead>
+                  <TableHead className="text-center text-white font-bold border-r border-white/5 py-1.5 text-[13px] font-['Adani']">Holding</TableHead>
+                  <TableHead className="text-center text-white font-bold py-1.5 text-[13px] font-['Adani']">% of Share Capital</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="bg-card">

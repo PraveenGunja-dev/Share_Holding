@@ -31,7 +31,7 @@ PPT_DIR = os.path.join(BACKEND_DIR, "PPT")
 ENV_PATH = os.path.join(PPT_DIR, ".env")
 
 # --- SQLite DB Path ---
-DB_PATH = os.path.join(ROOT_DIR, "WeeklyShareHolding_Update5.db")
+DB_PATH = os.path.join(ROOT_DIR, "WeeklyShareHolding_Update6.db")
 
 
 def _update_env_bu_id(bu_id: int):

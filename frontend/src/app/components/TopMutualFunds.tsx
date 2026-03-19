@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { TrendingUp, PieChart as PieIcon, Users, Activity } from 'lucide-react';
 import { getActiveMFHolders, getPassiveMFHolders } from '../services/api';
 import { useEffect, useState } from 'react';
-import { cn , formatName} from "./ui/utils";
+import { cn, formatName } from "./ui/utils";
 import { getCategoryColor } from '../constants/colors';
 
 interface TopMutualFundsProps {
@@ -144,9 +144,10 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-amber-500 min-h-[85px] h-full">
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 min-h-[85px] h-full"
+            style={{ borderRightColor: getCategoryColor('DII-MF') }}>
             <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total MF holdings</div>
-            <div className="text-base 2xl:text-lg font-black text-amber-500">
+            <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-400">
               {totalHoldings.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
             </div>
@@ -160,12 +161,12 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
           </Card>
           <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-emerald-500 min-h-[85px] h-full">
             <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none uppercase">Passive MF holdings</div>
-            <div className="text-base 2xl:text-lg font-black text-emerald-500">
+            <div className="text-base 2xl:text-lg font-black text-primary dark:text-emerald-400">
               {totalPassive.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center gap-1 shrink-0 min-h-[85px] h-full">
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center gap-1 shrink-0 min-h-[85px] h-full border-r-4 border-r-sky-500">
             <div className="flex justify-between items-center text-[9px] 2xl:text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
               <span>Active share</span>
               <span className="text-primary dark:text-sky-400 font-black">{((totalActive / totalHoldings) * 100).toFixed(1)}%</span>
@@ -206,9 +207,9 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                     stroke="none"
                   >
                     {activeChartData.map((_entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={activePalette[index % activePalette.length]} 
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={activePalette[index % activePalette.length]}
                         onMouseEnter={() => setActiveHoverIndex(index)}
                         onMouseLeave={() => setActiveHoverIndex(null)}
                         style={{ cursor: 'pointer', outline: 'none', filter: activeHoverIndex === index ? 'brightness(1.1) drop-shadow(0 0 5px rgba(0,0,0,0.2))' : 'none' }}
@@ -226,7 +227,7 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
             {isLargeTopN && (
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 w-full px-2">
                 {activeChartData.map((item, idx) => (
-                  <div key={idx} 
+                  <div key={idx}
                     className={cn(
                       "flex items-center gap-2 p-1 border-b border-border/30 text-[10px] font-bold transition-all duration-200 cursor-pointer rounded uppercase",
                       activeHoverIndex === idx ? "bg-sky-500/10 scale-[1.02] shadow-sm z-10" : "text-muted-foreground"
@@ -251,54 +252,54 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
               <Table>
                 <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-10 shadow-sm">
                   <TableRow className="hover:bg-transparent border-b border-white/10">
-                    <TableHead className="w-14 text-center text-white font-bold border-r border-white/5 py-5 text-[13px] font-['Adani']">Rank</TableHead>
-                    <TableHead className="text-white font-bold border-r border-white/5 py-5 w-[30%] text-[13px] font-['Adani']">Shareholder Name</TableHead>
+                    <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-5 text-[13px] font-['Adani']">Rank</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 py-5 w-[30%] text-[13px] font-['Adani']">Shareholder Name</TableHead>
                     <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2 whitespace-normal leading-tight">
                       {detectedDates.latest}
                     </TableHead>
                     <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight">
                       {detectedDates.prev}
                     </TableHead>
-                    <TableHead className="text-center text-white font-bold py-5 text-[13px] font-['Adani']">Change in Holding Shares</TableHead>
+                    <TableHead rowSpan={2} className="text-center text-white font-bold py-5 text-[13px] font-['Adani']">Change in Holding Shares</TableHead>
                   </TableRow>
-                  <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10 uppercase">
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20">HOLDINGS (L)</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">HOLDINGS (L)</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
+                  <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10">
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20">Holding</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">Holding</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="bg-card">
-                    {activeChartData.map((row, idx) => (
-                      <TableRow 
-                        key={row.name} 
-                        className={cn(
-                          "hover:bg-muted/50 transition-all duration-200 border-b border-border last:border-0 group",
-                          activeHoverIndex === idx && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
-                        )}
-                        onMouseEnter={() => setActiveHoverIndex(idx)}
-                        onMouseLeave={() => setActiveHoverIndex(null)}
-                      >
-                        <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
-                        <TableCell className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%]">{formatName(row.name)}</TableCell>
-                        <TableCell className={cn(
-                          "text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-all",
-                          activeHoverIndex === idx 
-                            ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" 
-                            : "bg-sky-500/15 text-sky-700 dark:text-sky-400"
-                        )}>{row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
-                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
-                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
-                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
-                        <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal">
-                          {row.buy > 0 ? (
-                            <span className="text-foreground">{row.buy.toLocaleString()}</span>
-                          ) : row.sell > 0 ? (
-                            <span className="text-rose-600">{row.sell.toLocaleString()}</span>
-                          ) : '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                  {activeChartData.map((row, idx) => (
+                    <TableRow
+                      key={row.name}
+                      className={cn(
+                        "hover:bg-muted/50 transition-all duration-200 border-b border-border last:border-0 group",
+                        activeHoverIndex === idx && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
+                      )}
+                      onMouseEnter={() => setActiveHoverIndex(idx)}
+                      onMouseLeave={() => setActiveHoverIndex(null)}
+                    >
+                      <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
+                      <TableCell className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%]">{formatName(row.name)}</TableCell>
+                      <TableCell className={cn(
+                        "text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-all",
+                        activeHoverIndex === idx
+                          ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner"
+                          : "bg-sky-500/15 text-sky-700 dark:text-sky-400"
+                      )}>{row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal">
+                        {row.buy > 0 ? (
+                          <span className="text-foreground">{row.buy.toLocaleString()}</span>
+                        ) : row.sell > 0 ? (
+                          <span className="text-rose-600">{row.sell.toLocaleString()}</span>
+                        ) : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
@@ -330,9 +331,9 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                     stroke="none"
                   >
                     {passiveChartData.map((_entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={passivePalette[index % passivePalette.length]} 
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={passivePalette[index % passivePalette.length]}
                         onMouseEnter={() => setPassiveHoverIndex(index)}
                         onMouseLeave={() => setPassiveHoverIndex(null)}
                         style={{ cursor: 'pointer', outline: 'none', filter: passiveHoverIndex === index ? 'brightness(1.1) drop-shadow(0 0 5px rgba(0,0,0,0.2))' : 'none' }}
@@ -350,7 +351,7 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
             {isLargeTopN && (
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 w-full px-2">
                 {passiveChartData.map((item, idx) => (
-                  <div key={idx} 
+                  <div key={idx}
                     className={cn(
                       "flex items-center gap-2 p-1 border-b border-border/30 text-[10px] font-bold transition-all duration-200 cursor-pointer rounded uppercase",
                       passiveHoverIndex === idx ? "bg-sky-500/10 scale-[1.02] shadow-sm z-10" : "text-muted-foreground"
@@ -375,27 +376,27 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
               <Table>
                 <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-10 shadow-sm">
                   <TableRow className="hover:bg-transparent border-b border-white/10">
-                    <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-4 uppercase">Rank</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 whitespace-normal py-4 w-[30%] uppercase">Shareholder Name</TableHead>
-                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/20 py-2 whitespace-normal leading-tight uppercase">
+                    <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-4 text-[13px] font-['Adani']">Rank</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 whitespace-normal py-4 w-[30%] text-[13px] font-['Adani']">Shareholder Name</TableHead>
+                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/20 py-2 whitespace-normal leading-tight">
                       {detectedDates.latest}
                     </TableHead>
-                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight uppercase">
+                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight">
                       {detectedDates.prev}
                     </TableHead>
-                    <TableHead rowSpan={2} className="text-center text-white font-bold py-4 whitespace-normal leading-tight uppercase">Change in Holding Share</TableHead>
+                    <TableHead rowSpan={2} className="text-center text-white font-bold py-4 whitespace-normal leading-tight text-[13px] font-['Adani']">Change in Holding Shares</TableHead>
                   </TableRow>
-                  <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10 uppercase">
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20">HOLDINGS (L)</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">HOLDINGS (L)</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% OF SHARE CAPITAL</TableHead>
+                  <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10">
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20">Holding</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">Holding</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="bg-card">
                   {passiveChartData.map((row, idx) => (
-                    <TableRow 
-                      key={row.name} 
+                    <TableRow
+                      key={row.name}
                       className={cn(
                         "hover:bg-muted/50 transition-all duration-200 border-b border-border last:border-0 group",
                         passiveHoverIndex === idx && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
@@ -407,8 +408,8 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                       <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%] uppercase">{row.name}</TableCell>
                       <TableCell className={cn(
                         "text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-all",
-                        passiveHoverIndex === idx 
-                          ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" 
+                        passiveHoverIndex === idx
+                          ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner"
                           : "bg-sky-500/15 text-sky-700 dark:text-sky-400"
                       )}>{row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
                       <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>

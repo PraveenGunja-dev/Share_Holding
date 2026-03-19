@@ -73,7 +73,7 @@ app.add_middleware(
 
 # Root directory where .db files are stored
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(ROOT_DIR, "WeeklyShareHolding_Update5.db")
+DB_PATH = os.path.join(ROOT_DIR, "WeeklyShareHolding_Update6.db")
 DIST_DIR = os.path.join(ROOT_DIR, "frontend", "dist")
 
 def dict_factory(cursor, row):
@@ -237,7 +237,7 @@ async def get_report_pptx(date: Optional[str] = None, bu_id: int = 1):
 
 @main_router.get("/api/databases")
 def get_available_databases():
-    return ["WeeklyShareHolding_Update5"]
+    return ["WeeklyShareHolding_Update5", "WeeklyShareHolding_Update6"]
 
 # Include the reports router under the main router prefix
 main_router.include_router(reports_router, prefix="/api/reports", tags=["Reports"])

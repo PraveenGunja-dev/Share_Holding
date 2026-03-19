@@ -1,14 +1,11 @@
 import { Card } from './ui/card';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Label, Cell, LabelList,
-  PieChart, Pie
-} from 'recharts';
+import { ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Label, Cell, PieChart, Pie } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { TrendingUp, Users, PieChart as PieIcon, ShieldCheck, Activity } from 'lucide-react';
 import { getInsurancePFHolders } from '../services/api';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { cn , formatName} from "./ui/utils";
 import { getCategoryColor } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 
 interface TopInsurancePFsProps {
   topN: number;
@@ -18,33 +15,16 @@ interface TopInsurancePFsProps {
 }
 
 export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsurancePFsProps) {
+  const { theme } = useTheme();
   const [liveData, setLiveData] = useState<any[]>([]);
   const [detectedDates, setDetectedDates] = useState({ latest: '', prev: '' });
-
-  const [dimensions, setDimensions] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1200,
-    height: typeof window !== 'undefined' ? window.innerHeight : 800
-  });
-
-  useEffect(() => {
-    const handleResize = () => setDimensions({
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const isMobile = dimensions.width < 768;
-  const isTablet = dimensions.width < 1024;
-  const isUltraWide = dimensions.width >= 1920;
+  const [activeHoverIndex, setActiveHoverIndex] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
         const rawData = await getInsurancePFHolders(buId, dateRange);
         if (!rawData || rawData.length === 0) return;
-
         const sample = rawData[0];
         const drString = sample["DateRange"] || "";
         if (drString.includes(' vs ')) {
@@ -53,198 +33,236 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
         } else {
           setDetectedDates({ latest: "Latest", prev: "Previous" });
         }
-
         const aggregated: Record<string, any> = {};
         rawData.forEach((item: any) => {
-          const name = (item["Institution"] || item["Name of Holder"] || item["Name"] || "").trim();
+          const name = (item["Institution"] || item["Name of Holder"] || "").trim();
           if (!name || name === "Unknown") return;
-
-          const curH = parseFloat(String(item["Current"] || 0).replace(/,/g, '')) || 0;
-          const preH = parseFloat(String(item["Previous"] || 0).replace(/,/g, '')) || 0;
-          const pCur = parseFloat(item["% of Sh. Cap (Current)"] || item["Latest Percent"]) || 0;
-          const pPrev = parseFloat(item["% of Sh. Cap (Previous)"] || item["Previous Percent"]) || 0;
-          const buyVal = parseFloat(item["Buy"]) || 0;
-          const sellVal = parseFloat(item["Sell"]) || 0;
-
+          const hCur = Math.abs(parseFloat(String(item["Current"] || 0).replace(/,/g, ''))) || 0;
+          const hPre = Math.abs(parseFloat(String(item["Previous"] || 0).replace(/,/g, ''))) || 0;
           if (!aggregated[name]) {
             const rawCat = (item["Category Label"] || item["Category"] || "").toUpperCase();
-            const subCat = (item["Sub Category"] || "").toUpperCase();
-
-            // Fix: Intelligent type detection that handles "DII-" prefix
-            let type = 'Insurance'; // Default
-            if (rawCat.includes("PROVIDENT") || subCat.includes("PROVIDENT") || rawCat.includes("PF") || subCat.includes("PF")) {
-              type = 'Provident Fund';
-            } else if (rawCat.includes("INSURANCE") || subCat.includes("INSURANCE")) {
-              type = 'Insurance';
-            }
-
-            aggregated[name] = {
-              name,
-              type,
-              holdings: curH,
-              prevHoldings: preH,
-              percent: pCur,
-              prevPercent: pPrev,
-              change: curH - preH,
-              buy: buyVal,
-              sell: sellVal,
-            };
+            aggregated[name] = { name, type: rawCat.includes("PF") || rawCat.includes("PROVIDENT") ? 'Provident Fund' : 'Insurance', holdings: hCur, prevHoldings: hPre, percent: parseFloat(item["% of Sh. Cap (Current)"] || 0), prevPercent: parseFloat(item["% of Sh. Cap (Previous)"] || 0), buy: parseFloat(item["Buy"] || 0), sell: parseFloat(item["Sell"] || 0) };
           } else {
-            aggregated[name].holdings = Math.max(aggregated[name].holdings, curH);
-            aggregated[name].prevHoldings = Math.max(aggregated[name].prevHoldings, preH);
-            aggregated[name].percent = Math.max(aggregated[name].percent, pCur);
-            aggregated[name].prevPercent = Math.max(aggregated[name].prevPercent, pPrev);
-            aggregated[name].change = aggregated[name].holdings - aggregated[name].prevHoldings;
-            aggregated[name].buy = Math.max(aggregated[name].buy, buyVal);
-            aggregated[name].sell = Math.max(aggregated[name].sell, sellVal);
+            aggregated[name].holdings = Math.max(aggregated[name].holdings, hCur);
+            aggregated[name].prevHoldings = Math.max(aggregated[name].prevHoldings, hPre);
           }
         });
-
         setLiveData(Object.values(aggregated));
-      } catch (e) { console.error("Insurance/PF fetch failed:", e); }
+      } catch (e) { console.error("Insurance PF Fetch failed:", e); }
     }
     fetchData();
   }, [dateRange, buId]);
 
   const [selectedView, setSelectedView] = useState<'Insurance' | 'PF'>('Insurance');
-
-  // Filter and process data based on selected view
-  const currentViewData = liveData
-    .filter(d => d.type === (selectedView === 'Insurance' ? 'Insurance' : 'Provident Fund'))
-    .sort((a, b) => b.holdings - a.holdings);
+  const currentViewData = liveData.filter(d => d.type === (selectedView === 'Insurance' ? 'Insurance' : 'Provident Fund')).sort((a, b) => b.holdings - a.holdings);
+  const filteredRankings = currentViewData.slice(0, topN);
 
   const totalHoldings = currentViewData.reduce((a, c) => a + c.holdings, 0);
-  const totalPercent = currentViewData.reduce((a, c) => a + c.percent, 0);
-  const totalPrevHoldings = currentViewData.reduce((a, c) => a + (c.prevHoldings || 0), 0);
-  const totalPrevPercent = currentViewData.reduce((a, c) => a + (c.prevPercent || 0), 0);
 
-  const wowChange = totalHoldings - totalPrevHoldings;
-  const wowPercentChange = totalPercent - totalPrevPercent;
-
-  const largestHolder = currentViewData[0];
+  // Chart data: entities on X-axis, holdings on Y-axis — creates a flowing mountain shape
+  const areaChartData = useMemo(() => {
+    return filteredRankings.map(d => ({
+      name: formatName(d.name),
+      latest: d.holdings,
+      previous: d.prevHoldings,
+      change: d.holdings - d.prevHoldings
+    }));
+  }, [filteredRankings]);
 
   return (
-    <div id="insurance" className="space-y-6 transition-all duration-300">
-      {/* Header Row: Title/Toggle on Left, KPIs on Right */}
+    <div id="insurance" className="space-y-8 transition-all duration-300">
       <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-3">
         <div className="pb-1 space-y-4">
-          <div>
-            <h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 tracking-tighter leading-none mb-1 inline-block">Insurance & PF</h2>
-            <p className="text-[11px] 2xl:text-[13px] text-muted-foreground font-bold opacity-80 tracking-widest">Holdings by {selectedView === 'Insurance' ? 'Insurance Funds' : 'Provident Funds'}</p>
-          </div>
-
+          <div><h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 uppercase leading-none mb-1">Insurance & PF</h2><p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold uppercase tracking-widest leading-none">Institutional Portfolio Analysis</p></div>
           <div className="flex p-1 bg-muted/40 backdrop-blur-sm rounded-xl border border-border w-fit shadow-inner">
-            <button
-              onClick={() => setSelectedView('Insurance')}
-              className={cn(
-                "px-3 py-1 rounded-lg text-xs font-black transition-all duration-300 tracking-wider",
-                selectedView === 'Insurance'
-                  ? "shadow-lg scale-105"
-                  : "text-muted-foreground hover:text-primary"
-              )}
-              style={selectedView === 'Insurance' ? { backgroundColor: getCategoryColor('DII-Insurance'), color: 'white' } : {}}
-            >
-              Insurance
-            </button>
-            <button
-              onClick={() => setSelectedView('PF')}
-              className={cn(
-                "px-3 py-1 rounded-lg text-xs font-black transition-all duration-300 tracking-wider",
-                selectedView === 'PF'
-                  ? "shadow-lg scale-105"
-                  : "text-muted-foreground hover:text-primary"
-              )}
-              style={selectedView === 'PF' ? { backgroundColor: getCategoryColor('DII-PF'), color: 'white' } : {}}
-            >
-              Provident
-            </button>
+            <button onClick={() => setSelectedView('Insurance')} className={cn("px-4 py-1.5 rounded-lg text-xs font-black transition-all", selectedView === 'Insurance' ? "bg-primary text-white shadow-lg" : "text-muted-foreground")}>INSURANCE</button>
+            <button onClick={() => setSelectedView('PF')} className={cn("px-4 py-1.5 rounded-lg text-xs font-black transition-all", selectedView === 'PF' ? "bg-primary text-white shadow-lg" : "text-muted-foreground")}>PROVIDENT</button>
           </div>
         </div>
-
-        {/* KPIs Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 min-h-[85px] h-full"
-            style={{ borderRightColor: selectedView === 'Insurance' ? getCategoryColor('DII-Insurance') : getCategoryColor('DII-PF') }}>
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none uppercase">Total holdings</div>
-            <div className="text-base 2xl:text-lg font-black" style={{ color: selectedView === 'Insurance' ? getCategoryColor('DII-Insurance') : getCategoryColor('DII-PF') }}>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-fuchsia-500 min-h-[85px] h-full">
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total holdings</div>
+            <div className="text-base 2xl:text-lg font-black text-primary dark:text-fuchsia-400">
               {totalHoldings.toLocaleString()}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-sky-500 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Change in holding shares</div>
-            <div className={cn("text-base 2xl:text-lg font-black", wowChange >= 0 ? "text-primary dark:text-sky-400" : "text-rose-600 dark:text-rose-400")}>
-              {Math.abs(wowChange).toLocaleString()}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
-            </div>
-          </Card>
-          <Card className={cn(
-            "p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 min-h-[85px] h-full",
-            selectedView === 'Insurance' ? "border-r-fuchsia-500" : "border-r-blue-500"
-          )}>
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none uppercase">Active investors</div>
-            <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300">
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-fuchsia-500 min-h-[85px] h-full">
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total investors</div>
+            <div className="text-base 2xl:text-lg font-black text-primary dark:text-fuchsia-400">
               {currentViewData.length}
               <span className="text-[9px] font-bold text-muted-foreground ml-1">Entities</span>
+            </div>
+          </Card>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-purple-500 min-h-[85px] h-full">
+            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 truncate uppercase" title={filteredRankings[0]?.name}>
+              Top Holder: {filteredRankings[0] ? formatName(filteredRankings[0].name) : '—'}
+            </div>
+            <div className="text-base 2xl:text-lg font-black text-primary dark:text-fuchsia-400 leading-none">
+              {filteredRankings[0] ? filteredRankings[0].holdings.toLocaleString() : '—'}
+              <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
             </div>
           </Card>
         </div>
       </div>
 
-      {/* TABLE SECTION */}
-      <Card className="p-4 bg-card shadow-xl border-border relative overflow-hidden">
-        <div className="w-full mb-6">
-          <h3 className="text-sm 2xl:text-base font-black font-['Adani'] text-primary dark:text-sky-400 tracking-widest uppercase border-l-4 border-primary dark:border-sky-500 pl-3">INSURANCE & PROVIDENT FUND ANALYSIS</h3>
-        </div>
-        <div className="mb-6">
-          <h3 className="text-base 2xl:text-lg font-black font-['Adani'] text-primary dark:text-sky-400 border-l-4 border-primary dark:border-sky-500 pl-3 tracking-widest opacity-90">
-            {selectedView === 'Insurance' ? `Top ${topN} Insurance Company Holdings` : `Top ${topN} Provident Fund Holdings`}
-          </h3>
+      <Card className="p-4 bg-card shadow-xl border-border">
+        {/* Header ribbon */}
+        <div className="flex items-center justify-between gap-4 mb-4 bg-muted/20 dark:bg-slate-900/40 p-2 rounded-xl border border-border/40 shadow-sm backdrop-blur-sm overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col">
+              <span className="text-[12px] 2xl:text-[14px] font-black text-primary dark:text-sky-400 tracking-[0.15em] uppercase">Holdings Distribution</span>
+              <span className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold opacity-60 uppercase">Ranked by holdings — Area Chart</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-6 pr-2">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-2.5 rounded-sm" style={{ backgroundColor: selectedView === 'Insurance' ? '#d946ef' : '#6366f1' }} />
+              <span className="text-[12px] 2xl:text-[14px] font-black text-foreground tracking-tight uppercase">{detectedDates.latest || 'Latest'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-2.5 rounded-sm opacity-40" style={{ backgroundColor: selectedView === 'Insurance' ? '#d946ef' : '#6366f1' }} />
+              <span className="text-[12px] 2xl:text-[14px] font-black text-muted-foreground tracking-tight uppercase">{detectedDates.prev || 'Previous'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-2.5 rounded-sm bg-slate-900 dark:bg-slate-200" />
+              <span className="text-[12px] 2xl:text-[14px] font-black text-slate-900 dark:text-slate-200 tracking-tight uppercase">Buy</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-2.5 rounded-sm bg-rose-500" />
+              <span className="text-[12px] 2xl:text-[14px] font-black text-rose-600 dark:text-rose-400 tracking-tight uppercase">Sell</span>
+            </div>
+          </div>
         </div>
 
-        <div className="border border-border rounded-xl shadow-2xl flex flex-col bg-card overflow-hidden">
-          <div className="flex-1 max-h-[500px] overflow-auto custom-scrollbar relative">
-              <Table>
-                <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-20 shadow-sm">
-                  <TableRow className="hover:bg-transparent border-b border-white/10">
-                        <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-4 text-[13px] font-['Adani']">Rank</TableHead>
-                        <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 whitespace-normal py-4 text-[13px] font-['Adani']">Shareholder Name</TableHead>
-                        <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2 whitespace-normal leading-tight text-[13px] font-['Adani']">
-                          {detectedDates.latest}
-                        </TableHead>
-                        <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight text-[13px] font-['Adani']">
-                          {detectedDates.prev}
-                        </TableHead>
-                        <TableHead rowSpan={2} className="text-center text-white font-bold py-4 whitespace-normal leading-tight text-[13px] font-['Adani']">Change in Holding Shares</TableHead>
+        {/* Composed Chart — Area + Change Bars */}
+        <div className="w-full transition-all duration-300" style={{ height: 420 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={areaChartData} margin={{ left: 20, right: 30, bottom: 80, top: 20 }}>
+              <defs>
+                <linearGradient id="gradLatest" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={selectedView === 'Insurance' ? '#d946ef' : '#6366f1'} stopOpacity={0.5} />
+                  <stop offset="95%" stopColor={selectedView === 'Insurance' ? '#d946ef' : '#6366f1'} stopOpacity={0.03} />
+                </linearGradient>
+                <linearGradient id="gradPrev" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={selectedView === 'Insurance' ? '#a855f7' : '#818cf8'} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={selectedView === 'Insurance' ? '#a855f7' : '#818cf8'} stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="4 8" stroke="var(--border)" opacity={0.2} vertical={false} />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 10, fontWeight: 800, fill: 'var(--muted-foreground)', fontFamily: 'Adani' }}
+                axisLine={{ stroke: 'var(--border)', strokeWidth: 0.5 }}
+                tickLine={false}
+                angle={-35}
+                textAnchor="end"
+                interval={0}
+                height={70}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fontWeight: 700, fill: 'var(--muted-foreground)' }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
+              />
+              <Tooltip
+                content={({ active, payload, label }: any) => {
+                  if (!active || !payload?.length) return null;
+                  const latest = payload.find((p: any) => p.dataKey === 'latest');
+                  const previous = payload.find((p: any) => p.dataKey === 'previous');
+                  const change = payload.find((p: any) => p.dataKey === 'change');
+                  const changeVal = change ? Number(change.value) : 0;
+                  return (
+                    <div style={{
+                      backgroundColor: 'var(--card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15)',
+                      padding: '12px 16px',
+                      fontFamily: 'Adani'
+                    }}>
+                      <div style={{ fontSize: '13px', fontWeight: 900, color: 'var(--primary)', marginBottom: '6px' }}>{label}</div>
+                      {latest && (
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#c026d3', marginBottom: '3px' }}>
+                          {detectedDates.latest || 'Latest'}: {Number(latest.value).toLocaleString()} Lakhs
+                        </div>
+                      )}
+                      {previous && (
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--muted-foreground)', marginBottom: '3px' }}>
+                          {detectedDates.prev || 'Previous'}: {Number(previous.value).toLocaleString()} Lakhs
+                        </div>
+                      )}
+                      {change && (
+                        <div style={{ fontSize: '12px', fontWeight: 900, color: changeVal > 0 ? 'var(--foreground)' : changeVal < 0 ? '#ef4444' : 'var(--muted-foreground)' }}>
+                          {changeVal > 0 ? 'Buy ▲' : changeVal < 0 ? 'Sell ▼' : 'No Change'}: {Math.abs(changeVal).toLocaleString()} Lakhs
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="previous"
+                stroke={selectedView === 'Insurance' ? '#a855f7' : '#818cf8'}
+                strokeWidth={1.5}
+                strokeDasharray="5 3"
+                fill="url(#gradPrev)"
+                animationDuration={1200}
+              />
+              <Area
+                type="monotone"
+                dataKey="latest"
+                stroke={selectedView === 'Insurance' ? '#d946ef' : '#6366f1'}
+                strokeWidth={2.5}
+                fill="url(#gradLatest)"
+                animationDuration={1500}
+                dot={{ r: 3, fill: selectedView === 'Insurance' ? '#d946ef' : '#6366f1', stroke: 'white', strokeWidth: 1.5 }}
+                activeDot={{ r: 6, fill: selectedView === 'Insurance' ? '#d946ef' : '#6366f1', stroke: 'white', strokeWidth: 2 }}
+              />
+              <Bar dataKey="change" barSize={14} animationDuration={1500} radius={[3, 3, 0, 0]}>
+                {areaChartData.map((entry: any, index: number) => (
+                  <Cell key={`bar-${index}`} fill={entry.change >= 0 ? '#080808ff' : '#ef4444'} fillOpacity={0.7} />
+                ))}
+              </Bar>
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="border border-border rounded-xl shadow-md overflow-hidden bg-card mt-8">
+          <div className="max-h-[500px] overflow-auto custom-scrollbar">
+            <Table>
+              <TableHeader className="bg-primary dark:bg-slate-900 sticky top-0 z-30">
+                <TableRow className="hover:bg-transparent border-b border-white/10 text-white uppercase">
+                  <TableHead rowSpan={2} className="w-16 text-center border-r border-white/5 font-bold text-white py-4 font-['Adani']">Rank</TableHead>
+                  <TableHead rowSpan={2} className="border-r border-white/5 font-bold text-white py-4 w-[25%] font-['Adani']">Shareholder Name</TableHead>
+                  <TableHead colSpan={2} className="text-center border-r border-white/5 font-bold text-white bg-white/10 py-2 font-['Adani']">{detectedDates.latest}</TableHead>
+                  <TableHead colSpan={2} className="text-center border-r border-white/5 font-bold text-white bg-white/5 py-2 font-['Adani']">{detectedDates.prev}</TableHead>
+                  <TableHead rowSpan={2} className="text-center font-bold text-white py-4 font-['Adani']">Change in Holding Shares</TableHead>
+                </TableRow>
+                <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10 uppercase">
+                  <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-fuchsia-400/20">Holding</TableHead>
+                  <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
+                  <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">Holding</TableHead>
+                  <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRankings.map((row, idx) => (
+                  <TableRow key={row.name} className={cn("hover:bg-muted/50 border-b border-border last:border-0", activeHoverIndex === idx && "bg-fuchsia-500/10")} onMouseEnter={() => setActiveHoverIndex(idx)} onMouseLeave={() => setActiveHoverIndex(null)}>
+                    <TableCell className="text-center border-r font-black py-2">{idx + 1}</TableCell>
+                    <TableCell className="py-2 border-r font-black text-primary dark:text-sky-300 py-2">{formatName(row.name)}</TableCell>
+                    <TableCell className="text-center border-r font-mono font-bold text-fuchsia-600 py-2">{row.holdings.toLocaleString()}L</TableCell>
+                    <TableCell className="text-center border-r font-mono font-bold py-2">{row.percent.toFixed(2)}%</TableCell>
+                    <TableCell className="text-center border-r font-mono text-muted-foreground py-2">{row.prevHoldings.toLocaleString()}L</TableCell>
+                    <TableCell className="text-center border-r font-mono text-muted-foreground py-2">{row.prevPercent.toFixed(2)}%</TableCell>
+                    <TableCell className="text-center py-2 font-black">
+                      {row.holdings - row.prevHoldings === 0 ? '-' : <span className={row.holdings - row.prevHoldings < 0 ? "text-rose-600" : "text-foreground"}>{Math.abs(row.holdings - row.prevHoldings).toLocaleString()}L</span>}
+                    </TableCell>
                   </TableRow>
-                  <TableRow className="hover:bg-transparent text-[10px] 2xl:text-[11px] border-b border-white/10 uppercase">
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2">Holding (L)</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2">% of Share Capital</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2">Holding (L)</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2">% of Share Capital</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentViewData.slice(0, topN).map((row, idx) => (
-                    <TableRow key={row.name} className={cn(
-                      "hover:bg-muted/50 transition-colors border-b border-border last:border-0 group"
-                    )}>
-                      <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-4">{idx + 1}</TableCell>
-                      <TableCell className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal">{formatName(row.name)}</TableCell>
-                      <TableCell className="text-center font-mono font-bold text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4">{row.holdings.toLocaleString()}</TableCell>
-                      <TableCell className="text-center font-mono font-bold text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4">{row.percent.toFixed(2)}%</TableCell>
-                      <TableCell className="text-center font-mono font-bold text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4">{row.prevHoldings.toLocaleString()}</TableCell>
-                      <TableCell className="text-center font-mono font-bold text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4">{row.prevPercent.toFixed(2)}%</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4">
-                        {row.buy > 0 ? (
-                          <span className="text-foreground">{Math.abs(row.buy).toFixed(2)}</span>
-                        ) : row.sell > 0 ? (
-                          <span className="text-rose-600">{Math.abs(row.sell).toFixed(2)}</span>
-                        ) : '-'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+                ))}
+              </TableBody>
             </Table>
           </div>
         </div>
