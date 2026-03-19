@@ -279,8 +279,25 @@ export function DashboardHeader({
       {/* Row 2 - Unified Control Center */}
       <div className="w-full h-12 flex items-center justify-end bg-gray-50/50 dark:bg-slate-900/30 border-t border-gray-100 dark:border-slate-800/40">
         <div className="flex items-center gap-1 bg-white dark:bg-slate-900 px-1.5 py-1 rounded-md border border-gray-200 dark:border-slate-700/60 shadow-sm transition-all hover:shadow-md">
-          {/* View Selection */}
+          {/* Active / Passive Global View */}
           <div className="flex items-center gap-2 pl-3">
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Type</span>
+            <Select value={mfView} onValueChange={onMfViewChange}>
+              <SelectTrigger className="h-7 border-none bg-transparent hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md px-2 text-[12px] font-bold text-sky-600 dark:text-sky-400 w-[95px] shadow-none focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-gray-100 dark:border-slate-800 shadow-xl">
+                <SelectItem value="all" className="text-xs">All</SelectItem>
+                <SelectItem value="active" className="text-xs">Active</SelectItem>
+                <SelectItem value="passive" className="text-xs">Passive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="h-4 w-px bg-gray-200 dark:bg-slate-700 mx-1" />
+
+          {/* View Selection */}
+          <div className="flex items-center gap-2 pl-1">
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">View</span>
             <Select value={metricView} onValueChange={onMetricViewChange}>
               <SelectTrigger className="h-7 border-none bg-transparent hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md px-2 text-[12px] font-bold text-sky-600 dark:text-sky-400 w-[140px] shadow-none focus:ring-0">

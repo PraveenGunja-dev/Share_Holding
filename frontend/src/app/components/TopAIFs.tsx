@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { TrendingUp, Users, PieChart as PieIcon, ShieldCheck, Activity, ArrowDown, ArrowUp } from 'lucide-react';
 import { getAIFHolders } from '../services/api';
 import { useEffect, useState } from 'react';
-import { cn , formatName} from "./ui/utils";
+import { cn, formatName } from "./ui/utils";
 import { getCategoryColor } from '../constants/colors';
 
 interface TopAIFsProps {
@@ -248,7 +248,7 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
             {isLargeTopN && (
               <div className="mt-6 grid grid-cols-1 gap-y-2 w-full px-2">
                 {chartData.map((item, idx) => (
-                  <div key={idx} 
+                  <div key={idx}
                     className={cn(
                       "flex items-center gap-3 group p-1.5 border-b border-border/30 last:border-0 hover:bg-sky-500/5 rounded transition-all duration-200 cursor-pointer",
                       activeRank === idx ? "bg-sky-500/10 scale-[1.02] shadow-sm z-10" : ""
@@ -309,8 +309,8 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
                     </TableHeader>
                     <TableBody className="bg-card">
                       {processedData.slice(0, topN).map((row: any, idx: number) => (
-                        <TableRow 
-                          key={row.name} 
+                        <TableRow
+                          key={row.name}
                           className={cn(
                             "hover:bg-muted/50 transition-all duration-200 border-b border-border last:border-0 group",
                             activeRank === idx && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
@@ -325,13 +325,13 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
                           <TableCell className={cn(
                             "text-center font-mono font-bold text-[12px] 2xl:text-[14px] border-r border-border py-4 whitespace-normal transition-all",
                             (metricView === 'holdings' || metricView === 'all')
-                              ? (activeRank === idx ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" : "bg-sky-500/15 text-sky-700 dark:text-sky-400") 
+                              ? (activeRank === idx ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" : "bg-sky-500/15 text-sky-700 dark:text-sky-400")
                               : "text-foreground"
                           )}>{row.holdings.toLocaleString()}</TableCell>
                           <TableCell className={cn(
                             "text-center font-mono font-bold text-[12px] 2xl:text-[14px] border-r border-border py-4 whitespace-normal transition-all",
                             (metricView === 'percentage' || metricView === 'all')
-                              ? (activeRank === idx ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" : "bg-sky-500/15 text-sky-700 dark:text-sky-400") 
+                              ? (activeRank === idx ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" : "bg-sky-500/15 text-sky-700 dark:text-sky-400")
                               : "text-foreground"
                           )}>{row.percent.toFixed(2)}%</TableCell>
 
@@ -341,8 +341,8 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
 
                           <TableCell className={cn(
                             "text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal transition-all",
-                            metricView === 'change' 
-                              ? (activeRank === idx ? "bg-sky-500/30 font-black scale-[1.02] shadow-inner" : "bg-sky-500/15") 
+                            metricView === 'change'
+                              ? (activeRank === idx ? "bg-sky-500/30 font-black scale-[1.02] shadow-inner" : "bg-sky-500/15")
                               : ""
                           )}>
                             {row.change === 0 ? '-' : (

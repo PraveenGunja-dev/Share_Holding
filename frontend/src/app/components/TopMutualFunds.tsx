@@ -186,6 +186,7 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
       </div>
 
       {/* SECTION 1: ACTIVE MUTUAL FUNDS */}
+      {(mfView === 'all' || mfView === 'active') && (
       <div className="space-y-6">
         <Card className="p-4 bg-card shadow-xl border-border">
           <div className="w-full mb-6 px-2 flex justify-between items-center">
@@ -306,10 +307,12 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
           </div>
         </Card>
       </div>
+      )}
 
-      <div className="h-4" /> {/* Spacer */}
+      {mfView === 'all' && <div className="h-4" />} {/* Spacer */}
 
       {/* SECTION 2: PASSIVE MUTUAL FUNDS */}
+      {(mfView === 'all' || mfView === 'passive') && (
       <div className="space-y-6">
         <Card className="p-4 bg-card shadow-xl border-border">
           <div className="w-full mb-6 px-2">
@@ -430,6 +433,7 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
           </div>
         </Card>
       </div>
+      )}
     </div>
   );
 }

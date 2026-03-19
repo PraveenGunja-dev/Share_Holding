@@ -213,48 +213,56 @@ export default function App() {
                   </section> */}
 
                   {/* 2. Institutional Holders */}
-                  <section id="institutional">
-                    <InstitutionalHolders
-                      selectedCategories={selectedCategories}
-                      availableCategories={availableCategories}
-                      topN={topN}
-                      metricView={metricView}
-                      dateRange={dateRange}
-                      buId={selectedBUId}
-                    />
-                  </section>
+                  {mfView === 'all' && (
+                    <section id="institutional">
+                      <InstitutionalHolders
+                        selectedCategories={selectedCategories}
+                        availableCategories={availableCategories}
+                        topN={topN}
+                        metricView={metricView}
+                        dateRange={dateRange}
+                        buId={selectedBUId}
+                      />
+                    </section>
+                  )}
 
                   {/* 3. Buyers */}
-                  <section id="buyers">
-                    <TopBuyers
-                      selectedCategories={selectedCategories}
-                      topN={topN}
-                      dateRange={dateRange}
-                      buId={selectedBUId}
-                    />
-                  </section>
+                  {mfView === 'all' && (
+                    <section id="buyers">
+                      <TopBuyers
+                        selectedCategories={selectedCategories}
+                        topN={topN}
+                        dateRange={dateRange}
+                        buId={selectedBUId}
+                      />
+                    </section>
+                  )}
 
                   {/* 4. Sellers */}
-                  <section id="sellers">
-                    <TopSellers
-                      selectedCategories={selectedCategories}
-                      topN={topN}
-                      dateRange={dateRange}
-                      buId={selectedBUId}
-                    />
-                  </section>
+                  {mfView === 'all' && (
+                    <section id="sellers">
+                      <TopSellers
+                        selectedCategories={selectedCategories}
+                        topN={topN}
+                        dateRange={dateRange}
+                        buId={selectedBUId}
+                      />
+                    </section>
+                  )}
 
                   {/* 5. New Entries & Exits */}
-                  <section id="entries">
-                    <NewEntriesExits
-                      selectedCategories={selectedCategories}
-                      dateRange={dateRange}
-                      buId={selectedBUId}
-                    />
-                  </section>
+                  {mfView === 'all' && (
+                    <section id="entries">
+                      <NewEntriesExits
+                        selectedCategories={selectedCategories}
+                        dateRange={dateRange}
+                        buId={selectedBUId}
+                      />
+                    </section>
+                  )}
 
                   {/* 6. FIIs & FPIs */}
-                  {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('FII') || c.includes('FPI'))) && (
+                  {mfView === 'all' && (selectedCategories.length === 0 || selectedCategories.some(c => c.includes('FII') || c.includes('FPI'))) && (
                     <section id="fiis">
                       <TopFIIs
                         topN={topN}
@@ -279,7 +287,7 @@ export default function App() {
                   )}
 
                   {/* 8. Insurance & PFs */}
-                  {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('Insurance') || c.includes('PF') || c.includes('Provident'))) && (
+                  {mfView === 'all' && (selectedCategories.length === 0 || selectedCategories.some(c => c.includes('Insurance') || c.includes('PF') || c.includes('Provident'))) && (
                     <section id="insurance">
                       <TopInsurancePFs
                         topN={topN}
@@ -291,7 +299,7 @@ export default function App() {
                   )}
 
                   {/* 9. AIFs */}
-                  {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('AIF'))) && (
+                  {mfView === 'all' && (selectedCategories.length === 0 || selectedCategories.some(c => c.includes('AIF'))) && (
                     <section id="aifs">
                       <TopAIFs
                         topN={topN}
