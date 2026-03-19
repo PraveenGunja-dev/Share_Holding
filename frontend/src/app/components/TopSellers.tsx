@@ -26,7 +26,6 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
   const [totalBought, setTotalBought] = useState(0);
   const [loading, setLoading] = useState(true);
   const [detectedDates, setDetectedDates] = useState({ latest: '', prev: '' });
-  const [activeRank, setActiveRank] = useState<number | null>(null);
 
   const [dimensions, setDimensions] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1200,
@@ -197,27 +196,27 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
 
         {/* KPIs Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-rose-600 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total shares sold</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-rose-600 h-[85px]">
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total shares sold</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-rose-400">
               {Math.abs(totalSold).toLocaleString()}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
+              <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-orange-500 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total sellers</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-orange-500 h-[85px]">
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total sellers</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-rose-400">
               {filteredData.length}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Investors</span>
+              <span className="text-[9px] font-black text-foreground ml-1">Investors</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-rose-400 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 truncate uppercase" title={filteredData[0]?.name}>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-rose-400 h-[85px]">
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 truncate uppercase" title={filteredData[0]?.name}>
               Top Seller: {filteredData[0]?.name || '—'}
             </div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-rose-400">
               {filteredData[0] ? (filteredData[0].sold >= 1000 ? `${(filteredData[0].sold / 1000).toFixed(1)}k` : filteredData[0].sold.toLocaleString()) : '—'}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
+              <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
         </div>
@@ -283,25 +282,17 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
               data={chartData}
               margin={chartMargin}
               barCategoryGap="15%"
-              onMouseMove={(state) => {
-                if (state && state.activePayload && state.activePayload.length > 0) {
-                  const name = state.activePayload[0].payload.name;
-                  const idx = filteredData.findIndex(d => d.name === name);
-                  setActiveRank(idx !== -1 ? idx : null);
-                }
-              }}
-              onMouseLeave={() => setActiveRank(null)}
             >
               <CartesianGrid strokeDasharray="3 6" stroke="var(--border)" horizontal={false} opacity={0.5} />
               <XAxis
                 type="number"
                 domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.3)]}
-                tick={{ fontSize: 12, fontWeight: 900, fill: 'var(--muted-foreground)' }}
+                tick={{ fontSize: 12, fontWeight: 900, fill: 'var(--foreground)' }}
                 tickLine={false}
                 axisLine={{ stroke: 'var(--border)', strokeWidth: 0.5 }}
                 tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
               >
-                <Label value="SHARES SOLD (LAKHS)" offset={-25} position="insideBottom" fontSize={13} fontWeight={900} fill="var(--muted-foreground)" style={{ opacity: 0.9 }} />
+                <Label value="SHARES SOLD (LAKHS)" offset={-25} position="insideBottom" fontSize={13} fontWeight={900} fill="var(--foreground)" style={{ opacity: 1 }} />
               </XAxis>
               <YAxis
                 dataKey="name"
@@ -327,7 +318,7 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
                 axisLine={{ stroke: theme === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,32,91,0.2)', strokeWidth: 1 }}
                 interval={0}
               >
-                <Label value="INSTITUTIONAL SHAREHOLDERS" angle={-90} position="insideLeft" offset={-40} style={{ textAnchor: 'middle', fontSize: 13, fontWeight: 900, fontFamily: 'Adani', fill: 'var(--muted-foreground)', opacity: 0.7 }} />
+                <Label value="INSTITUTIONAL SHAREHOLDERS" angle={-90} position="insideLeft" offset={-40} style={{ textAnchor: 'middle', fontSize: 13, fontWeight: 900, fontFamily: 'Adani', fill: 'var(--foreground)', opacity: 1 }} />
               </YAxis>
 
               <Tooltip
@@ -413,12 +404,7 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
                   {filteredData.map((row, idx) => (
                     <TableRow
                       key={idx}
-                      className={cn(
-                        "hover:bg-muted/50 border-b border-border last:border-0 transition-all duration-200",
-                        activeRank === idx && "bg-sky-500/[0.15] dark:bg-sky-400/[0.15] border-l-4 border-l-sky-500 scale-[1.01] shadow-md z-10"
-                      )}
-                      onMouseEnter={() => setActiveRank(idx)}
-                      onMouseLeave={() => setActiveRank(null)}
+                      className="hover:bg-muted/50 border-b border-border last:border-0 transition-colors duration-200"
                     >
                         <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-2">{idx + 1}</TableCell>
                         <TableCell className="py-2 border-r border-border min-w-[200px] max-w-[300px]">
@@ -427,12 +413,7 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
                         <TableCell className="border-r border-border py-2">
                           <div className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold tracking-tighter" style={{ backgroundColor: `${getCategoryColor(row.category)}15`, color: getCategoryColor(row.category) }}>{row.category}</div>
                       </TableCell>
-                      <TableCell className={cn(
-                        "text-center border-r border-border font-mono font-black text-[11px] 2xl:text-[13px] py-2 transition-all",
-                        activeRank === idx
-                          ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-105 shadow-inner"
-                          : "bg-sky-500/10 text-sky-700 dark:text-sky-400"
-                      )}>
+                      <TableCell className="text-center border-r border-border font-mono font-black text-[11px] 2xl:text-[13px] py-2 transition-colors bg-sky-500/10 text-sky-700 dark:text-sky-400">
                         {Math.abs(row.sold).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-center border-r border-border font-mono font-bold text-[11px] 2xl:text-[13px] text-foreground py-2">

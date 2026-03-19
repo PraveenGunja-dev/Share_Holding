@@ -96,7 +96,7 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
         <ResponsiveContainer width="100%" height={500}>
           <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 30, top: 0, bottom: 20 }}>
             <CartesianGrid strokeDasharray="4 4" stroke="var(--border)" horizontal={true} vertical={false} opacity={0.6} />
-            <XAxis type="number" tick={{ fontSize: 13, fontWeight: 500, fontFamily: 'inherit', fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
+            <XAxis type="number" tick={{ fontSize: 13, fontWeight: 900, fontFamily: 'inherit', fill: 'var(--foreground)' }} axisLine={false} tickLine={false} />
             <YAxis
               dataKey="category"
               type="category"
@@ -114,7 +114,7 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
               axisLine={false}
               tickLine={false}
             >
-              <Label value="SHAREHOLDER CATEGORIES" angle={-90} position="insideLeft" offset={-15} style={{ textAnchor: 'middle', fontSize: 13, fontWeight: 900, fontFamily: 'Adani', fill: 'var(--muted-foreground)', opacity: 0.7 }} />
+              <Label value="SHAREHOLDER CATEGORIES" angle={-90} position="insideLeft" offset={-15} style={{ textAnchor: 'middle', fontSize: 13, fontWeight: 900, fontFamily: 'Adani', fill: 'var(--foreground)', opacity: 1 }} />
             </YAxis>
             <Tooltip
               cursor={{ fill: 'var(--primary)', opacity: 0.05 }}

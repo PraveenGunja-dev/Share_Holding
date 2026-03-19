@@ -219,11 +219,21 @@ async def get_report_pptx(date: Optional[str] = None, bu_id: int = 1):
     if ppt_dir not in sys.path:
         sys.path.append(ppt_dir)
     from generate_ppt import generate_report as ppt_generate
-    template_path = os.path.join(ppt_dir, "Weekly Shareholder Movement_Template.pptx")
+
+    # Match the exact Adani template used everywhere; fail fast if missing.
+    desired_name = os.environ.get(
+        "WSHP_PPT_TEMPLATE",
+        "Weekly Shareholder Movement_Template - V7 - with dummy data.pptx",
+    ).strip()
+    if not desired_name:
+        raise HTTPException(status_code=500, detail="WSHP_PPT_TEMPLATE is empty")
+
+    template_path = desired_name if os.path.isabs(desired_name) else os.path.join(ppt_dir, desired_name)
     if not os.path.exists(template_path):
-        pptx_files = [f for f in os.listdir(backend_dir) if f.lower().endswith('.pptx') and 'template' in f.lower()]
-        if pptx_files:
-            template_path = os.path.join(backend_dir, pptx_files[0])
+        raise HTTPException(
+            status_code=500,
+            detail=f"Adani PPTX template not found: {template_path}",
+        )
     try:
         pptx_bytes, display_date = ppt_generate(template_path, DB_PATH, date, bu_id)
         logger.info(f"REPORT_GENERATED | SUCCESS | BU: {bu_id} | Date: {display_date}")

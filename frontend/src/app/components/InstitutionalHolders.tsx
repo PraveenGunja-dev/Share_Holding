@@ -15,7 +15,7 @@ import {
   SheetTitle,
 } from './ui/sheet';
 import { getInstitutionalHolders } from '../services/api';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useLayoutEffect, useRef } from 'react';
 import { cn, formatDateRange , formatName} from "./ui/utils";
 import { useTheme } from '../context/ThemeContext';
 import { getCategoryColor } from '../constants/colors';
@@ -40,13 +40,15 @@ export function InstitutionalHolders({
   buId
 }: InstitutionalHoldersProps) {
   const { theme } = useTheme();
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
+  const subtitleRef = useRef<HTMLParagraphElement | null>(null);
   const [liveData, setLiveData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedShareholder, setSelectedShareholder] = useState<any | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const [detectedDates, setDetectedDates] = useState({ latest: '', prev: '' });
-  const [activeRank, setActiveRank] = useState<number | null>(null);
+  
 
   useEffect(() => {
     async function fetchData() {
@@ -124,6 +126,19 @@ export function InstitutionalHolders({
     }
     fetchData();
   }, [dateRange, buId]);
+
+  // #region agent log
+  useLayoutEffect(() => {
+    if (loading) return;
+    if (!detectedDates.latest) return;
+    const titleEl = titleRef.current;
+    if (!titleEl) return;
+    const rect = titleEl.getBoundingClientRect();
+    const computed = window.getComputedStyle(titleEl);
+    const fontsStatus = (document as any).fonts?.status;
+    fetch('http://127.0.0.1:7530/ingest/52f209d2-7edd-4cf5-b122-cb80a387b1cb',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8302a7'},body:JSON.stringify({sessionId:'8302a7',location:'InstitutionalHolders.tsx:128',message:'institutional heading layout',data:{theme,htmlClass:document.documentElement.className,titleRect:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},titleColor:computed.color,titleFontFamily:computed.fontFamily,titleFontWeight:computed.fontWeight,fontsStatus},timestamp:Date.now()} )}).catch(()=>{});
+  }, [loading, detectedDates.latest, theme]);
+  // #endregion
 
   // ── Safe arrays: guard every derived array against undefined inputs ──────────
   const safeSelectedCategories = Array.isArray(selectedCategories) ? selectedCategories : [];
@@ -220,7 +235,7 @@ export function InstitutionalHolders({
       ? { left: 60, right: 60, bottom: 40, top: 10 }
       : { left: 80, right: 60, bottom: 40, top: 10 };
 
-  const yAxisWidth = isMobile ? 180 : isTablet ? 320 : 450;
+  const yAxisWidth = isMobile ? 180 : isTablet ? 280 : 380;
 
   const chartHeight = Math.max(isUltraWide ? 500 : 440, topN * (isUltraWide ? 32 : 28));
 
@@ -263,8 +278,8 @@ export function InstitutionalHolders({
     <div id="institutional" className="space-y-4 transition-all duration-300">
       <div className="flex items-end justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
         <div>
-          <h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 tracking-tighter leading-none mb-1.5 inline-block transition-all">Top {topN} Institutional Holders</h2>
-          <p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold tracking-tight opacity-80">
+          <h2 ref={titleRef} className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 tracking-tighter leading-none mb-1.5 inline-block transition-all">Top {topN} Institutional Holders</h2>
+          <p ref={subtitleRef} className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold tracking-tight opacity-80">
             Based on holdings as of {detectedDates.latest || (formatDateRange(dateRange).split(' vs ')[1] || 'Latest Date')}
           </p>
         </div>
@@ -366,18 +381,13 @@ export function InstitutionalHolders({
                   {filteredData.map((row, index) => (
                     <TableRow
                       key={index}
-                      className={cn(
-                        "hover:bg-primary/5 dark:hover:bg-sky-400/5 transition-all duration-200 border-b border-border last:border-0 group relative",
-                        activeRank === index && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
-                      )}
-                      onMouseEnter={() => setActiveRank(index)}
-                      onMouseLeave={() => setActiveRank(null)}
+                    className="hover:bg-primary/5 dark:hover:bg-sky-400/5 transition-colors duration-200 border-b border-border last:border-0"
                     >
                       <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-4 whitespace-normal">
                         {index + 1}
                       </TableCell>
                       <TableCell className="py-2 border-r border-border min-w-[200px] max-w-[300px]">
-                        <div className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 whitespace-normal leading-tight" title={row.name}>
+                      <div className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 whitespace-normal leading-tight">
                           {formatName(row.name)}
                         </div>
                       </TableCell>
@@ -392,17 +402,17 @@ export function InstitutionalHolders({
 
                       {/* Latest Date Data */}
                       <TableCell className={cn(
-                        "text-center font-mono font-black text-[11px] 2xl:text-[13px] border-r border-border/50 py-2 transition-all",
+                        "text-center font-mono font-black text-[11px] 2xl:text-[13px] border-r border-border/50 py-2 transition-colors",
                         (metricView === 'holdings' || metricView === 'all')
-                          ? (activeRank === index ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" : "bg-sky-500/15 text-sky-700 dark:text-sky-400")
+                          ? "bg-sky-500/15 text-sky-700 dark:text-sky-400"
                           : "text-foreground"
                       )}>
                         {row.latestHoldings.toLocaleString()}
                       </TableCell>
                       <TableCell className={cn(
-                        "text-center font-mono font-black text-[11px] 2xl:text-[13px] border-r border-border py-2 transition-all",
+                        "text-center font-mono font-black text-[11px] 2xl:text-[13px] border-r border-border py-2 transition-colors",
                         (metricView === 'percentage' || metricView === 'all')
-                          ? (activeRank === index ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" : "bg-sky-500/15 text-sky-700 dark:text-sky-400")
+                          ? "bg-sky-500/15 text-sky-700 dark:text-sky-400"
                           : "text-foreground"
                       )}>
                         {row.latestPercent.toFixed(2)}%
@@ -417,9 +427,9 @@ export function InstitutionalHolders({
                       </TableCell>
 
                       <TableCell className={cn(
-                        "text-center font-mono font-black text-[11px] 2xl:text-[13px] py-2 transition-all",
+                        "text-center font-mono font-black text-[11px] 2xl:text-[13px] py-2 transition-colors",
                         metricView === 'change'
-                          ? (activeRank === index ? "bg-sky-500/30 font-black scale-[1.02] shadow-inner" : "bg-sky-500/15")
+                          ? "bg-sky-500/15"
                           : ""
                       )}>
                         {row.sell > 0 ? (

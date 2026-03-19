@@ -60,7 +60,7 @@ export function SharePriceMovement({ dateRange }: SharePriceProps) {
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={priceVolumeData} margin={{ left: 0, right: 30, bottom: 20 }}>
             <CartesianGrid strokeDasharray="4 4" stroke="var(--border)" vertical={false} opacity={0.6} />
-            <XAxis dataKey="date" tick={{ fontSize: 11, fontWeight: 900, fontFamily: 'inherit', className: 'font-black', fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="date" tick={{ fontSize: 11, fontWeight: 900, fontFamily: 'inherit', className: 'font-black', fill: 'var(--foreground)' }} axisLine={false} tickLine={false} />
             <YAxis
               yAxisId="left"
               tick={{ fontSize: 12, fontWeight: 900, fontFamily: 'inherit', className: 'font-black', fill: '#f43f5e' }}
@@ -107,14 +107,14 @@ export function SharePriceMovement({ dateRange }: SharePriceProps) {
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={priceVolumeData} margin={{ left: 0, right: 30, bottom: 20 }}>
             <CartesianGrid strokeDasharray="4 4" stroke="var(--border)" vertical={false} opacity={0.6} />
-            <XAxis dataKey="date" tick={{ fontSize: 11, fontWeight: 900, fontFamily: 'inherit', className: 'font-black', fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="date" tick={{ fontSize: 11, fontWeight: 900, fontFamily: 'inherit', className: 'font-black', fill: 'var(--foreground)' }} axisLine={false} tickLine={false} />
             <YAxis
               yAxisId="left"
-              tick={{ fontSize: 12, fontWeight: 900, fontFamily: 'inherit', className: 'font-black', fill: 'var(--muted-foreground)' }}
+              tick={{ fontSize: 12, fontWeight: 900, fontFamily: 'inherit', className: 'font-black', fill: 'var(--foreground)' }}
               tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
               axisLine={false}
               tickLine={false}
-              label={{ value: 'Volume (Shares)', angle: -90, position: 'insideLeft', style: { fontSize: 13, fontWeight: 900, fontFamily: 'inherit', fill: 'var(--muted-foreground)' }, className: 'font-black' }}
+              label={{ value: 'Volume (Shares)', angle: -90, position: 'insideLeft', style: { fontSize: 13, fontWeight: 900, fontFamily: 'inherit', fill: 'var(--foreground)' }, className: 'font-black' }}
             />
             <YAxis
               yAxisId="right"

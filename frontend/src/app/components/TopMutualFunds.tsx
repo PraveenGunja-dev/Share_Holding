@@ -115,8 +115,25 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
   const totalActive = activeData.reduce((a, c) => a + c.holdings, 0);
   const totalPassive = passiveData.reduce((a, c) => a + c.holdings, 0);
   const totalHoldings = totalActive + totalPassive;
-  const totalPrevHoldings = activeData.reduce((a, c) => a + (c.prevHoldings || 0), 0) + passiveData.reduce((a, c) => a + (c.prevHoldings || 0), 0);
+  const totalActivePrevHoldings = activeData.reduce(
+    (a, c) => a + (c.prevHoldings || 0),
+    0,
+  );
+  const totalPassivePrevHoldings = passiveData.reduce(
+    (a, c) => a + (c.prevHoldings || 0),
+    0,
+  );
+  const totalPrevHoldings = totalActivePrevHoldings + totalPassivePrevHoldings;
   const globalWoWChange = totalHoldings - totalPrevHoldings;
+
+  const activeWoWChange = totalActive - totalActivePrevHoldings;
+  const passiveWoWChange = totalPassive - totalPassivePrevHoldings;
+  const activeSharePct = totalHoldings > 0 ? (totalActive / totalHoldings) * 100 : 0;
+  const passiveSharePct = totalHoldings > 0 ? (totalPassive / totalHoldings) * 100 : 0;
+
+  const isAllView = mfView === "all";
+  const isActiveView = mfView === "active";
+  const isPassiveView = mfView === "passive";
 
   const activeChartData = activeData.sort((a, b) => b.holdings - a.holdings).slice(0, topN);
   const passiveChartData = passiveData.sort((a, b) => b.holdings - a.holdings).slice(0, topN);
@@ -144,41 +161,86 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 min-h-[85px] h-full"
-            style={{ borderRightColor: getCategoryColor('DII-MF') }}>
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total MF holdings</div>
-            <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-400">
-              {totalHoldings.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
+          <Card
+            className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 h-[85px]"
+            style={{ borderRightColor: getCategoryColor("DII-MF") }}
+          >
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">
+              {isAllView ? "Total MF holdings" : isActiveView ? "Active MF holdings" : "Passive MF holdings"}
+            </div>
+            <div
+              className={cn(
+                "text-base 2xl:text-lg font-black",
+                isPassiveView ? "text-primary dark:text-emerald-400" : "text-primary dark:text-sky-400",
+              )}
+            >
+              {(isAllView ? totalHoldings : isActiveView ? totalActive : totalPassive).toLocaleString(undefined, {
+                maximumFractionDigits: 0,
+              })}
+              <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-amber-600 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none uppercase">Active MF holdings</div>
-            <div className="text-base 2xl:text-lg font-black text-amber-600">
-              {totalActive.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
+
+          <Card
+            className={cn(
+              "p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 h-[85px]",
+              isPassiveView ? "border-r-emerald-500" : "border-r-amber-600",
+            )}
+          >
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none uppercase">
+              {isAllView ? "Active MF holdings" : isPassiveView ? "Passive MF holdings" : "Active MF holdings"}
+            </div>
+            <div
+              className={cn(
+                "text-base 2xl:text-lg font-black",
+                isPassiveView ? "text-primary dark:text-emerald-400" : "text-amber-600",
+              )}
+            >
+              {(isAllView ? totalActive : isActiveView ? totalActive : totalPassive).toLocaleString(undefined, {
+                maximumFractionDigits: 0,
+              })}
+              <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-emerald-500 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none uppercase">Passive MF holdings</div>
+
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-emerald-500 h-[85px]">
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none uppercase">
+              {isAllView ? "Passive MF holdings" : isPassiveView ? "Passive entities" : "Active entities"}
+            </div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-emerald-400">
-              {totalPassive.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
+              {(isAllView ? totalPassive : isPassiveView ? passiveData.length : activeData.length).toLocaleString()}
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center gap-1 shrink-0 min-h-[85px] h-full border-r-4 border-r-sky-500">
-            <div className="flex justify-between items-center text-[9px] 2xl:text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
-              <span>Active share</span>
-              <span className="text-primary dark:text-sky-400 font-black">{((totalActive / totalHoldings) * 100).toFixed(1)}%</span>
-            </div>
-            <div className="flex justify-between items-center text-[9px] 2xl:text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
-              <span>Passive share</span>
-              <span className="text-primary dark:text-sky-400 font-black">{((totalPassive / totalHoldings) * 100).toFixed(1)}%</span>
-            </div>
-            <div className="flex justify-between items-center pt-1 border-t border-border/50 text-[9px] 2xl:text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
-              <span>Change</span>
-              <span className={cn("font-black", globalWoWChange >= 0 ? "text-primary dark:text-sky-400" : "text-rose-600 dark:text-rose-400")}>
-                {Math.abs(globalWoWChange).toLocaleString()}L
+
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center gap-1 shrink-0 h-[85px] border-r-4 border-r-sky-500">
+            {isAllView || isActiveView ? (
+              <div className="flex justify-between items-center text-[9px] 2xl:text-[10px] font-black text-foreground tracking-widest uppercase">
+                <span>Active share</span>
+                <span className="text-primary dark:text-sky-400 font-black">{activeSharePct.toFixed(1)}%</span>
+              </div>
+            ) : null}
+
+            {isAllView || isPassiveView ? (
+              <div className="flex justify-between items-center text-[9px] 2xl:text-[10px] font-black text-foreground tracking-widest uppercase">
+                <span>Passive share</span>
+                <span className="text-primary dark:text-sky-400 font-black">{passiveSharePct.toFixed(1)}%</span>
+              </div>
+            ) : null}
+
+            <div className="flex justify-between items-center pt-1 border-t border-border/50 text-[9px] 2xl:text-[10px] font-black text-foreground tracking-widest uppercase">
+              <span>{isAllView ? "Change" : isActiveView ? "Change (Active)" : "Change (Passive)"}</span>
+              <span
+                className={cn(
+                  "font-black",
+                  (isActiveView ? activeWoWChange : isPassiveView ? passiveWoWChange : globalWoWChange) >= 0
+                    ? "text-primary dark:text-sky-400"
+                    : "text-rose-600 dark:text-rose-400",
+                )}
+              >
+                {Math.abs(
+                  isActiveView ? activeWoWChange : isPassiveView ? passiveWoWChange : globalWoWChange,
+                ).toLocaleString()}
+                L
               </span>
             </div>
           </Card>
@@ -207,15 +269,28 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                     nameKey="name"
                     stroke="none"
                   >
-                    {activeChartData.map((_entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={activePalette[index % activePalette.length]}
-                        onMouseEnter={() => setActiveHoverIndex(index)}
-                        onMouseLeave={() => setActiveHoverIndex(null)}
-                        style={{ cursor: 'pointer', outline: 'none', filter: activeHoverIndex === index ? 'brightness(1.1) drop-shadow(0 0 5px rgba(0,0,0,0.2))' : 'none' }}
-                      />
-                    ))}
+                    {activeChartData.map((_entry, index) => {
+                      const isActive = activeHoverIndex === index;
+                      const isHovering = activeHoverIndex !== null;
+
+                      return (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={activePalette[index % activePalette.length]}
+                          onMouseEnter={() => setActiveHoverIndex(index)}
+                          onMouseLeave={() => setActiveHoverIndex(null)}
+                          style={{
+                            cursor: "pointer",
+                            outline: "none",
+                            opacity: !isHovering ? 1 : isActive ? 1 : 0.18,
+                            filter: isActive
+                              ? "brightness(1.12) drop-shadow(0 0 6px rgba(0,0,0,0.25))"
+                              : "none",
+                            transition: "opacity 200ms ease, filter 200ms ease",
+                          }}
+                        />
+                      );
+                    })}
                   </Pie>
                   <Tooltip
                     formatter={(v: any, name: string) => [`${v.toLocaleString()} Lakhs`, formatName(name)]}
@@ -274,21 +349,13 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                   {activeChartData.map((row, idx) => (
                     <TableRow
                       key={row.name}
-                      className={cn(
-                        "hover:bg-muted/50 transition-all duration-200 border-b border-border last:border-0 group",
-                        activeHoverIndex === idx && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
-                      )}
-                      onMouseEnter={() => setActiveHoverIndex(idx)}
-                      onMouseLeave={() => setActiveHoverIndex(null)}
+                      className="hover:bg-muted/50 transition-colors duration-200 border-b border-border last:border-0"
                     >
                       <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
                       <TableCell className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%]">{formatName(row.name)}</TableCell>
-                      <TableCell className={cn(
-                        "text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-all",
-                        activeHoverIndex === idx
-                          ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner"
-                          : "bg-sky-500/15 text-sky-700 dark:text-sky-400"
-                      )}>{row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-colors bg-sky-500/15 text-sky-700 dark:text-sky-400">
+                        {row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                      </TableCell>
                       <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
                       <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
                       <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
@@ -333,15 +400,28 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                     nameKey="name"
                     stroke="none"
                   >
-                    {passiveChartData.map((_entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={passivePalette[index % passivePalette.length]}
-                        onMouseEnter={() => setPassiveHoverIndex(index)}
-                        onMouseLeave={() => setPassiveHoverIndex(null)}
-                        style={{ cursor: 'pointer', outline: 'none', filter: passiveHoverIndex === index ? 'brightness(1.1) drop-shadow(0 0 5px rgba(0,0,0,0.2))' : 'none' }}
-                      />
-                    ))}
+                    {passiveChartData.map((_entry, index) => {
+                      const isActive = passiveHoverIndex === index;
+                      const isHovering = passiveHoverIndex !== null;
+
+                      return (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={passivePalette[index % passivePalette.length]}
+                          onMouseEnter={() => setPassiveHoverIndex(index)}
+                          onMouseLeave={() => setPassiveHoverIndex(null)}
+                          style={{
+                            cursor: "pointer",
+                            outline: "none",
+                            opacity: !isHovering ? 1 : isActive ? 1 : 0.18,
+                            filter: isActive
+                              ? "brightness(1.12) drop-shadow(0 0 6px rgba(0,0,0,0.25))"
+                              : "none",
+                            transition: "opacity 200ms ease, filter 200ms ease",
+                          }}
+                        />
+                      );
+                    })}
                   </Pie>
                   <Tooltip
                     formatter={(v: any, name: string) => [`${v.toLocaleString()} Lakhs`, name]}
@@ -400,21 +480,13 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                   {passiveChartData.map((row, idx) => (
                     <TableRow
                       key={row.name}
-                      className={cn(
-                        "hover:bg-muted/50 transition-all duration-200 border-b border-border last:border-0 group",
-                        passiveHoverIndex === idx && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
-                      )}
-                      onMouseEnter={() => setPassiveHoverIndex(idx)}
-                      onMouseLeave={() => setPassiveHoverIndex(null)}
+                      className="hover:bg-muted/50 transition-colors duration-200 border-b border-border last:border-0"
                     >
                       <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
                       <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%] uppercase">{row.name}</TableCell>
-                      <TableCell className={cn(
-                        "text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-all",
-                        passiveHoverIndex === idx
-                          ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner"
-                          : "bg-sky-500/15 text-sky-700 dark:text-sky-400"
-                      )}>{row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-colors bg-sky-500/15 text-sky-700 dark:text-sky-400">
+                        {row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                      </TableCell>
                       <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
                       <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
                       <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>

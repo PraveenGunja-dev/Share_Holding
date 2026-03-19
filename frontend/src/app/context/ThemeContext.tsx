@@ -24,6 +24,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         root.classList.remove('light', 'dark');
         root.classList.add(theme);
         localStorage.setItem('theme', theme);
+      // #region agent log
+      fetch('http://127.0.0.1:7530/ingest/52f209d2-7edd-4cf5-b122-cb80a387b1cb',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8302a7'},body:JSON.stringify({sessionId:'8302a7',location:'ThemeContext.tsx:22',message:'theme class applied',data:{theme,htmlClass:root.className,hasDark:root.classList.contains('dark')},timestamp:Date.now()} )}).catch(()=>{});
+      // #endregion
     }, [theme]);
 
     const toggleTheme = () => {

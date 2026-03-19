@@ -50,7 +50,12 @@ export function RankedInstitutionalBars({ data }: RankedInstitutionalBarsProps) 
         formatter: (params: any) => {
           const d = params[0].data;
           const arrow = d.change > 0 ? '▲' : d.change < 0 ? '▼' : '';
-          const changeColor = d.change > 0 ? '#00C853' : d.change < 0 ? '#FF3D00' : (theme === 'dark' ? '#E2E8F0' : '#64748b');
+          // Keep "sell" in red, but show "buy"/positive change in neutral black/foreground (matches tables).
+          const changeColor = d.change > 0
+            ? (theme === 'dark' ? '#FFFFFF' : '#00205B')
+            : d.change < 0
+              ? '#FF3D00'
+              : (theme === 'dark' ? '#E2E8F0' : '#64748b');
           return `
             <div style="padding: 4px; font-family: Adani;">
               <div style="font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 900; margin-bottom: 4px;">${d.category}</div>

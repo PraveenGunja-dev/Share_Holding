@@ -200,7 +200,7 @@ export default function App() {
             <div className="absolute inset-0 opacity-[0.4] dark:opacity-[0.1] pointer-events-none"
               style={{ backgroundImage: 'radial-gradient(var(--foreground) 0.5px, transparent 0.5px)', backgroundSize: '32px 32px' }} />
 
-            <main className="flex-1 relative z-10 w-full overflow-x-clip p-3 md:p-4 lg:p-5 space-y-4 md:space-y-6 max-w-[1280px] xl:max-w-[1440px] 2xl:max-w-[1536px] mx-auto">
+            <main className="flex-1 relative z-10 w-full overflow-x-hidden p-3 md:p-4 lg:p-5 space-y-4 md:space-y-6 max-w-[1280px] xl:max-w-[1440px] 2xl:max-w-[1536px] mx-auto">
               {screen === 'dashboard' ? (
                 <>
                   {/* 1. Category Movement - Disabled for now as data is unavailable */}
@@ -214,7 +214,7 @@ export default function App() {
 
                   {/* 2. Institutional Holders */}
                   {mfView === 'all' && (
-                    <section id="institutional">
+                    <section id="institutional" className="scroll-mt-[140px]">
                       <InstitutionalHolders
                         selectedCategories={selectedCategories}
                         availableCategories={availableCategories}
@@ -228,7 +228,7 @@ export default function App() {
 
                   {/* 3. Buyers */}
                   {mfView === 'all' && (
-                    <section id="buyers">
+                    <section id="buyers" className="scroll-mt-[140px]">
                       <TopBuyers
                         selectedCategories={selectedCategories}
                         topN={topN}
@@ -240,7 +240,7 @@ export default function App() {
 
                   {/* 4. Sellers */}
                   {mfView === 'all' && (
-                    <section id="sellers">
+                    <section id="sellers" className="scroll-mt-[140px]">
                       <TopSellers
                         selectedCategories={selectedCategories}
                         topN={topN}
@@ -252,7 +252,7 @@ export default function App() {
 
                   {/* 5. New Entries & Exits */}
                   {mfView === 'all' && (
-                    <section id="entries">
+                    <section id="entries" className="scroll-mt-[140px]">
                       <NewEntriesExits
                         selectedCategories={selectedCategories}
                         dateRange={dateRange}
@@ -263,7 +263,7 @@ export default function App() {
 
                   {/* 6. FIIs & FPIs */}
                   {mfView === 'all' && (selectedCategories.length === 0 || selectedCategories.some(c => c.includes('FII') || c.includes('FPI'))) && (
-                    <section id="fiis">
+                    <section id="fiis" className="scroll-mt-[140px]">
                       <TopFIIs
                         topN={topN}
                         metricView={metricView}
@@ -275,7 +275,7 @@ export default function App() {
 
                   {/* 7. Mutual Funds */}
                   {(selectedCategories.length === 0 || selectedCategories.some(c => c.includes('Mutual Funds') || c.includes('MF'))) && (
-                    <section id="mutualfunds">
+                    <section id="mutualfunds" className="scroll-mt-[140px]">
                       <TopMutualFunds
                         topN={topN}
                         metricView={metricView}
@@ -288,7 +288,7 @@ export default function App() {
 
                   {/* 8. Insurance & PFs */}
                   {mfView === 'all' && (selectedCategories.length === 0 || selectedCategories.some(c => c.includes('Insurance') || c.includes('PF') || c.includes('Provident'))) && (
-                    <section id="insurance">
+                    <section id="insurance" className="scroll-mt-[140px]">
                       <TopInsurancePFs
                         topN={topN}
                         metricView={metricView}
@@ -300,7 +300,7 @@ export default function App() {
 
                   {/* 9. AIFs */}
                   {mfView === 'all' && (selectedCategories.length === 0 || selectedCategories.some(c => c.includes('AIF'))) && (
-                    <section id="aifs">
+                    <section id="aifs" className="scroll-mt-[140px]">
                       <TopAIFs
                         topN={topN}
                         metricView={metricView}

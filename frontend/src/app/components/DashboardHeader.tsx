@@ -217,8 +217,8 @@ export function DashboardHeader({
           <div className="flex items-center gap-4">
             <img src={logoImage} alt="Adani" className="h-[40px] w-auto object-contain cursor-pointer transition-transform hover:scale-105" onClick={onHomeClick} />
             <div className="h-8 w-px bg-gray-200 dark:bg-slate-700 mx-1" />
-            <div className="flex flex-col">
-              <h1 className="text-lg font-black text-[#00205B] dark:text-gray-100 tracking-tight leading-none">
+            <div className="flex flex-col min-w-0">
+              <h1 className="text-lg font-black text-[#00205B] dark:text-gray-100 tracking-tight leading-none truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none" title={selectedBU || 'Adani Green Energy Limited'}>
                 {selectedBU || 'Adani Green Energy Limited'}
               </h1>
             </div>
@@ -252,7 +252,7 @@ export function DashboardHeader({
               </Popover>
 
               <Select value={dateRange} onValueChange={onDateRangeChange}>
-                <SelectTrigger className="h-8 px-3 flex items-center gap-2 bg-gray-50 dark:bg-slate-900 border-none rounded-full shadow-inner text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 focus:ring-0 w-auto min-w-[200px] transition-colors">
+                <SelectTrigger className="h-8 px-3 flex items-center gap-2 bg-gray-50 dark:bg-slate-900 border-none rounded-full shadow-inner text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 focus:ring-0 w-auto min-w-[140px] md:min-w-[180px] transition-colors">
                   <SelectValue placeholder="Select Period" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-gray-100 dark:border-slate-800 shadow-xl">
@@ -278,7 +278,7 @@ export function DashboardHeader({
 
       {/* Row 2 - Unified Control Center */}
       <div className="w-full h-12 flex items-center justify-end bg-gray-50/50 dark:bg-slate-900/30 border-t border-gray-100 dark:border-slate-800/40">
-        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 px-1.5 py-1 rounded-md border border-gray-200 dark:border-slate-700/60 shadow-sm transition-all hover:shadow-md">
+        <div className="flex items-center gap-0.5 px-4 h-full">
           {/* Active / Passive Global View */}
           <div className="flex items-center gap-2 pl-3">
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Type</span>

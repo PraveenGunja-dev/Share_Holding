@@ -18,7 +18,6 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
   const { theme } = useTheme();
   const [liveData, setLiveData] = useState<any[]>([]);
   const [detectedDates, setDetectedDates] = useState({ latest: '', prev: '' });
-  const [activeHoverIndex, setActiveHoverIndex] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -80,27 +79,27 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-fuchsia-500 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total holdings</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-fuchsia-500 h-[85px]">
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total holdings</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-fuchsia-400">
               {totalHoldings.toLocaleString()}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
+              <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-fuchsia-500 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total investors</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-fuchsia-500 h-[85px]">
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total investors</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-fuchsia-400">
               {currentViewData.length}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Entities</span>
+              <span className="text-[9px] font-black text-foreground ml-1">Entities</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-purple-500 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 truncate uppercase" title={filteredRankings[0]?.name}>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-purple-500 h-[85px]">
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 truncate uppercase" title={filteredRankings[0]?.name}>
               Top Holder: {filteredRankings[0] ? formatName(filteredRankings[0].name) : '—'}
             </div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-fuchsia-400 leading-none">
               {filteredRankings[0] ? filteredRankings[0].holdings.toLocaleString() : '—'}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
+              <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
         </div>
@@ -152,7 +151,7 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
               <CartesianGrid strokeDasharray="4 8" stroke="var(--border)" opacity={0.2} vertical={false} />
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 10, fontWeight: 800, fill: 'var(--muted-foreground)', fontFamily: 'Adani' }}
+                tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--foreground)', fontFamily: 'Adani' }}
                 axisLine={{ stroke: 'var(--border)', strokeWidth: 0.5 }}
                 tickLine={false}
                 angle={-35}
@@ -161,7 +160,7 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
                 height={70}
               />
               <YAxis
-                tick={{ fontSize: 11, fontWeight: 700, fill: 'var(--muted-foreground)' }}
+                tick={{ fontSize: 11, fontWeight: 900, fill: 'var(--foreground)' }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
@@ -250,9 +249,9 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
               </TableHeader>
               <TableBody>
                 {filteredRankings.map((row, idx) => (
-                  <TableRow key={row.name} className={cn("hover:bg-muted/50 border-b border-border last:border-0", activeHoverIndex === idx && "bg-fuchsia-500/10")} onMouseEnter={() => setActiveHoverIndex(idx)} onMouseLeave={() => setActiveHoverIndex(null)}>
+                  <TableRow key={row.name} className="hover:bg-muted/50 border-b border-border last:border-0 transition-colors">
                     <TableCell className="text-center border-r font-black py-2">{idx + 1}</TableCell>
-                    <TableCell className="py-2 border-r font-black text-primary dark:text-sky-300 py-2">{formatName(row.name)}</TableCell>
+                    <TableCell className="py-2 border-r font-black text-primary dark:text-sky-300">{formatName(row.name)}</TableCell>
                     <TableCell className="text-center border-r font-mono font-bold text-fuchsia-600 py-2">{row.holdings.toLocaleString()}L</TableCell>
                     <TableCell className="text-center border-r font-mono font-bold py-2">{row.percent.toFixed(2)}%</TableCell>
                     <TableCell className="text-center border-r font-mono text-muted-foreground py-2">{row.prevHoldings.toLocaleString()}L</TableCell>

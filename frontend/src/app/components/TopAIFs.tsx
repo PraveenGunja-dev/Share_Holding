@@ -154,26 +154,26 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
 
         {/* KPIs Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 min-h-[85px] h-full"
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 h-[85px]"
             style={{ borderRightColor: getCategoryColor('DII-AIF') }}>
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total AIF holdings</div>
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total AIF holdings</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-indigo-400">
               {totalAIFHoldings.toLocaleString()}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
+              <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-sky-500 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Change in holding shares</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-sky-500 h-[85px]">
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Change in holding shares</div>
             <div className={cn("text-base 2xl:text-lg font-black", totalWoWChange >= 0 ? "text-primary dark:text-sky-400" : "text-rose-600 dark:text-rose-400")}>
               {Math.abs(totalWoWChange).toLocaleString()}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Lakhs</span>
+              <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col shrink-0 border-r-4 border-r-blue-500 min-h-[85px] h-full">
-            <div className="text-[8px] 2xl:text-[9px] font-bold text-muted-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total Investors</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-blue-500 h-[85px]">
+            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total Investors</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300">
               {activeAIFCount}
-              <span className="text-[9px] font-bold text-muted-foreground ml-1">Entities</span>
+              <span className="text-[9px] font-black text-foreground ml-1">Entities</span>
             </div>
           </Card>
         </div>
@@ -311,27 +311,22 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
                       {processedData.slice(0, topN).map((row: any, idx: number) => (
                         <TableRow
                           key={row.name}
-                          className={cn(
-                            "hover:bg-muted/50 transition-all duration-200 border-b border-border last:border-0 group",
-                            activeRank === idx && "bg-sky-500/[0.08] dark:bg-sky-400/[0.12] border-l-4 border-l-sky-500 scale-[1.005] z-10 shadow-sm"
-                          )}
-                          onMouseEnter={() => setActiveRank(idx)}
-                          onMouseLeave={() => setActiveRank(null)}
+                          className="hover:bg-muted/50 transition-colors duration-200 border-b border-border last:border-0"
                         >
                           <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
                           <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[25%] uppercase">{row.name}</TableCell>
 
                           {/* Metric Highlighting */}
                           <TableCell className={cn(
-                            "text-center font-mono font-bold text-[12px] 2xl:text-[14px] border-r border-border py-4 whitespace-normal transition-all",
+                            "text-center font-mono font-bold text-[12px] 2xl:text-[14px] border-r border-border py-4 whitespace-normal transition-colors",
                             (metricView === 'holdings' || metricView === 'all')
-                              ? (activeRank === idx ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" : "bg-sky-500/15 text-sky-700 dark:text-sky-400")
+                              ? "bg-sky-500/15 text-sky-700 dark:text-sky-400"
                               : "text-foreground"
                           )}>{row.holdings.toLocaleString()}</TableCell>
                           <TableCell className={cn(
-                            "text-center font-mono font-bold text-[12px] 2xl:text-[14px] border-r border-border py-4 whitespace-normal transition-all",
+                            "text-center font-mono font-bold text-[12px] 2xl:text-[14px] border-r border-border py-4 whitespace-normal transition-colors",
                             (metricView === 'percentage' || metricView === 'all')
-                              ? (activeRank === idx ? "bg-sky-500/30 text-sky-800 dark:text-sky-200 scale-[1.02] shadow-inner" : "bg-sky-500/15 text-sky-700 dark:text-sky-400")
+                              ? "bg-sky-500/15 text-sky-700 dark:text-sky-400"
                               : "text-foreground"
                           )}>{row.percent.toFixed(2)}%</TableCell>
 
@@ -340,9 +335,9 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
                           <TableCell className="text-center font-mono font-bold text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
 
                           <TableCell className={cn(
-                            "text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal transition-all",
+                            "text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal transition-colors",
                             metricView === 'change'
-                              ? (activeRank === idx ? "bg-sky-500/30 font-black scale-[1.02] shadow-inner" : "bg-sky-500/15")
+                              ? "bg-sky-500/15"
                               : ""
                           )}>
                             {row.change === 0 ? '-' : (

@@ -70,19 +70,36 @@ class EmailRequest(BaseModel):
 
 def _get_template_path() -> str:
     """Discover the PPT template from the PPT folder."""
-    
-    # 1. Prefer the default pristine template
-    default_template = os.path.join(PPT_DIR, "Weekly Shareholder Movement_Template.pptx")
-    if os.path.exists(default_template):
-        logger.info(f"TEMPLATE_FOUND | Using Pristine Template: {default_template}")
-        return default_template
 
-    # 2. Last resort: check root dir
-    fallback = os.path.join(ROOT_DIR, "Weekly_ShareHolding_Report_27-02 1.pptx")
-    if os.path.exists(fallback):
-        return fallback
+    # IMPORTANT: Use exactly one “Adani template” PPTX.
+    # If the template is missing, fail fast rather than generating with a wrong/fallback deck.
+    desired_name = os.environ.get(
+        "WSHP_PPT_TEMPLATE",
+        # Match the PPT template name used by the standalone generator script.
+        "Weekly Shareholder Movement_Template - V7 - with dummy data.pptx",
+    ).strip()
+    if not desired_name:
+        raise FileNotFoundError("WSHP_PPT_TEMPLATE is empty")
 
-    raise FileNotFoundError("No PPT template or Report file found in backend/PPT folder")
+    # Allow absolute paths via env var; otherwise resolve relative to backend/PPT
+    candidate = desired_name if os.path.isabs(desired_name) else os.path.join(PPT_DIR, desired_name)
+    if os.path.exists(candidate):
+        logger.info(f"TEMPLATE_FOUND | Using Adani Template: {candidate}")
+        return candidate
+
+    # Give a helpful error showing what’s in the folder (so you can copy the file into place).
+    try:
+        available = sorted(
+            [f for f in os.listdir(PPT_DIR) if f.lower().endswith(".pptx")]
+        )
+    except Exception:
+        available = []
+
+    raise FileNotFoundError(
+        "Adani PPTX template not found. "
+        f"Expected: {candidate}. "
+        f"Available in {PPT_DIR}: {available}"
+    )
 
 
 def _get_db_path() -> str:
