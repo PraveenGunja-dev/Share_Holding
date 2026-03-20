@@ -338,11 +338,11 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                     </TableHead>
                     <TableHead rowSpan={2} className="text-center text-white font-bold py-5 text-[13px] font-['Adani']">Change in Holding Shares</TableHead>
                   </TableRow>
-                  <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10">
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20">Holding</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">Holding</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
+                  <TableRow className="hover:bg-transparent border-b border-white/10">
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20 text-[13px] font-['Adani']">Holding</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight text-[13px] font-['Adani']">% of Share Capital</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal text-[13px] font-['Adani']">Holding</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight text-[13px] font-['Adani']">% of Share Capital</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="bg-card">
@@ -353,17 +353,17 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                     >
                       <TableCell className="text-center font-black text-muted-foreground text-[13px] font-['Adani'] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
                       <TableCell className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%]">{formatName(row.name)}</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-colors bg-sky-500/15 text-sky-700 dark:text-sky-400">
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] border-r border-border/50 py-4 whitespace-normal transition-colors bg-sky-500/15 text-sky-700 dark:text-sky-400">
                         {row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}
                       </TableCell>
-                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal">
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] py-4 whitespace-normal">
                         {row.buy > 0 ? (
-                          <span className="text-foreground">{row.buy.toLocaleString()}</span>
+                          <span className="text-foreground dark:text-white font-black">{row.buy.toLocaleString()}</span>
                         ) : row.sell > 0 ? (
-                          <span className="text-rose-600">{row.sell.toLocaleString()}</span>
+                          <span className="text-rose-600 dark:text-rose-400">{row.sell.toLocaleString()}</span>
                         ) : '-'}
                       </TableCell>
                     </TableRow>
@@ -469,11 +469,11 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                     </TableHead>
                     <TableHead rowSpan={2} className="text-center text-white font-bold py-4 whitespace-normal leading-tight text-[13px] font-['Adani']">Change in Holding Shares</TableHead>
                   </TableRow>
-                  <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10">
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20">Holding</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">Holding</TableHead>
-                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
+                  <TableRow className="hover:bg-transparent border-b border-white/10">
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-sky-400/20 text-[13px] font-['Adani']">Holding</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight text-[13px] font-['Adani']">% of Share Capital</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal text-[13px] font-['Adani']">Holding</TableHead>
+                    <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight text-[13px] font-['Adani']">% of Share Capital</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="bg-card">
@@ -483,18 +483,18 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                       className="hover:bg-muted/50 transition-colors duration-200 border-b border-border last:border-0"
                     >
                       <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
-                      <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%] uppercase">{row.name}</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] border-r border-border/50 py-4 whitespace-normal transition-colors bg-sky-500/15 text-sky-700 dark:text-sky-400">
+                      <TableCell className="font-bold text-[13px] font-['Adani'] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[30%]">{row.name}</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] border-r border-border/50 py-4 whitespace-normal transition-colors bg-sky-500/15 text-sky-700 dark:text-sky-400">
                         {row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}
                       </TableCell>
-                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal">
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] py-4 whitespace-normal">
                         {row.buy > 0 ? (
-                          <span className="text-foreground">{row.buy.toLocaleString()}</span>
+                          <span className="text-foreground dark:text-white font-black">{row.buy.toLocaleString()}</span>
                         ) : row.sell > 0 ? (
-                          <span className="text-rose-600">{row.sell.toLocaleString()}</span>
+                          <span className="text-rose-600 dark:text-rose-400">{row.sell.toLocaleString()}</span>
                         ) : '-'}
                       </TableCell>
                     </TableRow>

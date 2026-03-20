@@ -212,16 +212,55 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
             <BarChart data={filteredRankings} layout="vertical" margin={{ left: 50, right: 80, bottom: 60, top: 40 }}>
               <CartesianGrid strokeDasharray="3 6" stroke="var(--border)" horizontal={false} opacity={0.5} />
               <XAxis type="number" tick={{ fontSize: 12, fontWeight: 900, fill: 'var(--foreground)' }} axisLine={{ stroke: 'var(--border)', strokeWidth: 0.5 }} tickLine={false}>
-                <Label value="TOTAL HOLDINGS (LAKHS)" offset={-25} position="insideBottom" fontSize={13} fontWeight={900} fill="var(--foreground)" style={{ opacity: 1 }} />
+                <Label
+                  value="TOTAL HOLDINGS (LAKHS)"
+                  offset={-25}
+                  position="insideBottom"
+                  fontSize={13}
+                  fontWeight={900}
+                  fill={theme === 'dark' ? '#38bdf8' : '#00205B'}
+                  style={{ opacity: 1 }}
+                />
               </XAxis>
               <YAxis dataKey="name" type="category" width={yAxisWidth} tick={({ x, y, payload }: any) => (
                 <g transform={`translate(${x},${y})`}>
-                  <text x={-25} y={4} dominantBaseline="central" textAnchor="end" fontSize={isMobile ? 10 : 12} fontWeight={900} fill={theme === 'dark' ? '#38bdf8' : '#00205B'} style={{ fontFamily: 'Adani' }} className="truncate">
-                    {formatName(payload.value)}
+                  <text
+                    x={-25}
+                    y={4}
+                    dominantBaseline="central"
+                    textAnchor="end"
+                    fontSize={isMobile ? 11 : 13}
+                    fontWeight={900}
+                    fill={theme === 'dark' ? '#38bdf8' : '#00205B'}
+                    style={{ fontFamily: 'Adani' }}
+                  >
+                    {(() => {
+                      const raw = String(payload?.value || '');
+                      const words = raw.split(' ').filter(Boolean);
+                      const maxWords = isMobile ? 2 : 4;
+                      const display =
+                        words.length > maxWords
+                          ? formatName(words.slice(0, maxWords).join(' ')) + '...'
+                          : formatName(raw);
+                      return display;
+                    })()}
                   </text>
                 </g>
               )} axisLine={{ stroke: 'var(--border)', strokeWidth: 0.5 }} tickLine={false}>
-                <Label value="INSTITUTIONAL SHAREHOLDERS" angle={-90} position="insideLeft" offset={isMobile ? -20 : -35} style={{ textAnchor: 'middle', fontSize: 13, fontWeight: 900, fontFamily: 'Adani', fill: 'var(--foreground)', opacity: 1 }} />
+                <Label
+                  value="INSTITUTIONAL SHAREHOLDERS"
+                  angle={-90}
+                  position="insideLeft"
+                  offset={isMobile ? -20 : -35}
+                  style={{
+                    textAnchor: 'middle',
+                    fontSize: 13,
+                    fontWeight: 900,
+                    fontFamily: 'Adani',
+                    fill: theme === 'dark' ? '#38bdf8' : '#00205B',
+                    opacity: 1
+                  }}
+                />
               </YAxis>
               <Tooltip cursor={{ fill: 'var(--muted)', opacity: 0.1 }} />
               <Bar dataKey="holdings" barSize={3} shape={(props: any) => {
