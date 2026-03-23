@@ -17,7 +17,7 @@ if PPT_DIR not in sys.path:
 # Import our logic modules
 from logger_config import get_logger
 from generate_ppt import generate_report
-from pdf_converter import pptx_bytes_to_pdf, pptx_to_images
+from pdf_converter import PdfConversionError, pptx_bytes_to_pdf, pptx_to_images
 from email_service import send_report_email
 
 logger = get_logger("REPORTS_API")
@@ -30,8 +30,9 @@ ROOT_DIR = os.path.dirname(BACKEND_DIR)
 PPT_DIR = os.path.join(BACKEND_DIR, "PPT")
 ENV_PATH = os.path.join(PPT_DIR, ".env")
 
-# --- SQLite DB Path ---
-DB_PATH = os.path.join(ROOT_DIR, "WeeklyShareHolding_Update6.db")
+# --- SQLite DB Path (single canonical file) ---
+DB_FILENAME = "WeeklyShareHolding_Update7.db"
+DB_PATH = os.path.join(ROOT_DIR, DB_FILENAME)
 
 
 def _update_env_bu_id(bu_id: int):
@@ -76,7 +77,7 @@ def _get_template_path() -> str:
     desired_name = os.environ.get(
         "WSHP_PPT_TEMPLATE",
         # Match the PPT template name used by the standalone generator script.
-        "Weekly Shareholder Movement_Template - V7 - with dummy data.pptx",
+        "Weekly Shareholder Movement_Template.pptx",
     ).strip()
     if not desired_name:
         raise FileNotFoundError("WSHP_PPT_TEMPLATE is empty")
@@ -87,13 +88,33 @@ def _get_template_path() -> str:
         logger.info(f"TEMPLATE_FOUND | Using Adani Template: {candidate}")
         return candidate
 
-    # Give a helpful error showing what’s in the folder (so you can copy the file into place).
+    # Fallback order for environments where the template was renamed.
+    fallback_names = [
+        "Weekly Shareholder Movement_Template.pptx",
+        "Weekly Shareholder Movement_Template.pptx",
+    ]
+    for fallback in fallback_names:
+        fallback_path = os.path.join(PPT_DIR, fallback)
+        if os.path.exists(fallback_path):
+            logger.warning(
+                f"TEMPLATE_FALLBACK_USED | Requested: {desired_name} | Using: {fallback_path}"
+            )
+            return fallback_path
+
+    # Last-resort fallback: pick the first available PPTX in the folder.
     try:
         available = sorted(
             [f for f in os.listdir(PPT_DIR) if f.lower().endswith(".pptx")]
         )
     except Exception:
         available = []
+
+    if available:
+        fallback_path = os.path.join(PPT_DIR, available[0])
+        logger.warning(
+            f"TEMPLATE_FALLBACK_USED | Requested: {desired_name} | Using first available: {fallback_path}"
+        )
+        return fallback_path
 
     raise FileNotFoundError(
         "Adani PPTX template not found. "
@@ -103,21 +124,17 @@ def _get_template_path() -> str:
 
 
 def _get_db_path() -> str:
-    """Get the SQLite database path."""
+    """Resolve the only supported SQLite DB: WeeklyShareHolding_Update7.db, or DB_PATH env override."""
     env_db = os.environ.get("DB_PATH")
     if env_db and os.path.exists(env_db) and os.path.getsize(env_db) > 0:
         return env_db
 
-    # Check root folder first (where the real DB lives)
     if os.path.exists(DB_PATH) and os.path.getsize(DB_PATH) > 0:
         return DB_PATH
 
-    # Try finding any non-empty .db file in the root directory only
-    db_files = [f for f in os.listdir(ROOT_DIR) if f.lower().endswith('.db') and os.path.getsize(os.path.join(ROOT_DIR, f)) > 0]
-    if db_files:
-        return os.path.join(ROOT_DIR, sorted(db_files, reverse=True)[0])
-
-    raise FileNotFoundError("SQLite database not found")
+    raise FileNotFoundError(
+        f"SQLite database not found. Place {DB_FILENAME} under {ROOT_DIR} or set DB_PATH."
+    )
 
 
 def get_report_metadata(date_iso: Optional[str], bu_id: int = 1):
@@ -204,19 +221,26 @@ async def preview_pdf(date: Optional[str] = None, bu_id: int = 1):
             media_type="application/pdf",
             headers={"Content-Disposition": f"inline; filename={filename}"}
         )
+    except PdfConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/preview-slides")
 async def preview_slides(date: Optional[str] = None, bu_id: int = 1):
-    pptx_bytes, _, bu_name, report_data = get_report_metadata(date, bu_id)
+    pptx_bytes, _, bu_name, _ = get_report_metadata(date, bu_id)
     try:
         images_bytes = pptx_to_images(pptx_bytes)
         if not images_bytes:
-            return {"slides": [], "data": report_data, "bu_name": bu_name}
+            raise HTTPException(
+                status_code=503,
+                detail="Slide preview not available on this server. Please download PPTX or PDF.",
+            )
         encoded = [base64.b64encode(img).decode('utf-8') for img in images_bytes]
         return {"slides": encoded, "bu_name": bu_name}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"SLIDE_PREVIEW_FAILED | {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -234,6 +258,9 @@ async def download_pdf(date: Optional[str] = None, bu_id: int = 1):
             media_type="application/pdf",
             headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
+    except PdfConversionError as e:
+        logger.error(f"PDF_DOWNLOAD_UNAVAILABLE | Date: {date} | Error: {e}")
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"PDF_DOWNLOAD_FAILED | Date: {date} | Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -263,6 +290,8 @@ async def send_email(req: EmailRequest, bu_id: int = 1):
         send_report_email(req.email, display_date, pdf_bytes, filename)
         logger.info(f"EMAIL_SENT_SUCCESS | Recipient: {req.email}")
         return {"success": True, "message": "Email sent successfully", "recipient": req.email}
+    except PdfConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

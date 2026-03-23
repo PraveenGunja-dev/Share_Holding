@@ -22,7 +22,7 @@ load_dotenv()
 app = FastAPI(title="Adani Shareholding Analytics API")
 
 # Create a master router for the /shareholding-pattern prefix
-main_router = APIRouter(prefix="/shareholding-pattern")
+main_router = APIRouter(prefix="/equity-dashboard/shareholding-pattern")
 
 # Security & Analytics Middleware
 @app.middleware("http")
@@ -73,7 +73,7 @@ app.add_middleware(
 
 # Root directory where .db files are stored
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(ROOT_DIR, "WeeklyShareHolding_Update6.db")
+DB_PATH = os.path.join(ROOT_DIR, "WeeklyShareHolding_Update7.db")
 DIST_DIR = os.path.join(ROOT_DIR, "frontend", "dist")
 
 def dict_factory(cursor, row):
@@ -247,7 +247,7 @@ async def get_report_pptx(date: Optional[str] = None, bu_id: int = 1):
 
 @main_router.get("/api/databases")
 def get_available_databases():
-    return ["WeeklyShareHolding_Update5", "WeeklyShareHolding_Update6"]
+    return ["WeeklyShareHolding_Update5", "WeeklyShareHolding_Update7"]
 
 # Include the reports router under the main router prefix
 main_router.include_router(reports_router, prefix="/api/reports", tags=["Reports"])
@@ -260,9 +260,16 @@ if os.path.exists(DIST_DIR):
     assets_dir = os.path.join(DIST_DIR, "assets")
     if os.path.exists(assets_dir):
         # Mount assets first so they take priority
-        app.mount("/shareholding-pattern/assets", StaticFiles(directory=assets_dir), name="assets")
+        app.mount("/equity-dashboard/shareholding-pattern/assets", StaticFiles(directory=assets_dir), name="assets")
 
-@app.get("/shareholding-pattern/{path:path}")
+@app.get("/equity-dashboard/shareholding-pattern/")
+async def serve_index():
+    index_path = os.path.join(DIST_DIR, "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+    return {"message": "Frontend build not found."}
+
+@app.get("/equity-dashboard/shareholding-pattern/{path:path}")
 async def catch_all(request: Request, path: str):
     # If path corresponds to a file in dist (e.g. favicon.ico), serve it
     file_path = os.path.join(DIST_DIR, path)
@@ -274,11 +281,11 @@ async def catch_all(request: Request, path: str):
     if os.path.isfile(index_path):
         return FileResponse(index_path)
     
-    return {"message": "Frontend build not found. Visit /shareholding-pattern/api for the API."}
+    return {"message": "Resource not found."}
 
 @app.get("/")
 async def root_redirect():
-    return RedirectResponse(url="/shareholding-pattern/")
+    return RedirectResponse(url="/equity-dashboard/shareholding-pattern/")
 
 if __name__ == "__main__":
     import uvicorn

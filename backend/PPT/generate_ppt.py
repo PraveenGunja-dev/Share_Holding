@@ -120,7 +120,7 @@ def _get_date_range_label() -> Optional[str]:
     return None
 
 # Load DB config from environment
-_default_db_path = str((_here.parent.parent / "WeeklyShareHolding_Update6.db").resolve())
+_default_db_path = str((_here.parent.parent / "WeeklyShareHolding_Update7.db").resolve())
 DB_PATH = _get_env("DB_PATH", _default_db_path).strip()
 if not DB_PATH:
     raise ValueError("Missing required DB env var: DB_PATH")
@@ -190,7 +190,7 @@ if not CURRENT_WEEK_DATE or not PREVIOUS_WEEK_DATE:
         PREVIOUS_WEEK_DATE = PREVIOUS_WEEK_DATE or _d2
 
 # PowerPoint I/O
-TEMPLATE_PPT = _get_env("WSHP_PPT_TEMPLATE", "Weekly Shareholder Movement_Template - V7 - with dummy data.pptx")
+TEMPLATE_PPT = _get_env("WSHP_PPT_TEMPLATE", "Weekly Shareholder Movement_Template.pptx")
 OUTPUT_PPT_FILENAME = _get_env("WSHP_PPT_OUTPUT", "Weekly_ShareHolding_Report.pptx")
 
 # Slide dimensions
@@ -3516,79 +3516,94 @@ def update_toc_on_template(prs, toc_items):
             slide = None
     if slide is None:
         return False
-    # Force-refresh the TOC body: remove all non-title shapes, then insert a new table
-    try:
-        def _norm_txt(s):
-            return " ".join(str(s or "").split()).strip().lower()
-        title_shape = None
-        for shp in list(slide.shapes):
+
+    def _norm_txt(s: str) -> str:
+        return " ".join(str(s or "").split()).strip().lower()
+
+    def _set_tf_text_preserve_format(tf, new_text: str) -> None:
+        try:
+            if not tf.paragraphs:
+                tf.text = new_text
+                return
+            p = tf.paragraphs[0]
+            if not p.runs:
+                tf.text = new_text
+                return
+            p.runs[0].text = new_text
+            for r in p.runs[1:]:
+                r.text = ""
+        except Exception:
             try:
-                if getattr(shp, "has_text_frame", False):
-                    if _norm_txt(shp.text_frame.text) == "table of contents":
-                        title_shape = shp
-                        break
+                tf.text = new_text
             except Exception:
-                continue
-        for shp in list(slide.shapes):
-            if shp is title_shape:
-                continue
-            try:
-                slide.shapes._spTree.remove(shp._element)
-            except Exception:
-                continue
-    except Exception:
-        pass
+                pass
 
     try:
-        # Title (ensure present)
-        has_title = False
+        # 1) Prefer updating an existing table (keeps template formatting)
         for shp in slide.shapes:
-            if getattr(shp, "has_text_frame", False):
-                if (shp.text_frame.text or "").strip().lower() == "table of contents":
-                    has_title = True
-                    break
-        if not has_title:
-            txBox = slide.shapes.add_textbox(
-                Emu(5657849), Emu(1423331), Emu(3620905), Emu(747837)
-            )
-            tf = txBox.text_frame
-            para = tf.paragraphs[0]
-            run = para.add_run()
-            run.text = "Table of Contents"
-            run.font.size = Pt(32)
-            run.font.bold = True
-            run.font.name = "Arial"
-            run.font.color.rgb = RGBColor(0x1B, 0x3A, 0x5C)
+            try:
+                if getattr(shp, "has_table", False) and shp.table is not None:
+                    tbl = shp.table
+                    rows = len(tbl.rows)
+                    cols = len(tbl.columns)
+                    if cols < 2:
+                        continue
+                    max_rows = min(rows, len(toc_items))
+                    for i in range(max_rows):
+                        _set_tf_text_preserve_format(tbl.cell(i, 0).text_frame, str(i + 1))
+                        _set_tf_text_preserve_format(tbl.cell(i, 1).text_frame, str(toc_items[i]))
+                    for i in range(max_rows, rows):
+                        _set_tf_text_preserve_format(tbl.cell(i, 0).text_frame, "")
+                        _set_tf_text_preserve_format(tbl.cell(i, 1).text_frame, "")
+                    return True
+            except Exception:
+                continue
 
-        num_rows = len(toc_items)
-        num_cols = 2
-        table_left = Emu(5779770)
-        table_top = Emu(2284098)
-        table_width = Emu(6006327)
-        row_height = Emu(335931)
-        table_height = row_height * num_rows
+        # 2) Fallback: update a textbox list (most paragraphs) without changing layout
+        candidate = None
+        best_score = -1
+        for shp in slide.shapes:
+            try:
+                if not getattr(shp, "has_text_frame", False):
+                    continue
+                txt = _norm_txt(shp.text_frame.text)
+                if not txt or "table of contents" in txt:
+                    continue
+                score = len(shp.text_frame.paragraphs)
+                if score > best_score:
+                    best_score = score
+                    candidate = shp
+            except Exception:
+                continue
 
-        table_shape = slide.shapes.add_table(num_rows, num_cols, table_left, table_top,
-                                             table_width, table_height)
-        table = table_shape.table
-        remove_table_styling(table)
-        table.columns[0].width = Emu(622658)
-        table.columns[1].width = Emu(5383669)
+        if candidate is None:
+            return False
+
+        tf = candidate.text_frame
         for i, item in enumerate(toc_items):
-            set_cell_style(
-                table.cell(i, 0), str(i + 1),
-                font_size=Pt(14), bold=False,
-                font_color=RGBColor(0x1B, 0x3A, 0x5C),
-                alignment=PP_ALIGN.CENTER, font_name="Arial",
-            )
-            set_cell_style(
-                table.cell(i, 1), item,
-                font_size=Pt(14), bold=False,
-                font_color=RGBColor(0x1B, 0x3A, 0x5C),
-                alignment=PP_ALIGN.LEFT, font_name="Arial",
-            )
-            for c in range(num_cols):
-                set_cell_border(table.cell(i, c))
+            if i >= len(tf.paragraphs):
+                break
+            p = tf.paragraphs[i]
+            if not p.runs:
+                try:
+                    p.text = f"{i + 1} {item}"
+                except Exception:
+                    continue
+            else:
+                p.runs[0].text = f"{i + 1} {item}"
+                for r in p.runs[1:]:
+                    r.text = ""
+        for j in range(len(toc_items), len(tf.paragraphs)):
+            try:
+                p = tf.paragraphs[j]
+                if p.runs:
+                    p.runs[0].text = ""
+                    for r in p.runs[1:]:
+                        r.text = ""
+                else:
+                    p.text = ""
+            except Exception:
+                continue
         return True
     except Exception:
         return False
@@ -4394,7 +4409,7 @@ def build_thankyou_slide(prs):
 
 def generate_report(template_path: str, db_path: str, date_input: Optional[str], bu_id: int) -> tuple:
     """Library entry point to generate the PPT report.
-    Returns: (pptx_bytes: bytes, display_date: str)
+    Returns: (pptx_bytes: bytes, display_date: str, report_data: dict)
     """
     global DB_PATH, TEMPLATE_PPT
     DB_PATH = db_path
@@ -4441,21 +4456,6 @@ def generate_report(template_path: str, db_path: str, date_input: Optional[str],
         df_aif = fetch_table_data_latest(conn, TABLE_NAMES["top_10_aif"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
         df_entry = fetch_table_data_latest(conn, TABLE_NAMES["entry"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
         df_exit = fetch_table_data_latest(conn, TABLE_NAMES["exit"], SCHEMA_NAME, date_range=date_range_label, bu_id=bu_id)
-
-        report_data = {
-            "institutional": df_institutional.to_dict(orient="records") if not df_institutional.empty else [],
-            "buyers": df_buyers.to_dict(orient="records") if not df_buyers.empty else [],
-            "sellers": df_sellers.to_dict(orient="records") if not df_sellers.empty else [],
-            "fii_fpi": df_fii_fpi.to_dict(orient="records") if not df_fii_fpi.empty else [],
-            "mf_active": df_mf_active.to_dict(orient="records") if not df_mf_active.empty else [],
-            "mf_passive": df_mf_passive.to_dict(orient="records") if not df_mf_passive.empty else [],
-            "insurance_pf": df_insurance_pf.to_dict(orient="records") if not df_insurance_pf.empty else [],
-            "aif": df_aif.to_dict(orient="records") if not df_aif.empty else [],
-            "entry": df_entry.to_dict(orient="records") if not df_entry.empty else [],
-            "exit": df_exit.to_dict(orient="records") if not df_exit.empty else [],
-            "bu_name": bu_name,
-            "display_date": d1
-        }
 
         import io
         prs = Presentation(template_path)
@@ -4558,6 +4558,12 @@ def generate_report(template_path: str, db_path: str, date_input: Optional[str],
             except Exception:
                 pass
 
+        report_data = {
+            "date_range_label": date_range_label,
+            "bu_id": bu_id,
+            "bu_name": bu_name,
+        }
+
         output = io.BytesIO()
         prs.save(output)
         return output.getvalue(), d1, report_data
@@ -4572,7 +4578,7 @@ def main():
 
     bu_id = _get_bu_id()
     date_range = _get_date_range_label()
-    pptx_bytes, display_date = generate_report(TEMPLATE_PPT, DB_PATH, date_range, bu_id)
+    pptx_bytes, display_date, _ = generate_report(TEMPLATE_PPT, DB_PATH, date_range, bu_id)
 
     output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_PPT_FILENAME)
     with open(output_path, "wb") as f:

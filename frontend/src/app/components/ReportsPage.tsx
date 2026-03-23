@@ -4,7 +4,7 @@ import {
   FileText, Download, Mail, Eye, 
   RotateCcw, CheckCircle, X, Loader2,
   Calendar as CalendarIcon, FileStack, AlertCircle, FileType, ChevronDown,
-  Info, Sparkles, Send
+  Info, Send
 } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
@@ -33,14 +33,41 @@ interface ReportsPageProps {
 type Stage = 'idle' | 'generating' | 'viewing' | 'error';
 type EmailStatus = 'idle' | 'sending' | 'sent' | 'error';
 
+const REPORTS_API_BASE = (
+  import.meta.env.VITE_API_URL || "/equity-dashboard/shareholding-pattern/api"
+).replace(/\/$/, "");
+
+const buildReportsUrl = (
+  path: string,
+  params?: Record<string, string | number | undefined>
+) => {
+  const qs = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && String(v).trim() !== "") {
+        qs.append(k, String(v));
+      }
+    });
+  }
+  return `${REPORTS_API_BASE}/reports/${path}${qs.toString() ? `?${qs.toString()}` : ""}`;
+};
+
+const parseErrorMessage = async (response: Response) => {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    const body = await response.json();
+    return body?.detail || body?.message || "Request failed";
+  }
+  const text = await response.text();
+  return text?.slice(0, 200) || "Request failed";
+};
+
 export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
   const [stage, setStage] = useState<Stage>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [slides, setSlides] = useState<string[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [buName, setBuName] = useState('Adani');
-  const [slideData, setSlideData] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<'image' | 'web'>('image');
   const [showEmail, setShowEmail] = useState(false);
   const [showDownloadChoice, setShowDownloadChoice] = useState(false);
   const [emailStatus, setEmailStatus] = useState<EmailStatus>('idle');
@@ -131,10 +158,11 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
     setErrorMsg('');
     try {
       const endpoint = action === 'view' ? 'preview-slides' : 'preview-pdf';
-      const response = await fetch(`/equity-dashboard/shareholding-pattern/api/reports/${endpoint}?date=${encodeURIComponent(reportISO)}&bu_id=${buId || 1}`);
+      const response = await fetch(
+        buildReportsUrl(endpoint, { date: reportISO, bu_id: buId || 1 })
+      );
       if (!response.ok) {
-          const body = await response.json();
-          throw new Error(body.detail || 'Failed to connect to report engine');
+          throw new Error(await parseErrorMessage(response));
       }
       
       if (action === 'view') {
@@ -143,29 +171,9 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
           setSlides(data.slides);
           setBuName(data.bu_name || 'Adani');
           setCurrentSlide(0);
-          setViewMode('image');
-          setStage('viewing');
-        } else if (data.data) {
-          setSlideData(data.data);
-          setBuName(data.bu_name || 'Adani');
-          // Mock slides based on data presence
-          const mockSlides = ['Title', 'TOC'];
-          if (data.data.institutional?.length) mockSlides.push('Institutional');
-          if (data.data.buyers?.length) mockSlides.push('Buyers');
-          if (data.data.sellers?.length) mockSlides.push('Sellers');
-          if (data.data.entry?.length || data.data.exit?.length) mockSlides.push('EntryExit');
-          if (data.data.fii_fpi?.length) mockSlides.push('FII');
-          if (data.data.mf_active?.length || data.data.mf_passive?.length) mockSlides.push('MF');
-          if (data.data.insurance_pf?.length) mockSlides.push('Insurance');
-          if (data.data.aif?.length) mockSlides.push('AIF');
-          mockSlides.push('ThankYou');
-          
-          setSlides(mockSlides);
-          setCurrentSlide(0);
-          setViewMode('web');
           setStage('viewing');
         } else {
-          throw new Error('No slides or data generated');
+          throw new Error('Slide preview is unavailable on this server. Please download PPTX/PDF.');
         }
       } else {
         // Just triggering generation logic if needed, but 'view' handles the slide logic now
@@ -182,10 +190,7 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
     try {
       const endpoint = format === 'pdf' ? 'download-pdf' : 'download-pptx';
       const rangeToUse = overrideRange || reportISO;
-      const response = await fetch(`/equity-dashboard/shareholding-pattern/api/reports/${endpoint}?date=${encodeURIComponent(rangeToUse)}&bu_id=${buId || 1}`);
-      if (!response.ok) throw new Error(`Download failed`);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      const url = buildReportsUrl(endpoint, { date: rangeToUse, bu_id: buId || 1 });
       const a = document.createElement('a');
       a.href = url;
       const rangeName = overrideRange || displayDate;
@@ -193,9 +198,8 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      alert(`Download Error`);
+    } catch (err: any) {
+      alert(err?.message || 'Download Error');
     }
   };
 
@@ -204,12 +208,12 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
     if (!email || !reportISO) return;
     setEmailStatus('sending');
     try {
-      const response = await fetch(`/equity-dashboard/shareholding-pattern/api/reports/send-email?bu_id=${buId || 1}`, {
+      const response = await fetch(buildReportsUrl("send-email", { bu_id: buId || 1 }), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date: reportISO, email })
       });
-      if (!response.ok) throw new Error('Email delivery failed');
+      if (!response.ok) throw new Error(await parseErrorMessage(response));
       setEmailStatus('sent');
     } catch (err) {
       setEmailStatus('error');
@@ -246,7 +250,7 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
     <div className="w-full h-full space-y-6 animate-in fade-in duration-500">
       {/* Control Card - Full Width Adani Sidebar-to-Sidebar style */}
       <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden rounded-xl bg-white dark:bg-slate-900 border">
-        <div className="bg-[#002B5C] px-6 py-3 flex items-center justify-between">
+        <div className="bg-[#002B5C] px-5 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <FileText className="w-5 h-5 text-white/90" />
             <h2 className="text-white font-black text-sm tracking-widest uppercase">Weekly Shareholder Report</h2>
@@ -256,42 +260,42 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
           </Badge>
         </div>
         
-        <CardContent className="p-8">
-          <div className="flex flex-col xl:flex-row items-center justify-between gap-8">
+        <CardContent className="p-4 lg:p-5">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
             
             {/* Date Selection and Filename Block */}
-            <div className="flex flex-col md:flex-row items-center gap-6 flex-1 min-w-0">
+            <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] items-end gap-3 min-w-0">
                {/* Date Selector */}
-                <div className="w-full md:w-80 shrink-0">
-                  <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Reporting Period</Label>
+                <div className="w-full shrink-0">
+                  <Label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Reporting Period</Label>
                   <Dialog open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                    <Button 
+                    <Button
                       onClick={() => setIsCalendarOpen(true)}
-                      variant="outline" 
-                      className="w-full h-12 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all group"
+                      variant="outline"
+                      className="w-full h-9 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 flex items-center justify-between px-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all rounded-md group"
                     >
                       <div className="flex items-center gap-3">
-                        <CalendarIcon className="w-5 h-5 text-[#002B5C] dark:text-sky-400 group-hover:scale-110 transition-transform" />
-                        <span className="font-bold text-[#002B5C] dark:text-sky-400">
+                        <CalendarIcon className="w-3 h-3 text-[#002B5C] dark:text-sky-400 group-hover:scale-110 transition-transform" />
+                        <span className="font-bold text-[12px] text-[#002B5C] dark:text-sky-400">
                           {displayDate}
                         </span>
                       </div>
-                      <ChevronDown className="w-4 h-4 text-slate-400" />
+                      <ChevronDown className="w-3 h-3 text-slate-400" />
                     </Button>
-                    <DialogContent className="sm:max-w-md p-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-white">
-                      <div className="bg-[#002B5C] p-6 text-white text-center">
+                    <DialogContent className="sm:max-w-[360px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-white">
+                      <div className="bg-[#002B5C] p-4 text-white text-center">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-1">Interactive Selection</p>
                         <h3 className="text-xl font-black">Select Reporting Week</h3>
                         <p className="text-white/50 text-xs mt-1">Select any date to pick the full reporting week</p>
                       </div>
                       
-                      <div className="p-4 flex flex-col items-center">
+                      <div className="p-3 flex flex-col items-center">
                         <Calendar 
                           mode="single"
                           selected={selectedInterval?.start}
                           onSelect={onCalendarSelect}
                           initialFocus
-                          className="bg-white mx-auto scale-110 my-4"
+                          className="bg-white mx-auto scale-95 my-2"
                           modifiers={{
                             selectedRange: selectedInterval ? { from: selectedInterval.start, to: selectedInterval.end } : [],
                             availableRange: parsedIntervals.map(i => ({ from: i.start, to: i.end }))
@@ -306,13 +310,13 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
                   </Dialog>
                </div>
 
-               <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 flex items-center gap-4 flex-1 min-w-0 h-20">
-                  <div className="w-10 h-10 rounded bg-[#002B5C]/10 flex items-center justify-center">
-                    <FileType className="w-6 h-6 text-[#002B5C]" />
+               <div className="h-9 px-3 bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded bg-[#002B5C]/10 flex items-center justify-center shrink-0">
+                    <FileType className="w-4 h-4 text-[#002B5C] dark:text-sky-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Generated Output</p>
-                    <p className="text-sm font-bold text-[#002B5C] dark:text-sky-400 truncate">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Generated Output</p>
+                    <p className="text-[11px] sm:text-xs md:text-sm font-bold text-[#002B5C] dark:text-sky-400 leading-snug break-all sm:break-words line-clamp-2 sm:line-clamp-none">
                       Weekly_Report_{displayDate?.replace(/-/g, '_') || 'latest'}_{buName.replace(/ /g, '_')}.pptx
                     </p>
                   </div>
@@ -320,29 +324,29 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
             </div>
 
             {/* Actions Row */}
-            <div className="flex items-center gap-3">
-              <Button 
+            <div className="flex flex-wrap md:flex-nowrap items-center xl:justify-end gap-3">
+              <Button
                 onClick={() => handleAction('view')}
                 disabled={stage === 'generating'}
-                className="h-12 px-6 bg-[#002B5C] hover:bg-[#001a4d] text-white font-black text-xs gap-3 rounded transition-all active:scale-95"
+                className="h-12 px-6 min-w-[170px] bg-[#002B5C] hover:bg-[#001a4d] text-white font-black text-xs gap-3 rounded-md transition-all active:scale-95"
               >
                 {stage === 'generating' ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
                 Generate & Preview
               </Button>
 
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => setShowEmail(true)}
-                className="h-12 px-5 border-slate-200 dark:border-slate-800 text-[#002B5C] dark:text-sky-400 font-black text-xs gap-2 rounded hover:bg-slate-50 hover:text-[#002B5C] transition-all"
+                className="h-12 px-5 min-w-[120px] border-slate-200 dark:border-slate-700 text-[#002B5C] dark:text-sky-400 font-black text-xs gap-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#002B5C] transition-all"
               >
                 <Mail className="w-4 h-4" />
                 Email
               </Button>
 
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => setShowDownloadChoice(true)}
-                className="h-12 px-5 border-slate-200 dark:border-slate-800 text-[#002B5C] dark:text-sky-400 font-black text-xs gap-2 rounded hover:bg-slate-50 hover:text-[#002B5C] transition-all"
+                className="h-12 px-5 min-w-[120px] border-slate-200 dark:border-slate-700 text-[#002B5C] dark:text-sky-400 font-black text-xs gap-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#002B5C] transition-all"
               >
                 <Download className="w-4 h-4" />
                 Download
@@ -366,7 +370,7 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
             <div className="flex items-center gap-4">
               <Eye className="w-4 h-4 text-sky-400" />
               <div className="flex items-center gap-3">
-                <span className="text-white font-black text-[10px] uppercase tracking-widest text-white/70">Presentation View</span>
+                <span className="font-black text-[10px] uppercase tracking-widest text-white/70">Presentation View</span>
                 <Badge variant="outline" className="text-[9px] border-white/20 text-white/50 h-5">
                   SLIDE {currentSlide + 1} OF {slides.length}
                 </Badge>
@@ -400,20 +404,11 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
 
              {/* Slide Image / Web Content Wrapper */}
              <div className="w-full max-w-5xl bg-white shadow-2xl rounded-lg overflow-hidden border border-slate-200 aspect-[16/9] relative">
-                {viewMode === 'image' ? (
-                  <img 
-                    src={`data:image/png;base64,${slides[currentSlide]}`} 
-                    alt={`Slide ${currentSlide + 1}`}
-                    className="w-full h-full object-contain select-none pointer-events-none"
-                  />
-                ) : (
-                  <WebSlidePreview 
-                    type={slides[currentSlide]} 
-                    data={slideData} 
-                    buName={buName} 
-                    displayDate={displayDate}
-                  />
-                )}
+                <img 
+                  src={`data:image/png;base64,${slides[currentSlide]}`} 
+                  alt={`Slide ${currentSlide + 1}`}
+                  className="w-full h-full object-contain select-none pointer-events-none"
+                />
              </div>
 
              {/* Slide Indicators */}
@@ -460,18 +455,18 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
                   </div>
                   <ChevronDown className="w-4 h-4 text-slate-400" />
                 </Button>
-                <DialogContent className="sm:max-w-md p-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-white">
+                <DialogContent className="sm:max-w-[360px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-white">
                   <div className="bg-[#002B5C] p-4 text-white text-center">
                     <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Target Week</p>
                     <p className="text-sm font-bold">Pick date for export</p>
                   </div>
-                  <div className="p-4 flex flex-col items-center">
+                  <div className="p-3 flex flex-col items-center">
                     <Calendar 
                       mode="single"
                       selected={downloadInterval?.start}
                       onSelect={onDownloadCalendarSelect}
                       initialFocus
-                      className="bg-white"
+                      className="bg-white scale-95"
                       modifiers={{
                         selectedRange: downloadInterval ? { from: downloadInterval.start, to: downloadInterval.end } : [],
                         availableRange: parsedIntervals.map(i => ({ from: i.start, to: i.end }))
@@ -537,116 +532,4 @@ export function ReportsPage({ dateRange, buId }: ReportsPageProps) {
       </Dialog>
     </div>
   );
-}
-
-function WebSlidePreview({ type, data, buName, displayDate }: { type: string, data: any, buName: string, displayDate: string }) {
-  const renderTable = (rows: any[], columns: string[], title: string) => (
-    <div className="w-full h-full flex flex-col p-8 bg-white">
-      <div className="bg-[#002B5C] text-white p-4 mb-4 flex justify-between items-center h-12">
-        <h3 className="text-sm font-bold uppercase tracking-widest">{title}</h3>
-        <span className="text-[10px] opacity-70">{displayDate}</span>
-      </div>
-      <div className="flex-1 overflow-hidden border border-slate-200">
-        <table className="w-full text-[9px] border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              {columns.map(col => (
-                <th key={col} className="p-1.5 text-left font-black text-[#002B5C] uppercase">{col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.slice(0, 20).map((row, i) => (
-              <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                {columns.map(col => {
-                  const val = row[col] || row[col.replace(/ /g, '')] || '';
-                  const isChange = col.toLowerCase().includes('change') || col.toLowerCase().includes('bought') || col.toLowerCase().includes('sold');
-                  const colorClass = isChange ? (parseFloat(val) > 0 ? 'text-green-600' : parseFloat(val) < 0 ? 'text-red-600' : '') : '';
-                  return <td key={col} className={cn("p-1 font-medium", colorClass)}>{val}</td>;
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="mt-4 flex justify-between items-end border-t border-slate-100 pt-2 h-8">
-        <span className="text-[8px] font-bold text-[#002B5C]">{buName} Portfolio</span>
-        <span className="text-[8px] text-slate-400">Page 1</span>
-      </div>
-    </div>
-  );
-
-  switch (type) {
-    case 'Title':
-      return (
-        <div className="w-full h-full flex flex-col items-center justify-center p-20 bg-gradient-to-br from-[#002B5C] to-[#001a4d] text-white text-center">
-          <div className="w-24 h-24 mb-10 bg-white/10 rounded-full flex items-center justify-center">
-            <Sparkles className="w-12 h-12 text-white/50" />
-          </div>
-          <h1 className="text-4xl font-black mb-4 tracking-tighter uppercase">{buName} Portfolio</h1>
-          <h2 className="text-xl font-bold opacity-60 uppercase tracking-[0.3em]">Weekly Shareholder Movement</h2>
-          <div className="mt-20 px-8 py-3 bg-white/10 rounded-full text-sm font-black tracking-widest">
-            {displayDate}
-          </div>
-        </div>
-      );
-    case 'TOC':
-      return (
-        <div className="w-full h-full p-16 bg-white">
-          <h3 className="text-2xl font-black text-[#002B5C] mb-10 pb-4 border-b-4 border-slate-100">Table of Contents</h3>
-          <div className="space-y-4">
-            {['Top 20 Institutional Shareholders', 'Top 20 Buyers', 'Top 20 Sellers', 'New Entry / Exits', 'Top 10 FIIs & FPIs', 'Top 10 MFs', 'Top 10 Insurance & PFs', 'Top 10 AIFs'].map((item, i) => (
-              <div key={i} className="flex items-center gap-4 group">
-                <span className="w-8 h-8 rounded bg-[#002B5C]/10 flex items-center justify-center text-[#002B5C] font-black text-xs">{i+1}</span>
-                <span className="text-lg font-bold text-slate-700">{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    case 'Institutional':
-      return renderTable(data.institutional || [], ['Rank', 'Shareholder Name', 'Category', 'Holding %', 'Change %'], 'Top 20 Institutional Shareholders');
-    case 'Buyers':
-      return renderTable(data.buyers || [], ['Rank', 'Shareholder Name', 'Category', 'Shares Bought', 'Current%'], 'Top 20 Buyers During the Week');
-    case 'Sellers':
-      return renderTable(data.sellers || [], ['Rank', 'Shareholder Name', 'Category', 'Shares Sold', 'Current%'], 'Top 20 Sellers During the Week');
-    case 'EntryExit':
-       return (
-         <div className="w-full h-full flex flex-col p-8 bg-white overflow-hidden">
-            <div className="bg-[#002B5C] text-white p-4 mb-4 h-12 flex items-center"><h3 className="text-sm font-bold uppercase tracking-widest">New Entry / Exits</h3></div>
-            <div className="flex gap-4 flex-1 min-h-0">
-               <div className="flex-1 flex flex-col min-w-0">
-                  <h4 className="text-[10px] font-black uppercase text-green-600 mb-2">New Entries</h4>
-                  <div className="flex-1 border border-slate-100 overflow-hidden text-[8px] p-2">
-                     {data.entry?.map((e:any, i:number) => <div key={i} className="py-1 border-b">{e.ShareholderName || e.Name}</div>)}
-                  </div>
-               </div>
-               <div className="flex-1 flex flex-col min-w-0">
-                  <h4 className="text-[10px] font-black uppercase text-red-600 mb-2">New Exits</h4>
-                  <div className="flex-1 border border-slate-100 overflow-hidden text-[8px] p-2">
-                     {data.exit?.map((e:any, i:number) => <div key={i} className="py-1 border-b">{e.ShareholderName || e.Name}</div>)}
-                  </div>
-               </div>
-            </div>
-         </div>
-       );
-    case 'FII':
-      return renderTable(data.fii_fpi || [], ['Rank', 'Shareholder Name', 'Holding %', 'Change %'], "Top 10 FII's & FPI's");
-    case 'MF':
-      return renderTable(data.mf_active || [], ['Rank', 'Shareholder Name', 'Holding %', 'Change %'], "Top 10 MF's (Active & Passive)");
-    case 'Insurance':
-      return renderTable(data.insurance_pf || [], ['Rank', 'Shareholder Name', 'Holding %', 'Change %'], "Top 10 Insurance & PFs");
-    case 'AIF':
-      return renderTable(data.aif || [], ['Rank', 'Shareholder Name', 'Holding %', 'Change %'], "Top 10 AIFs");
-    case 'ThankYou':
-      return (
-        <div className="w-full h-full flex flex-col items-center justify-center p-20 bg-[#002B5C] text-white text-center">
-          <h1 className="text-6xl font-black mb-4 italic tracking-tighter uppercase">Thank You</h1>
-          <div className="w-20 h-1 bg-white/30 my-6"></div>
-          <p className="text-sm font-bold opacity-60 tracking-[0.5em] uppercase">{buName} Investor Relations</p>
-        </div>
-      );
-    default:
-      return <div className="p-20 text-center">Loading Preview...</div>;
-  }
 }
