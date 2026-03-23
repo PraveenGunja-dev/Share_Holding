@@ -3,7 +3,7 @@ import { ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Respons
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { getInsurancePFHolders } from '../services/api';
 import { useEffect, useState, useMemo } from 'react';
-import { cn , formatName} from "./ui/utils";
+import { cn , formatName, truncateShareholderName} from "./ui/utils";
 import { getCategoryColor } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
 
@@ -18,6 +18,21 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
   const { theme } = useTheme();
   const [liveData, setLiveData] = useState<any[]>([]);
   const [detectedDates, setDetectedDates] = useState({ latest: '', prev: '' });
+  const [dimensions, setDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1200,
+    height: typeof window !== 'undefined' ? window.innerHeight : 800
+  });
+
+  useEffect(() => {
+    const handleResize = () => setDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobile = dimensions.width < 768;
 
   useEffect(() => {
     async function fetchData() {
@@ -68,9 +83,18 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
     }));
   }, [filteredRankings]);
 
+  // If there are many long names, show fewer X ticks to reduce overlap.
+  const xTickInterval = areaChartData.length > (isMobile ? 6 : 8) ? Math.ceil(areaChartData.length / (isMobile ? 6 : 8)) - 1 : 0;
+  
+  // Responsive chart height so labels don't collide on smaller screens.
+  const chartHeight = Math.max(
+    isMobile ? 320 : 380,
+    Math.min(560, filteredRankings.length * (isMobile ? 28 : 22) + (isMobile ? 240 : 220))
+  );
+
   return (
     <div id="insurance" className="space-y-8 transition-all duration-300">
-      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-3">
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-5">
         <div className="pb-1 space-y-4">
           <div><h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 uppercase leading-none mb-1">Insurance & PF</h2><p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold uppercase tracking-widest leading-none">Institutional Portfolio Analysis</p></div>
           <div className="flex p-1 bg-muted/40 backdrop-blur-sm rounded-xl border border-border w-fit shadow-inner">
@@ -79,22 +103,22 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-fuchsia-500 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total holdings</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-fuchsia-500 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total holdings</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-fuchsia-400">
               {totalHoldings.toLocaleString()}
               <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-fuchsia-500 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total investors</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-fuchsia-500 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total investors</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-fuchsia-400">
               {currentViewData.length}
               <span className="text-[9px] font-black text-foreground ml-1">Entities</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-purple-500 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 truncate uppercase" title={filteredRankings[0]?.name}>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-purple-500 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 truncate uppercase" title={filteredRankings[0]?.name}>
               Top Holder: {filteredRankings[0] ? formatName(filteredRankings[0].name) : '—'}
             </div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-fuchsia-400 leading-none">
@@ -135,7 +159,7 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
         </div>
 
         {/* Composed Chart — Area + Change Bars */}
-        <div className="w-full transition-all duration-300" style={{ height: 420 }}>
+        <div className="w-full transition-all duration-300" style={{ height: chartHeight }}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={areaChartData} margin={{ left: 20, right: 30, bottom: 80, top: 20 }}>
               <defs>
@@ -151,13 +175,17 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
               <CartesianGrid strokeDasharray="4 8" stroke="var(--border)" opacity={0.2} vertical={false} />
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--foreground)', fontFamily: 'Adani' }}
+                tick={{ fontSize: isMobile ? 8 : 9, fontWeight: 900, fill: 'var(--foreground)', fontFamily: 'Adani' }}
                 axisLine={{ stroke: 'var(--border)', strokeWidth: 0.5 }}
                 tickLine={false}
                 angle={-35}
                 textAnchor="end"
-                interval={0}
-                height={70}
+                interval={xTickInterval}
+                height={isMobile ? 60 : 70}
+                tickFormatter={(v: any) => {
+                  const s = String(v ?? '');
+                  return truncateShareholderName(s, 3);
+                }}
               />
               <YAxis
                 tick={{ fontSize: 11, fontWeight: 900, fill: 'var(--foreground)' }}
@@ -233,14 +261,14 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
           <div className="max-h-[500px] overflow-auto custom-scrollbar">
             <Table>
               <TableHeader className="bg-primary dark:bg-slate-900 sticky top-0 z-30">
-                <TableRow className="hover:bg-transparent border-b border-white/10 text-white uppercase">
+                <TableRow className="hover:bg-transparent border-b border-white/10 text-white">
                   <TableHead rowSpan={2} className="w-16 text-center border-r border-white/5 font-bold text-white py-4 font-['Adani']">Rank</TableHead>
                   <TableHead rowSpan={2} className="border-r border-white/5 font-bold text-white py-4 w-[25%] font-['Adani']">Shareholder Name</TableHead>
                   <TableHead colSpan={2} className="text-center border-r border-white/5 font-bold text-white bg-white/10 py-2 font-['Adani']">{detectedDates.latest}</TableHead>
-                  <TableHead colSpan={2} className="text-center border-r border-white/5 font-bold text-white bg-white/5 py-2 font-['Adani']">{detectedDates.prev}</TableHead>
-                  <TableHead rowSpan={2} className="text-center font-bold text-white py-4 font-['Adani']">Change in Holding Shares</TableHead>
+                  <TableHead colSpan={2} className="text-center border-r border-white/5 font-bold text-white bg-white/10 py-2 font-['Adani']">{detectedDates.prev}</TableHead>
+                  <TableHead rowSpan={2} className="text-center font-bold text-white py-4 font-['Adani'] leading-tight">Change in Holding Shares</TableHead>
                 </TableRow>
-                <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10 uppercase">
+                <TableRow className="hover:bg-transparent border-b border-white/10">
                   <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal bg-fuchsia-400/20">Holding</TableHead>
                   <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight">% of Share Capital</TableHead>
                   <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">Holding</TableHead>
@@ -254,9 +282,9 @@ export function TopInsurancePFs({ topN, metricView, dateRange, buId }: TopInsura
                     <TableCell className="py-2 border-r font-black text-primary dark:text-sky-300">{formatName(row.name)}</TableCell>
                     <TableCell className="text-center border-r font-mono font-bold text-fuchsia-600 py-2">{row.holdings.toLocaleString()}L</TableCell>
                     <TableCell className="text-center border-r font-mono font-bold py-2">{row.percent.toFixed(2)}%</TableCell>
-                    <TableCell className="text-center border-r font-mono text-muted-foreground py-2">{row.prevHoldings.toLocaleString()}L</TableCell>
-                    <TableCell className="text-center border-r font-mono text-muted-foreground py-2">{row.prevPercent.toFixed(2)}%</TableCell>
-                    <TableCell className="text-center py-2 font-black">
+                    <TableCell className="text-center border-r font-mono font-bold text-fuchsia-600 py-2">{row.prevHoldings.toLocaleString()}L</TableCell>
+                    <TableCell className="text-center border-r font-mono font-bold py-2">{row.prevPercent.toFixed(2)}%</TableCell>
+                    <TableCell className="change-holding-cell text-center py-2 font-mono font-bold text-[11px] 2xl:text-[11px] leading-tight">
                       {row.holdings - row.prevHoldings === 0 ? '-' : <span className={row.holdings - row.prevHoldings < 0 ? "text-rose-600" : "text-foreground"}>{Math.abs(row.holdings - row.prevHoldings).toLocaleString()}L</span>}
                     </TableCell>
                   </TableRow>

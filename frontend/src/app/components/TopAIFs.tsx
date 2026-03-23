@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { TrendingUp, Users, PieChart as PieIcon, ShieldCheck, Activity, ArrowDown, ArrowUp } from 'lucide-react';
 import { getAIFHolders } from '../services/api';
 import { useEffect, useState } from 'react';
-import { cn, formatName } from "./ui/utils";
+import { cn, formatName, truncateShareholderName } from "./ui/utils";
 import { getCategoryColor } from '../constants/colors';
 
 interface TopAIFsProps {
@@ -144,9 +144,9 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
   ];
 
   return (
-    <div id="aifs" className="space-y-6 transition-all duration-300">
+    <div id="aifs" className="space-y-8 transition-all duration-300">
       {/* Header Row: Title on Left, KPIs on Right */}
-      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-3">
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-5">
         <div className="pb-1">
           <h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 tracking-tighter leading-none mb-1 inline-block">Top AIFs</h2>
           <p className="text-[11px] 2xl:text-[13px] text-muted-foreground font-bold opacity-80 tracking-widest">Comparing {detectedDates.latest} vs {detectedDates.prev}</p>
@@ -154,23 +154,23 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
 
         {/* KPIs Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 h-[85px]"
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 h-[95px]"
             style={{ borderRightColor: getCategoryColor('DII-AIF') }}>
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total AIF holdings</div>
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total AIF holdings</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-indigo-400">
               {totalAIFHoldings.toLocaleString()}
               <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-sky-500 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Change in holding shares</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-sky-500 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Change in holding shares</div>
             <div className={cn("text-base 2xl:text-lg font-black", totalWoWChange >= 0 ? "text-primary dark:text-sky-400" : "text-rose-600 dark:text-rose-400")}>
               {Math.abs(totalWoWChange).toLocaleString()}
               <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-blue-500 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total Investors</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-blue-500 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total Investors</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300">
               {activeAIFCount}
               <span className="text-[9px] font-black text-foreground ml-1">Entities</span>
@@ -220,9 +220,9 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
                       <LabelList
                         dataKey="name"
                         position="outside"
-                        offset={25}
-                        style={{ fontSize: '13px', fontWeight: 500, fill: 'var(--foreground)' }}
-                        formatter={(name: string) => name.toUpperCase()}
+                        offset={isMobile ? 18 : isTablet ? 22 : 25}
+                        style={{ fontSize: isMobile ? '10px' : isTablet ? '12px' : '13px', fontWeight: 500, fill: 'var(--foreground)' }}
+                        formatter={(name: string) => truncateShareholderName(String(name), 3).toUpperCase()}
                       />
                     )}
                   </Pie>
@@ -285,22 +285,36 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
             </div>
 
             <div className="border border-border rounded-xl shadow-xl flex flex-col bg-card overflow-hidden">
-              <div className="flex-1 max-h-[500px] overflow-y-auto custom-scrollbar relative">
-                <div className="w-full min-w-[800px]">
+              <div className="flex-1 max-h-[500px] overflow-x-auto overflow-y-auto custom-scrollbar relative">
+                <div className="w-full min-w-0">
                   <Table>
                     <TableHeader className="bg-primary dark:bg-slate-900 transition-colors sticky top-0 z-20 shadow-sm">
                       <TableRow className="hover:bg-transparent border-b border-white/10">
-                        <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-4 uppercase">Rank</TableHead>
-                        <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 whitespace-normal py-4 w-[25%] uppercase">Shareholder Name</TableHead>
-                        <TableHead colSpan={2} className={cn("text-center text-white font-bold border-r border-white/5 transition-colors uppercase", (metricView === 'holdings' || metricView === 'percentage') ? "bg-white/20" : "bg-white/10")}>
+                        <TableHead rowSpan={2} className="w-14 text-center text-white font-bold border-r border-white/5 py-4">Rank</TableHead>
+                        <TableHead rowSpan={2} className="text-white font-bold border-r border-white/5 whitespace-normal py-4 w-[25%] text-[13px] font-['Adani']">Shareholder Name</TableHead>
+                        <TableHead colSpan={2} className={cn("text-center text-white font-bold border-r border-white/5 transition-colors", (metricView === 'holdings' || metricView === 'percentage') ? "bg-white/20" : "bg-white/10")}>
                           {detectedDates.latest}
                         </TableHead>
-                        <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight uppercase">
+                        <TableHead
+                          colSpan={2}
+                          className={cn(
+                            "text-center text-white font-bold border-r border-white/5 transition-colors",
+                            (metricView === 'holdings' || metricView === 'percentage') ? "bg-white/20" : "bg-white/10",
+                          )}
+                        >
                           {detectedDates.prev}
                         </TableHead>
-                        <TableHead rowSpan={2} className={cn("text-center text-white font-bold py-4 whitespace-normal leading-tight max-w-[100px] transition-colors uppercase", metricView === 'change' ? "bg-white/20" : "")}>Change in Holding Shares</TableHead>
+                        <TableHead
+                          rowSpan={2}
+                          className={cn(
+                            "text-center text-white font-bold py-4 whitespace-normal leading-tight max-w-[100px] transition-colors text-[13px]",
+                            metricView === 'change' ? "bg-white/20" : "",
+                          )}
+                        >
+                          Change in Holding Shares
+                        </TableHead>
                       </TableRow>
-                      <TableRow className="hover:bg-transparent text-[9px] 2xl:text-[10px] border-b border-white/10 uppercase">
+                      <TableRow className="hover:bg-transparent border-b border-white/10">
                         <TableHead className={cn("text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal transition-all", (metricView === 'holdings' || metricView === 'all') ? "bg-sky-400/20 shadow-inner" : "")}>Holding</TableHead>
                         <TableHead className={cn("text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal leading-tight transition-all", (metricView === 'percentage' || metricView === 'all') ? "bg-sky-400/20 shadow-inner" : "")}>% of Share Capital</TableHead>
                         <TableHead className="text-center text-white/80 font-bold border-r border-white/5 py-2.5 whitespace-normal">Holding</TableHead>
@@ -314,7 +328,7 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
                           className="hover:bg-muted/50 transition-colors duration-200 border-b border-border last:border-0"
                         >
                           <TableCell className="text-center font-black text-muted-foreground text-[11px] 2xl:text-[13px] border-r border-border py-4 whitespace-normal">{idx + 1}</TableCell>
-                          <TableCell className="font-bold text-[12px] 2xl:text-[14px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[25%] uppercase">{row.name}</TableCell>
+                          <TableCell className="font-bold text-[13px] text-primary dark:text-sky-300 border-r border-border py-4 leading-tight whitespace-normal w-[25%] font-['Adani']">{formatName(row.name)}</TableCell>
 
                           {/* Metric Highlighting */}
                           <TableCell className={cn(
@@ -331,11 +345,29 @@ export function TopAIFs({ topN, metricView, dateRange, buId }: TopAIFsProps) {
                           )}>{row.percent.toFixed(2)}%</TableCell>
 
                           {/* Previous Date Data */}
-                          <TableCell className="text-center font-mono font-bold text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevHoldings.toLocaleString()}</TableCell>
-                          <TableCell className="text-center font-mono font-bold text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
+                          <TableCell
+                            className={cn(
+                              "text-center font-mono font-bold text-[12px] 2xl:text-[14px] border-r border-border py-4 whitespace-normal transition-colors",
+                              (metricView === 'holdings' || metricView === 'all')
+                                ? "bg-sky-500/15 text-sky-700 dark:text-sky-400"
+                                : "text-foreground",
+                            )}
+                          >
+                            {row.prevHoldings.toLocaleString()}
+                          </TableCell>
+                          <TableCell
+                            className={cn(
+                              "text-center font-mono font-bold text-[12px] 2xl:text-[14px] border-r border-border py-4 whitespace-normal transition-colors",
+                              (metricView === 'percentage' || metricView === 'all')
+                                ? "bg-sky-500/15 text-sky-700 dark:text-sky-400"
+                                : "text-foreground",
+                            )}
+                          >
+                            {row.prevPercent.toFixed(2)}%
+                          </TableCell>
 
                           <TableCell className={cn(
-                            "text-center font-mono font-black text-[12px] 2xl:text-[14px] py-4 whitespace-normal transition-colors",
+                            "change-holding-cell text-center font-mono font-black text-[11px] 2xl:text-[11px] py-4 whitespace-normal transition-colors",
                             metricView === 'change'
                               ? "bg-sky-500/15"
                               : ""

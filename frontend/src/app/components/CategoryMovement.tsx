@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { ArrowUp, ArrowDown, TrendingUp } from 'lucide-react';
 import { kpiData, categoryMovementData } from '../data';
 import { cn } from './ui/utils';
+import { useEffect, useState } from 'react';
 
 interface CategoryMovementProps {
   selectedCategories: string[];
@@ -12,6 +13,19 @@ interface CategoryMovementProps {
 }
 
 export function CategoryMovement({ selectedCategories, metricView, dateRange }: CategoryMovementProps) {
+  const [viewportWidth, setViewportWidth] = useState<number>(() =>
+    typeof window !== 'undefined' ? window.innerWidth : 1400
+  );
+
+  useEffect(() => {
+    const onResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const yAxisWidth = viewportWidth < 768 ? 180 : viewportWidth < 1400 ? 280 : 480;
+  const chartHeight = viewportWidth < 768 ? 320 : viewportWidth < 1400 ? 420 : 520;
+
   const getChangeIcon = (change: number) => {
     if (change > 0) return <ArrowUp className="w-4 h-4 text-emerald-600" />;
     if (change < 0) return <ArrowDown className="w-4 h-4 text-rose-600" />;
@@ -73,7 +87,7 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {filteredKPIs.map((kpi, index) => (
           <Card key={index} className="px-6 py-5 bg-card border-border shadow-lg hover:shadow-2xl transition-all duration-300 group relative overflow-hidden border-l-4 border-l-primary dark:border-l-sky-500">
-            <div className="text-[10px] 2xl:text-[12px] font-bold text-muted-foreground uppercase tracking-widest mb-2 leading-none">{kpi.label}</div>
+            <div className="text-[13px] font-bold text-muted-foreground uppercase tracking-widest mb-2 leading-none">{kpi.label}</div>
             <div className="flex items-baseline gap-2">
               <div className="text-2xl 2xl:text-4xl font-black text-primary dark:text-sky-400 tracking-tighter leading-none">{kpi.value}</div>
             </div>
@@ -93,14 +107,14 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
             Holdings Comparison <span className="text-muted-foreground font-bold ml-2">(% Share Capital)</span>
           </h3>
         </div>
-        <ResponsiveContainer width="100%" height={500}>
+        <ResponsiveContainer width="100%" height={chartHeight}>
           <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 30, top: 0, bottom: 20 }}>
             <CartesianGrid strokeDasharray="4 4" stroke="var(--border)" horizontal={true} vertical={false} opacity={0.6} />
             <XAxis type="number" tick={{ fontSize: 13, fontWeight: 900, fontFamily: 'inherit', fill: 'var(--foreground)' }} axisLine={false} tickLine={false} />
             <YAxis
               dataKey="category"
               type="category"
-              width={480}
+              width={yAxisWidth}
               tick={(props: any) => {
                 const { x, y, payload } = props;
                 return (
@@ -165,13 +179,13 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
             <Table>
               <TableHeader className="bg-primary dark:bg-slate-900">
                 <TableRow className="hover:bg-transparent border-b border-white/10">
-                  <TableHead className="w-16 font-bold text-[10px] 2xl:text-[12px] uppercase tracking-wider text-white text-center py-5">#</TableHead>
-                  <TableHead className="font-bold text-[10px] 2xl:text-[12px] uppercase tracking-wider text-white py-5 min-w-[200px]">Category</TableHead>
-                  <TableHead className="text-right font-bold text-[10px] 2xl:text-[12px] uppercase tracking-wider text-white py-5">Holdings (Dec-19)</TableHead>
-                  <TableHead className="text-right font-bold text-[10px] 2xl:text-[12px] uppercase tracking-wider text-white py-5">% of Share Capital (19)</TableHead>
-                  <TableHead className="text-right font-bold text-[10px] 2xl:text-[12px] uppercase tracking-wider text-white py-5">Holdings (Dec-26)</TableHead>
-                  <TableHead className="text-right font-bold text-[10px] 2xl:text-[12px] uppercase tracking-wider text-white py-5">% of Share Capital (26)</TableHead>
-                  <TableHead className="text-right font-bold text-[10px] 2xl:text-[12px] uppercase tracking-wider text-white py-5">Change in Holding (L)</TableHead>
+                  <TableHead className="w-16 font-bold uppercase tracking-wider text-white text-center py-5">#</TableHead>
+                  <TableHead className="font-bold uppercase tracking-wider text-white py-5 min-w-[200px]">Category</TableHead>
+                  <TableHead className="text-right font-bold uppercase tracking-wider text-white py-5">Holdings (Dec-19)</TableHead>
+                  <TableHead className="text-right font-bold uppercase tracking-wider text-white py-5">% of Share Capital (19)</TableHead>
+                  <TableHead className="text-right font-bold uppercase tracking-wider text-white py-5">Holdings (Dec-26)</TableHead>
+                  <TableHead className="text-right font-bold uppercase tracking-wider text-white py-5">% of Share Capital (26)</TableHead>
+                  <TableHead className="text-right font-bold uppercase tracking-wider text-white py-5">Change in Holding (L)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -183,8 +197,8 @@ export function CategoryMovement({ selectedCategories, metricView, dateRange }: 
                     <TableCell className="text-right font-mono font-bold text-[12px] 2xl:text-[14px] text-muted-foreground py-4 border-r border-border/50">{item.percent19.toFixed(2)}%</TableCell>
                     <TableCell className="text-right font-mono font-bold text-[13px] 2xl:text-[15px] text-primary dark:text-foreground py-4 bg-primary/5 dark:bg-sky-400/5">{item.holding26.toLocaleString()}</TableCell>
                     <TableCell className="text-right font-mono font-bold text-[13px] 2xl:text-[15px] text-primary dark:text-sky-400 py-4 bg-primary/5 dark:bg-sky-400/5 border-r border-border/50">{item.percent26.toFixed(2)}%</TableCell>
-                    <TableCell className="text-right py-4">
-                      <div className={cn("flex items-center justify-end gap-1.5 font-mono font-black text-[12px] 2xl:text-[14px] px-3 py-1 rounded-md",
+                    <TableCell className="text-right py-4 change-holding-cell">
+                      <div className={cn("flex items-center justify-end gap-1.5 font-mono font-black text-[11px] px-3 py-1 rounded-md",
                         item.change > 0 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" :
                           item.change < 0 ? "bg-rose-500/10 text-rose-600 dark:text-rose-400" : "bg-muted/30 text-muted-foreground")}>
                         {getChangeIcon(item.change)}

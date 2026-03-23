@@ -67,15 +67,15 @@ function TrendSparkline({ type }: { type: 'up' | 'down' }) {
 
 export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   return (
-    <div className="w-[240px] flex flex-col border-r border-slate-200/60 dark:border-slate-800 h-full relative z-40 bg-white dark:bg-slate-950 font-['Adani'] transition-colors duration-300">
+    <div className="w-[210px] flex flex-col border-r border-slate-200/60 dark:border-slate-800 h-full relative z-40 bg-white dark:bg-slate-950 font-['Adani'] transition-colors duration-300">
       <ScrollArea className="flex-1">
         <div className="py-4">
           {navigationGroups.map((group, groupIdx) => (
             <div key={group.title} className={cn("mb-6", groupIdx === 0 ? "mt-1" : "")}>
-              <h2 className="px-5 mb-2 text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-400">
+              <h2 className="px-4 mb-2 text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-400">
                 {group.title}
               </h2>
-              <nav className="px-3 space-y-1">
+              <nav className="px-2.5 space-y-1">
                 {group.items.map((item) => {
                   const isActive = activeSection === item.id;
                   return (
@@ -83,7 +83,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
                       key={item.id}
                       onClick={() => onSectionChange(item.id)}
                       className={cn(
-                        "w-full flex items-center px-4 py-2 rounded-lg transition-all duration-300 group relative",
+                        "w-full flex items-center px-3 py-2 rounded-lg transition-all duration-300 group relative",
                         isActive
                           ? "text-[#00205B] dark:text-sky-400 font-bold bg-[#00205B]/[0.06] dark:bg-sky-400/10 shadow-[inset_0_0_0_1px_rgba(0,32,91,0.08)] dark:shadow-[inset_0_0_0_1px_rgba(56,189,248,0.2)]"
                           : "text-slate-800 dark:text-slate-300 hover:text-[#00205B] dark:hover:text-sky-300 hover:bg-slate-50 dark:hover:bg-slate-900"
@@ -95,6 +95,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
 
                       <span className={cn(
                         "text-[12px] 2xl:text-[14px] tracking-tight transition-transform duration-300",
+                        "whitespace-nowrap overflow-hidden text-ellipsis",
                         isActive ? "translate-x-1" : "group-hover:translate-x-1"
                       )}>
                         {item.label}

@@ -1,0 +1,30 @@
+[data-slot="table"] thead th[colspan="2"] {
+  /* Standardize week/date header cells (latest vs prev) */
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 13px;
+  font-family: 'Adani', sans-serif;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* Force consistent styling for week/date header cells ("latest" and "prev"). */
+[data-slot="table"] thead th[colspan="2"] {
+  background-color: rgba(255, 255, 255, 0.1) !important; /* matches Tailwind `bg-white/10` */
+  color: #ffffff !important; /* matches Tailwind `text-white` */
+  font-size: 13px !important;
+  font-family: "Adani", sans-serif !important;
+  padding-top: 0.5rem !important; /* matches Tailwind `py-2` */
+  padding-bottom: 0.5rem !important;
+}
+
+/* Ensure consistent number sizing across all tables (dashboard + previews). */
+table td {
+  font-size: 13px !important;
+}
+
+/* If a number is wrapped in a monospace span, normalize it too. */
+table td span.font-mono {
+  font-size: 13px !important;
+}
+

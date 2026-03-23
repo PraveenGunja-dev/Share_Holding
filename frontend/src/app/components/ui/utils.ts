@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDateRange(range: string) {
   if (!range) return '';
-  if (range === 'WeeklyShareHolding_Update4') return '20-Feb-26 vs 27-Feb-26';
+  if (range === 'WeeklyShareHolding_Update7') return '20-Feb-26 vs 27-Feb-26';
 
   // Handle the format: 12-19-2025-12-26-2025
   const parts = range.split('-');
@@ -64,5 +64,12 @@ export function formatName(name: string) {
     })
     .join(' ')
     .trim();
+}
+
+export function truncateShareholderName(name: string, maxWords = 3): string {
+  if (!name || name === '—' || name === 'Unknown') return name;
+  const words = String(name).trim().split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return formatName(name);
+  return `${formatName(words.slice(0, maxWords).join(' '))}...`;
 }
 

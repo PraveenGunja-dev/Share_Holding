@@ -12,7 +12,17 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn(
+          "w-full caption-bottom text-sm",
+          // Numeric / mono cells: fixed 11px at all breakpoints
+          "[&_td.font-mono]:text-[11px] [&_td.font-mono]:2xl:text-[11px]",
+          "[&_td.text-muted-foreground.font-black]:text-[11px] [&_td.text-muted-foreground.font-black]:2xl:text-[11px]",
+          // "Change in Holding Shares" column: force 11px including inner spans
+          "[&_td.change-holding-cell]:text-[11px] [&_td.change-holding-cell]:2xl:text-[11px]",
+          "[&_td.change-holding-cell_span]:text-[11px] [&_td.change-holding-cell_span]:2xl:text-[11px]",
+          "[&_td.change-holding-cell_.font-mono]:text-[11px] [&_td.change-holding-cell_.font-mono]:2xl:text-[11px]",
+          className,
+        )}
         {...props}
       />
     </div>
@@ -70,7 +80,9 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        // Allow wrapping on smaller screens so table content can't force horizontal overflow.
+        // Card tables: one consistent header size (13px) unless overridden per-column.
+        "text-foreground h-10 px-2 text-left align-middle font-bold font-['Adani'] text-[13px] whitespace-normal break-words [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}
@@ -83,7 +95,8 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        // Allow wrapping on smaller screens so table content can't force horizontal overflow.
+        "p-2 align-middle whitespace-normal break-words [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}

@@ -18,7 +18,8 @@ import { BondYieldMovement } from './components/BondYieldMovement';
 import { DashboardFooter } from './components/DashboardFooter';
 import { ScrollArea } from './components/ui/scroll-area';
 import { ReportsPage } from './components/ReportsPage';
-import { getDateRanges } from './services/api';
+import './table-overrides.css';
+// Note: keep this component focused on routing/state; do not auto-recover dashboard data on refresh.
 
 type AppScreen = 'login' | 'landing' | 'dashboard' | 'reports';
 
@@ -37,8 +38,12 @@ export default function App() {
   });
   const [selectedBUId, setSelectedBUId] = useState<number | undefined>(() => {
     const saved = localStorage.getItem('selected_bu_id');
-    return saved ? parseInt(saved, 10) : undefined;
+    if (!saved) return undefined;
+    const parsed = parseInt(saved, 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
   });
+  const isDashboardDataReady =
+    typeof selectedBUId === "number" && Number.isFinite(selectedBUId);
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
   // Dashboard state
@@ -59,6 +64,8 @@ export default function App() {
   const [mfView, setMfView] = useState(() => {
     return localStorage.getItem('mf_view') || 'all';
   });
+  /** Incremented each time user confirms a BU on the landing page — scroll dashboard to first section */
+  const [buSessionKey, setBuSessionKey] = useState(0);
   const isScrollingRef = useRef(false);
 
   // Persist state to localStorage
@@ -70,14 +77,32 @@ export default function App() {
     localStorage.setItem('top_n', topN.toString());
     localStorage.setItem('metric_view', metricView);
     localStorage.setItem('mf_view', mfView);
-    if (selectedBUId !== undefined) {
+    if (typeof selectedBUId === 'number' && Number.isFinite(selectedBUId)) {
       localStorage.setItem('selected_bu_id', selectedBUId.toString());
     } else {
       localStorage.removeItem('selected_bu_id');
     }
   }, [screen, selectedBU, selectedBUId, activeSection, dateRange, topN, metricView, mfView]);
 
-  // Restore scroll position after refresh if on dashboard
+  // After choosing a BU on the landing page, scroll dashboard to the first section (viewport top + institutional)
+  useEffect(() => {
+    if (screen !== 'dashboard' || buSessionKey === 0) return;
+
+    isScrollingRef.current = true;
+    const raf = requestAnimationFrame(() => {
+      const viewport = document.querySelector(
+        '[data-slot="scroll-area-viewport"]',
+      ) as HTMLElement | null;
+      if (viewport) viewport.scrollTop = 0;
+      document.getElementById('institutional')?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      window.setTimeout(() => {
+        isScrollingRef.current = false;
+      }, 900);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [buSessionKey, screen]);
+
+  // Restore scroll position after refresh or when switching back to dashboard (e.g. Reports)
   useEffect(() => {
     if (screen === 'dashboard' && activeSection) {
       const timer = setTimeout(() => {
@@ -88,7 +113,7 @@ export default function App() {
       }, 800); // Give some time for components to load
       return () => clearTimeout(timer);
     }
-  }, [screen]); // Only run on mount/screen change to dashboard
+  }, [screen]);
 
   const handleBUSubmit = (buId: number, buName: string) => {
     setSelectedBU(buName);
@@ -96,6 +121,8 @@ export default function App() {
     setSelectedCategories([]); // This means "All" by default
     setDateRange(''); // Header will set latest available
     setAvailableCategories([]);
+    setActiveSection('institutional'); // start from first dashboard section
+    setBuSessionKey((k) => k + 1);
     setScreen('dashboard');
   };
 
@@ -194,15 +221,21 @@ export default function App() {
           <Sidebar activeSection={activeSection} onSectionChange={scrollToSection} />
         </aside>
 
-        <ScrollArea className="flex-1 bg-background transition-colors duration-300">
-          <div className="flex flex-col min-h-[calc(100vh-80px)] relative">
+        <ScrollArea className="flex-1 bg-background transition-colors duration-300 min-w-0">
+          <div className="flex flex-col min-h-[calc(100vh-80px)] relative min-w-0">
             {/* Subtle background overlay */}
             <div className="absolute inset-0 opacity-[0.4] dark:opacity-[0.1] pointer-events-none"
               style={{ backgroundImage: 'radial-gradient(var(--foreground) 0.5px, transparent 0.5px)', backgroundSize: '32px 32px' }} />
 
-            <main className="flex-1 relative z-10 w-full overflow-x-hidden p-3 md:p-4 lg:p-5 space-y-4 md:space-y-6 max-w-[1280px] xl:max-w-[1440px] 2xl:max-w-[1536px] mx-auto">
+            <main className="flex-1 relative z-10 w-full overflow-x-auto p-3 md:p-4 lg:p-5 space-y-4 md:space-y-6 max-w-[1280px] xl:max-w-[1440px] 2xl:max-w-[1536px] mx-auto">
               {screen === 'dashboard' ? (
                 <>
+                  {!isDashboardDataReady ? (
+                    // On refresh, if BU id is not available, show an empty dashboard area.
+                    // This prevents child components from mounting with incomplete params and showing loaders.
+                    <div className="min-h-[400px]" />
+                  ) : (
+                    <div className="flex flex-col gap-8 md:gap-10">
                   {/* 1. Category Movement - Disabled for now as data is unavailable */}
                   {/* <section id="category">
                     <CategoryMovement
@@ -309,12 +342,14 @@ export default function App() {
                       />
                     </section>
                   )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <ReportsPage dateRange={dateRange} buId={selectedBUId} />
               )}
             </main>
-            <DashboardFooter />
+            <DashboardFooter buName={selectedBU || undefined} />
           </div>
         </ScrollArea>
       </div>

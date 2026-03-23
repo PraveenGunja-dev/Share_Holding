@@ -2,10 +2,11 @@ import { Card } from './ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Label, PieChart, Pie, LabelList } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { getFIIHolders } from '../services/api';
-import { useEffect, useState, useMemo, useLayoutEffect, useRef } from 'react';
-import { cn , formatName} from "./ui/utils";
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { cn , formatName, truncateShareholderName } from "./ui/utils";
 import { useTheme } from '../context/ThemeContext';
 import { getCategoryColor } from '../constants/colors';
+import { getOwnershipMixPieLayout } from './ui/ownershipMixPie';
 
 interface TopFIIsProps {
   topN: number;
@@ -34,8 +35,33 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
   }, []);
 
   const isMobile = dimensions.width < 768;
-  const isTablet = dimensions.width < 1200;
-  const yAxisWidth = isMobile ? 180 : isTablet ? 280 : 380;
+  // Treat smaller laptops (like 13") as tablet so we don't reserve too much axis width.
+  const isTablet = dimensions.width < 1400;
+
+  // Measure actual chart area (not full viewport) so truncation triggers correctly.
+  const chartWrapRef = useRef<HTMLDivElement | null>(null);
+  const [chartContainerWidth, setChartContainerWidth] = useState<number>(1200);
+
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const el = chartWrapRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const w = el.getBoundingClientRect().width;
+      setChartContainerWidth(w || window.innerWidth);
+    };
+
+    update();
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const isCompact = chartContainerWidth < 1100;
+  const yAxisWidth = isMobile ? 190 : isCompact ? 310 : isTablet ? 280 : 380;
+
+  const ownershipMixPie = useMemo(() => getOwnershipMixPieLayout(dimensions.width), [dimensions.width]);
 
   useEffect(() => {
     async function fetchData() {
@@ -81,73 +107,44 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
   }, [availableCategories, liveData]);
 
   const totalFIIHoldings = liveData.reduce((acc, curr) => acc + curr.holdings, 0);
-  const didLogRef = useRef(false);
-
-  // #region agent log
-  useLayoutEffect(() => {
-    if (didLogRef.current) return;
-    if (loading) return;
-    if (filteredRankings.length === 0) return;
-
-    const cell = document.querySelector<HTMLTableCellElement>('#fiis table tbody tr td');
-    const html = document.documentElement;
-    if (!cell) return;
-    const tr = cell.closest('tr');
-
-    const computed = window.getComputedStyle(cell);
-    const computedTrBg = tr ? window.getComputedStyle(tr).backgroundColor : null;
-
-    fetch('http://127.0.0.1:7530/ingest/52f209d2-7edd-4cf5-b122-cb80a387b1cb', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8302a7' },
-      body: JSON.stringify({
-        sessionId: '8302a7',
-        location: 'TopFIIs.tsx:dbg',
-        message: 'FII table first cell computed styles',
-        data: {
-          themeFromHook: theme,
-          htmlClass: html.className,
-          hasDark: html.classList.contains('dark'),
-          cellClass: cell.className,
-          cellTextColor: computed.color,
-          cellBg: computed.backgroundColor,
-          trBg: computedTrBg,
-          timestamp: Date.now()
-        }
-      })
-    }).catch(() => {});
-
-    didLogRef.current = true;
-  }, [loading, filteredRankings.length, theme]);
-  // #endregion
 
   if (loading) return <div className="p-8 text-center text-slate-400 font-bold animate-pulse">Updating FII Intelligence...</div>;
 
+  if (!loading && filteredRankings.length === 0) {
+    return (
+      <div id="fiis" className="space-y-6 transition-all duration-300 text-slate-100">
+        <div className="p-8 text-center text-muted-foreground font-bold bg-card border border-border rounded-xl">
+          No data available for the selected filters as of now.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div id="fiis" className="space-y-8 transition-all duration-300">
-      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-3">
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-5">
         <div className="pb-1">
           <h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 uppercase leading-none mb-1">Top {topN} FIIs & FPIs</h2>
           <p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold uppercase tracking-widest leading-none">Institutional FII Analysis</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-sky-500 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total holdings</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-sky-500 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total holdings</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-400">
               {totalFIIHoldings.toLocaleString()}
               <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-blue-500 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total Investors</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-blue-500 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total Investors</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300">
               {liveData.length}
               <span className="text-[9px] font-black text-foreground ml-1">Entities</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-indigo-500 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Top Holder</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-indigo-500 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Top Holder</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-sky-300 truncate" title={liveData[0]?.name}>
               {liveData[0]?.name || '—'}
             </div>
@@ -157,16 +154,19 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
 
       <Card className="p-4 bg-card shadow-xl border-border">
         {/* Ownership Mix ribbon — matching InstitutionalHolders */}
-        <div className="flex items-center justify-between gap-4 mb-4 bg-muted/20 dark:bg-slate-900/40 p-2 rounded-xl border border-border/40 shadow-sm backdrop-blur-sm overflow-x-auto no-scrollbar">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 bg-muted/20 dark:bg-slate-900/40 p-2 rounded-xl border border-border/40 shadow-sm backdrop-blur-sm">
           <div className="flex items-center gap-3">
             {donutData.length > 0 && (
-              <div className="h-[50px] w-[50px] 2xl:h-[65px] 2xl:w-[65px] flex-shrink-0">
+              <div
+                className="flex-shrink-0"
+                style={{ width: ownershipMixPie.boxSizePx, height: ownershipMixPie.boxSizePx }}
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={donutData}
-                      innerRadius={12}
-                      outerRadius={24}
+                      innerRadius={ownershipMixPie.innerRadius}
+                      outerRadius={ownershipMixPie.outerRadius}
                       paddingAngle={4}
                       dataKey="value"
                       stroke="none"
@@ -197,7 +197,7 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-6 pr-2">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pr-2 w-full md:w-auto">
             {donutData.map((d: any) => (
               <div key={d.name} className="flex items-center gap-2 flex-shrink-0">
                 <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: d.color }} />
@@ -207,7 +207,7 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
           </div>
         </div>
 
-        <div className="w-full transition-all duration-300" style={{ height: Math.max(200, filteredRankings.length * 45 + 50) }}>
+        <div ref={chartWrapRef} className="w-full transition-all duration-300" style={{ height: Math.max(200, filteredRankings.length * 45 + 50) }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={filteredRankings} layout="vertical" margin={{ left: 50, right: 80, bottom: 60, top: 40 }}>
               <CartesianGrid strokeDasharray="3 6" stroke="var(--border)" horizontal={false} opacity={0.5} />
@@ -222,31 +222,34 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
                   style={{ opacity: 1 }}
                 />
               </XAxis>
-              <YAxis dataKey="name" type="category" width={yAxisWidth} tick={({ x, y, payload }: any) => (
-                <g transform={`translate(${x},${y})`}>
-                  <text
-                    x={-25}
-                    y={4}
-                    dominantBaseline="central"
-                    textAnchor="end"
-                    fontSize={isMobile ? 11 : 13}
-                    fontWeight={900}
-                    fill={theme === 'dark' ? '#38bdf8' : '#00205B'}
-                    style={{ fontFamily: 'Adani' }}
-                  >
-                    {(() => {
-                      const raw = String(payload?.value || '');
-                      const words = raw.split(' ').filter(Boolean);
-                      const maxWords = isMobile ? 2 : 4;
-                      const display =
-                        words.length > maxWords
-                          ? formatName(words.slice(0, maxWords).join(' ')) + '...'
-                          : formatName(raw);
-                      return display;
-                    })()}
-                  </text>
-                </g>
-              )} axisLine={{ stroke: 'var(--border)', strokeWidth: 0.5 }} tickLine={false}>
+              <YAxis
+                dataKey="name"
+                type="category"
+                width={yAxisWidth}
+                tick={({ x, y, payload, index }: any) => {
+                  const raw = payload?.value != null ? String(payload.value) : '—';
+                  const display = truncateShareholderName(raw, 3);
+
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      <text
+                        x={isMobile ? -27 : isCompact ? -32 : -25}
+                        y={4}
+                        dominantBaseline="central"
+                        textAnchor="end"
+                        fontSize={isMobile ? 11 : isCompact ? 12 : 13}
+                        fontWeight={900}
+                        fill={theme === 'dark' ? '#38bdf8' : '#00205B'}
+                        style={{ fontFamily: 'Adani' }}
+                      >
+                        {display}
+                      </text>
+                    </g>
+                  );
+                }}
+                axisLine={{ stroke: 'var(--border)', strokeWidth: 0.5 }}
+                tickLine={false}
+              >
                 <Label
                   value="INSTITUTIONAL SHAREHOLDERS"
                   angle={-90}
@@ -288,14 +291,14 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
           <div className="max-h-[500px] overflow-auto custom-scrollbar relative">
             <Table>
               <TableHeader className="bg-primary dark:bg-slate-900 sticky top-0 z-30 shadow-sm">
-                <TableRow className="border-b border-white/10 text-white uppercase hover:bg-primary dark:hover:bg-slate-900">
+                <TableRow className="border-b border-white/10 text-white hover:bg-primary dark:hover:bg-slate-900">
                   <TableHead rowSpan={2} className="w-16 text-center border-r font-bold text-white py-4 font-['Adani']">Rank</TableHead>
                   <TableHead rowSpan={2} className="border-r font-bold text-white py-4 w-[25%] font-['Adani']">Shareholder Name</TableHead>
                   <TableHead colSpan={2} className="text-center border-r font-bold text-white bg-white/10 py-2 font-['Adani']">{detectedDates.latest}</TableHead>
-                  <TableHead colSpan={2} className="text-center border-r font-bold text-white bg-white/5 py-2 font-['Adani']">{detectedDates.prev}</TableHead>
-                  <TableHead rowSpan={2} className="text-center font-bold text-white py-4 font-['Adani']">Change in Holding Shares</TableHead>
+                  <TableHead colSpan={2} className="text-center border-r font-bold text-white bg-white/10 py-2 font-['Adani']">{detectedDates.prev}</TableHead>
+                  <TableHead rowSpan={2} className="text-center font-bold text-white py-4 font-['Adani'] leading-tight">Change in Holding Shares</TableHead>
                 </TableRow>
-                <TableRow className="text-[10px] text-white/80 uppercase hover:bg-primary dark:hover:bg-slate-900">
+                <TableRow className="text-white/80 hover:bg-primary dark:hover:bg-slate-900">
                   <TableHead className="text-center border-r py-2 text-white/80">Holding</TableHead>
                   <TableHead className="text-center border-r py-2 text-white/80">% of Share Capital</TableHead>
                   <TableHead className="text-center border-r py-2 text-white/80">Holding</TableHead>
@@ -309,9 +312,9 @@ export function TopFIIs({ topN, metricView, dateRange, buId }: TopFIIsProps) {
                     <TableCell className="py-2 border-r font-black text-primary dark:text-sky-300">{formatName(row.name)}</TableCell>
                     <TableCell className="text-center border-r font-mono font-bold text-primary py-2">{row.holdings.toLocaleString()}L</TableCell>
                     <TableCell className="text-center border-r font-mono font-bold py-2 text-foreground dark:text-sky-300">{row.percent.toFixed(2)}%</TableCell>
-                    <TableCell className="text-center border-r font-mono text-foreground py-2 dark:text-sky-300">{row.prevHoldings.toLocaleString()}L</TableCell>
-                    <TableCell className="text-center border-r font-mono text-foreground py-2 dark:text-sky-300">{row.prevPercent.toFixed(2)}%</TableCell>
-                    <TableCell className="text-center py-2 font-black text-foreground dark:text-sky-300">
+                    <TableCell className="text-center border-r font-mono font-bold text-primary py-2 dark:text-sky-300">{row.prevHoldings.toLocaleString()}L</TableCell>
+                    <TableCell className="text-center border-r font-mono font-bold py-2 text-foreground dark:text-sky-300">{row.prevPercent.toFixed(2)}%</TableCell>
+                    <TableCell className="change-holding-cell text-center py-2 font-mono font-bold text-[11px] 2xl:text-[11px] text-foreground dark:text-sky-300">
                       {row.holdings - row.prevHoldings === 0 ? '-' : <span className={row.holdings - row.prevHoldings < 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground dark:text-sky-300"}>{Math.abs(row.holdings - row.prevHoldings).toLocaleString()}L</span>}
                     </TableCell>
                   </TableRow>

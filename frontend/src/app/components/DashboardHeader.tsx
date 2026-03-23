@@ -1,5 +1,4 @@
-import { ChevronRight, LogOut, Home, Sun, Moon, Filter, Settings2, CheckCircle2, Calendar as LucideCalendar, ChevronDown } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { ChevronRight, Home, Sun, Moon, Filter, Settings2, CheckCircle2, Calendar as LucideCalendar, ChevronDown } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -84,7 +83,6 @@ export function DashboardHeader({
   onMfViewChange,
   onHomeClick
 }: DashboardHeaderProps) {
-  const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [dbWeeks, setDbWeeks] = useState<{ label: string, value: string }[]>([]);
 
@@ -268,8 +266,13 @@ export function DashboardHeader({
               <Button variant="ghost" size="icon" onClick={toggleTheme} className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-all">
                 {theme === 'light' ? <Moon className="w-4 h-4 text-gray-500" /> : <Sun className="w-4 h-4 text-yellow-500" />}
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => { logout(); window.location.reload(); }} className="w-8 h-8 rounded-full hover:bg-rose-50 dark:hover:bg-rose-500/10 text-gray-400 hover:text-rose-600 transition-all">
-                <LogOut className="w-4 h-4" />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onHomeClick}
+                className="w-8 h-8 rounded-full hover:bg-sky-50 dark:hover:bg-sky-500/10 text-gray-400 hover:text-sky-600 transition-all"
+              >
+                <Home className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -281,7 +284,7 @@ export function DashboardHeader({
         <div className="flex items-center gap-0.5 px-4 h-full">
           {/* Active / Passive Global View */}
           <div className="flex items-center gap-2 pl-3">
-            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Type</span>
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">MF Type</span>
             <Select value={mfView} onValueChange={onMfViewChange}>
               <SelectTrigger className="h-7 border-none bg-transparent hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md px-2 text-[12px] font-bold text-sky-600 dark:text-sky-400 w-[95px] shadow-none focus:ring-0">
                 <SelectValue />

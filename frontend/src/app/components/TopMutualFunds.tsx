@@ -153,8 +153,8 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
 
 
   return (
-    <div className="space-y-4 transition-all duration-300">
-      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-3">
+    <div className="space-y-6 transition-all duration-300">
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-5">
         <div className="pb-1">
           <h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 tracking-tighter leading-none mb-1 inline-block">Top Mutual Funds</h2>
           <p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold opacity-80 tracking-widest leading-relaxed px-0.5">Comparing {detectedDates.latest} vs {detectedDates.prev}</p>
@@ -162,10 +162,10 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
           <Card
-            className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 h-[85px]"
+            className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 h-[95px]"
             style={{ borderRightColor: getCategoryColor("DII-MF") }}
           >
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">
               {isAllView ? "Total MF holdings" : isActiveView ? "Active MF holdings" : "Passive MF holdings"}
             </div>
             <div
@@ -183,11 +183,11 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
 
           <Card
             className={cn(
-              "p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 h-[85px]",
+              "p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 h-[95px]",
               isPassiveView ? "border-r-emerald-500" : "border-r-amber-600",
             )}
           >
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none uppercase">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none uppercase">
               {isAllView ? "Active MF holdings" : isPassiveView ? "Passive MF holdings" : "Active MF holdings"}
             </div>
             <div
@@ -203,8 +203,8 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
             </div>
           </Card>
 
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-emerald-500 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none uppercase">
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-emerald-500 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none uppercase">
               {isAllView ? "Passive MF holdings" : isPassiveView ? "Passive entities" : "Active entities"}
             </div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-emerald-400">
@@ -212,22 +212,22 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
             </div>
           </Card>
 
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center gap-1 shrink-0 h-[85px] border-r-4 border-r-sky-500">
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center gap-1 shrink-0 h-[95px] border-r-4 border-r-sky-500">
             {isAllView || isActiveView ? (
-              <div className="flex justify-between items-center text-[9px] 2xl:text-[10px] font-black text-foreground tracking-widest uppercase">
+              <div className="flex justify-between items-center text-[13px] font-black text-foreground tracking-widest uppercase">
                 <span>Active share</span>
                 <span className="text-primary dark:text-sky-400 font-black">{activeSharePct.toFixed(1)}%</span>
               </div>
             ) : null}
 
             {isAllView || isPassiveView ? (
-              <div className="flex justify-between items-center text-[9px] 2xl:text-[10px] font-black text-foreground tracking-widest uppercase">
+              <div className="flex justify-between items-center text-[13px] font-black text-foreground tracking-widest uppercase">
                 <span>Passive share</span>
                 <span className="text-primary dark:text-sky-400 font-black">{passiveSharePct.toFixed(1)}%</span>
               </div>
             ) : null}
 
-            <div className="flex justify-between items-center pt-1 border-t border-border/50 text-[9px] 2xl:text-[10px] font-black text-foreground tracking-widest uppercase">
+            <div className="flex justify-between items-center pt-1 border-t border-border/50 text-[13px] font-black text-foreground tracking-widest uppercase">
               <span>{isAllView ? "Change" : isActiveView ? "Change (Active)" : "Change (Passive)"}</span>
               <span
                 className={cn(
@@ -333,7 +333,7 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                     <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2 whitespace-normal leading-tight">
                       {detectedDates.latest}
                     </TableHead>
-                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight">
+                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2 whitespace-normal leading-tight">
                       {detectedDates.prev}
                     </TableHead>
                     <TableHead rowSpan={2} className="text-center text-white font-bold py-5 text-[13px] font-['Adani']">Change in Holding Shares</TableHead>
@@ -357,9 +357,9 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                         {row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}
                       </TableCell>
                       <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] py-4 whitespace-normal">
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] border-r border-border/50 py-4 whitespace-normal transition-colors bg-sky-500/15 text-sky-700 dark:text-sky-400">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.prevPercent.toFixed(2)}%</TableCell>
+                      <TableCell className="change-holding-cell text-center font-mono font-black text-[11px] 2xl:text-[11px] py-4 whitespace-normal">
                         {row.buy > 0 ? (
                           <span className="text-foreground dark:text-white font-black">{row.buy.toLocaleString()}</span>
                         ) : row.sell > 0 ? (
@@ -464,7 +464,7 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                     <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/20 py-2 whitespace-normal leading-tight">
                       {detectedDates.latest}
                     </TableHead>
-                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/5 py-2 whitespace-normal leading-tight">
+                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2 whitespace-normal leading-tight">
                       {detectedDates.prev}
                     </TableHead>
                     <TableHead rowSpan={2} className="text-center text-white font-bold py-4 whitespace-normal leading-tight text-[13px] font-['Adani']">Change in Holding Shares</TableHead>
@@ -488,9 +488,9 @@ export function TopMutualFunds({ topN, metricView, mfView, dateRange, buId }: To
                         {row.holdings.toLocaleString(undefined, { maximumFractionDigits: 1 })}
                       </TableCell>
                       <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.percent.toFixed(2)}%</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border/50 py-4 whitespace-normal">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border py-4 whitespace-normal">{row.prevPercent.toFixed(2)}%</TableCell>
-                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] py-4 whitespace-normal">
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] border-r border-border/50 py-4 whitespace-normal transition-colors bg-sky-500/15 text-sky-700 dark:text-sky-400">{row.prevHoldings.toLocaleString(undefined, { maximumFractionDigits: 1 })}</TableCell>
+                      <TableCell className="text-center font-mono font-black text-[11px] 2xl:text-[13px] text-foreground border-r border-border py-4 whitespace-normal bg-muted/5">{row.prevPercent.toFixed(2)}%</TableCell>
+                      <TableCell className="change-holding-cell text-center font-mono font-black text-[11px] 2xl:text-[11px] py-4 whitespace-normal">
                         {row.buy > 0 ? (
                           <span className="text-foreground dark:text-white font-black">{row.buy.toLocaleString()}</span>
                         ) : row.sell > 0 ? (

@@ -18,26 +18,39 @@ interface RankedInstitutionalBarsProps {
 
 export function RankedInstitutionalBars({ data }: RankedInstitutionalBarsProps) {
   const { theme } = useTheme();
-  const [dimensions, setDimensions] = React.useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1200
-  });
+  const wrapRef = React.useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = React.useState<number>(1200);
 
   React.useEffect(() => {
-    const handleResize = () => setDimensions({ width: window.innerWidth });
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    if (typeof ResizeObserver === 'undefined') return;
+    const el = wrapRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const w = el.getBoundingClientRect().width;
+      setContainerWidth(w || window.innerWidth);
+    };
+
+    update();
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
-  const isMobile = dimensions.width < 768;
-  const isTablet = dimensions.width < 1024;
+  const isMobile = containerWidth < 768;
+  // Treat smaller laptops (like 13") as tablet so left-side labels fit.
+  const isTablet = containerWidth < 1400;
+  // Extra-small laptop breakpoint to tighten labels for 13"-ish screens.
+  const isSmallLaptop = containerWidth < 1280;
 
   const option = useMemo(() => {
     const sortedData = [...data]
       .sort((a, b) => b.lakhs - a.lakhs)
       .slice(0, 20);
 
-    const leftSpace = isMobile ? 150 : isTablet ? 320 : 480;
-    const labelMargin = isMobile ? 10 : 25;
+    const leftSpace = isMobile ? 150 : isSmallLaptop ? 310 : isTablet ? 280 : 380;
+    const labelMargin = isMobile ? 10 : isSmallLaptop ? 16 : 18;
+    const axisLabelFontSize = isMobile ? 11 : isSmallLaptop ? 12 : 13;
 
     return {
       backgroundColor: 'transparent',
@@ -100,13 +113,13 @@ export function RankedInstitutionalBars({ data }: RankedInstitutionalBarsProps) 
         type: 'category',
         name: isMobile ? '' : 'INSTITUTIONAL SHAREHOLDERS',
         nameLocation: 'middle',
-        nameGap: leftSpace - 40,
+        nameGap: leftSpace - (isMobile ? 35 : 45),
         nameRotate: 90,
         nameTextStyle: {
             color: theme === 'dark' ? '#94a3b8' : '#64748b',
             fontFamily: 'Adani',
             fontWeight: '900',
-            fontSize: 13,
+            fontSize: isMobile ? 12 : isSmallLaptop ? 12 : 13,
             align: 'center'
         },
         data: sortedData.map(item => item.name),
@@ -115,15 +128,20 @@ export function RankedInstitutionalBars({ data }: RankedInstitutionalBarsProps) 
           color: theme === 'dark' ? '#E2E8F0' : '#1e293b',
           fontFamily: 'Adani',
           fontWeight: '900',
-          fontSize: 13,
+          fontSize: axisLabelFontSize,
           width: leftSpace - 60,
           margin: labelMargin,
           overflow: 'none',
           interval: 0,
-          formatter: (value: string) => {
-             const maxLen = isMobile ? 15 : 120;
-             const truncated = value.length > maxLen ? value.slice(0, maxLen) + "..." : value;
-             return formatName(truncated);
+          formatter: (value: string, idx: number) => {
+            const safeIdx = typeof idx === 'number' ? idx : 0;
+            // Always render a label (truncated if needed) to avoid "missing names" on smaller widths.
+            const maxLen =
+              safeIdx < (isMobile ? 8 : isSmallLaptop ? 10 : 20)
+                ? (isMobile ? 15 : isSmallLaptop ? 28 : 120)
+                : (isMobile ? 12 : isSmallLaptop ? 20 : 80);
+            const truncated = value.length > maxLen ? value.slice(0, maxLen) + '...' : value;
+            return formatName(truncated);
           }
         },
         axisLine: { show: true, lineStyle: { color: theme === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,32,91,0.2)' } },
@@ -161,10 +179,10 @@ export function RankedInstitutionalBars({ data }: RankedInstitutionalBarsProps) 
         }
       ]
     };
-  }, [data, theme]);
+  }, [data, theme, containerWidth, isMobile, isTablet, isSmallLaptop]);
 
   return (
-    <div className="w-full h-full min-h-[800px] bg-transparent overflow-hidden p-4">
+    <div ref={wrapRef} className="w-full h-full min-h-[800px] bg-transparent overflow-x-visible p-4">
       <ReactECharts 
         option={option} 
         style={{ height: '800px', width: '100%' }}

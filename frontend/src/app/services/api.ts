@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '/shareholding-pattern/api').replace(/\/$/, '') + '/';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '/equity-dashboard/shareholding-pattern/api').replace(/\/$/, '') + '/';
 
 const api = axios.create({
     baseURL: API_BASE_URL,

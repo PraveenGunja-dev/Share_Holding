@@ -7,10 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from './ui/badge';
 import { ArrowUp, ArrowDown, TrendingDown } from 'lucide-react';
 import { getTopSellers, getTopBuyers } from '../services/api';
-import { useEffect, useState, useMemo } from 'react';
-import { cn, formatDateRange, formatName } from "./ui/utils";
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { cn, formatDateRange, formatName, truncateShareholderName } from "./ui/utils";
 import { getCategoryColor } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
+import { getOwnershipMixPieLayout } from './ui/ownershipMixPie';
 
 interface TopSellersProps {
   selectedCategories: string[];
@@ -42,17 +43,39 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
   }, []);
 
   const isMobile = dimensions.width < 768;
-  const isTablet = dimensions.width < 1024;
+  // Treat smaller laptops (~13") as "tablet" so charts don't reserve too much fixed axis width.
+  const isTablet = dimensions.width < 1400;
   const isUltraWide = dimensions.width >= 1920;
+
+  // Measure actual chart area (not full viewport width) to avoid label overlap.
+  const chartWrapRef = useRef<HTMLDivElement | null>(null);
+  const [chartContainerWidth, setChartContainerWidth] = useState<number>(1200);
+
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const el = chartWrapRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const w = el.getBoundingClientRect().width;
+      setChartContainerWidth(w || window.innerWidth);
+    };
+
+    update();
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const isCompact = chartContainerWidth < 1100;
+
+  const ownershipMixPie = useMemo(() => getOwnershipMixPieLayout(dimensions.width), [dimensions.width]);
 
   const chartMargin = isMobile
     ? { left: 10, right: 40, bottom: 60, top: 40 }
     : { left: 50, right: 60, bottom: 60, top: 40 };
 
-  const yAxisWidth = isMobile ? 150 : isTablet ? 320 : 430;
-
-  // Standardized height to match Institutional Bars (800px)
-  const chartH = 800;
+  const yAxisWidth = isMobile ? 170 : isCompact ? 310 : isTablet ? 280 : 380;
 
   useEffect(() => {
     async function fetchData() {
@@ -145,6 +168,9 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
     .filter(item => selectedCategories.length === 0 || selectedCategories.includes(item.category))
     .slice(0, topN); // Dynamic Top N
 
+  // Responsive height: taller cards on larger viewports, but always enough room for labels.
+  const chartH = Math.max(240, filteredData.length * (isMobile ? 40 : 48) + (isMobile ? 70 : 60));
+
   const totalSold = filteredData.reduce((acc, curr) => acc + curr.sold, 0);
 
   const donutData = useMemo(() => {
@@ -159,6 +185,26 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
       color: getCategoryColor(cat)
     })).filter(d => d.value > 0);
   }, [filteredData]);
+
+  if (loading) {
+    return (
+      <div id="sellers" className="space-y-4 transition-all duration-300 text-slate-100">
+        <div className="p-8 text-center text-muted-foreground font-bold animate-pulse bg-card border border-border rounded-xl">
+          Updating sellers...
+        </div>
+      </div>
+    );
+  }
+
+  if (filteredData.length === 0) {
+    return (
+      <div id="sellers" className="space-y-4 transition-all duration-300 text-slate-100">
+        <div className="p-8 text-center text-muted-foreground font-bold bg-card border border-border rounded-xl">
+          No data available for the selected filters as of now.
+        </div>
+      </div>
+    );
+  }
 
   const maxSellValue = Math.max(...filteredData.map(d => d.sold), 1);
   const trackValue = maxSellValue * 1.15;
@@ -184,9 +230,9 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
   }
 
   return (
-    <div id="sellers" className="space-y-4 transition-all duration-300 text-slate-100">
+    <div id="sellers" className="space-y-6 transition-all duration-300 text-slate-100">
       {/* Header Row: Title on Left, KPIs on Right */}
-      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-3">
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-border pb-2 mb-5">
         <div className="pb-1">
           <h2 className="text-xl 2xl:text-2xl font-[1000] font-['Adani'] text-primary dark:text-sky-400 tracking-tighter leading-none mb-1 transition-all">Top {topN} Sellers</h2>
           <p className="text-[10px] 2xl:text-[12px] text-muted-foreground font-bold opacity-80 tracking-widest">
@@ -196,22 +242,22 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
 
         {/* KPIs Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-rose-600 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total shares sold</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-rose-600 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total shares sold</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-rose-400">
               {Math.abs(totalSold).toLocaleString()}
               <span className="text-[9px] font-black text-foreground ml-1">Lakhs</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-orange-500 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total sellers</div>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-orange-500 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 uppercase">Total sellers</div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-rose-400">
               {filteredData.length}
               <span className="text-[9px] font-black text-foreground ml-1">Investors</span>
             </div>
           </Card>
-          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-rose-400 h-[85px]">
-            <div className="text-[8px] 2xl:text-[9px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 truncate uppercase" title={filteredData[0]?.name}>
+          <Card className="p-2.5 bg-card border border-border shadow-sm flex flex-col justify-center shrink-0 border-r-4 border-r-rose-400 h-[95px]">
+            <div className="text-[13px] font-black text-foreground tracking-widest mb-0.5 leading-none px-0 truncate uppercase" title={filteredData[0]?.name}>
               Top Seller: {filteredData[0]?.name || '—'}
             </div>
             <div className="text-base 2xl:text-lg font-black text-primary dark:text-rose-400">
@@ -224,16 +270,19 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
 
       <Card className="p-4 bg-card border-border shadow-[0_8px_30px_-4px_rgba(0,32,91,0.08)] dark:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.3)]">
         {/* Ownership Mix ribbon — matching InstitutionalHolders */}
-        <div className="flex items-center justify-between gap-4 mb-4 bg-muted/20 dark:bg-slate-900/40 p-2 rounded-xl border border-border/40 shadow-sm backdrop-blur-sm overflow-x-auto no-scrollbar">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 bg-muted/20 dark:bg-slate-900/40 p-2 rounded-xl border border-border/40 shadow-sm backdrop-blur-sm">
           <div className="flex items-center gap-3">
             {donutData.length > 0 && (
-              <div className="h-[50px] w-[50px] 2xl:h-[65px] 2xl:w-[65px] flex-shrink-0">
+              <div
+                className="flex-shrink-0"
+                style={{ width: ownershipMixPie.boxSizePx, height: ownershipMixPie.boxSizePx }}
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={donutData}
-                      innerRadius={12}
-                      outerRadius={24}
+                      innerRadius={ownershipMixPie.innerRadius}
+                      outerRadius={ownershipMixPie.outerRadius}
                       paddingAngle={4}
                       dataKey="value"
                       stroke="none"
@@ -264,18 +313,18 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
             </div>
           </div>
 
-          <div className="flex items-center gap-6 pr-2">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pr-2">
             {donutData.map((d: any) => (
               <div key={d.name} className="flex items-center gap-2 flex-shrink-0">
                 <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: d.color }} />
-                <span className="text-[12px] 2xl:text-[14px] font-black text-foreground whitespace-nowrap tracking-tight uppercase">{d.name}</span>
+                <span className="text-[12px] 2xl:text-[14px] font-black text-foreground tracking-tight uppercase">{d.name}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* FULL WIDTH Chart Container — Lollipop Style matching TopBuyers */}
-        <div className="w-full mt-4" style={{ height: chartH }}>
+        <div ref={chartWrapRef} className="w-full mt-4" style={{ height: chartH }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               layout="vertical"
@@ -298,16 +347,12 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
                 dataKey="name"
                 type="category"
                 tick={({ x, y, payload, index }: any) => {
-                  let text = payload.value;
-                  const maxLen = isMobile ? 15 : 120; // Increased maxLen
-                  if (text.length > maxLen) {
-                    text = text.substring(0, maxLen) + '...';
-                  }
-                  const rank = (index ?? 0) + 1;
-                  const fontSize = 13;
+                  const raw = payload?.value != null ? String(payload.value) : '—';
+                  const text = truncateShareholderName(raw, 3);
+                  const fontSize = isMobile ? 11 : isCompact ? 12 : 13;
                   return (
                     <g transform={`translate(${x},${y})`}>
-                      <text x={-25} y={4} dominantBaseline="central" textAnchor="end" fontSize={fontSize} fontWeight={900} fill={theme === 'dark' ? '#38bdf8' : '#00205B'} style={{ fontFamily: 'Adani', letterSpacing: '0.01em' }}>
+                      <text x={isMobile ? -27 : isCompact ? -32 : -25} y={4} dominantBaseline="central" textAnchor="end" fontSize={fontSize} fontWeight={900} fill={theme === 'dark' ? '#38bdf8' : '#00205B'} style={{ fontFamily: 'Adani', letterSpacing: '0.01em' }}>
                         {formatName(text)}
                       </text>
                     </g>
@@ -391,7 +436,7 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
                     <TableHead rowSpan={2} className="text-center text-white font-bold border-r border-white/5 py-4 text-[13px] font-['Adani']">Category</TableHead>
                     <TableHead rowSpan={2} className="text-center text-white font-bold border-r border-white/5 py-4 bg-sky-500/20 text-[13px] font-['Adani']">Shares Sold during the Week</TableHead>
                     <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2 text-[13px] font-['Adani']">{detectedDates.latest}</TableHead>
-                    <TableHead colSpan={2} className="text-center text-white font-bold bg-white/5 py-2 text-[13px] font-['Adani']">{detectedDates.prev}</TableHead>
+                    <TableHead colSpan={2} className="text-center text-white font-bold border-r border-white/5 bg-white/10 py-2 text-[13px] font-['Adani']">{detectedDates.prev}</TableHead>
                   </TableRow>
                   <TableRow className="hover:bg-transparent border-b border-white/10">
                     <TableHead className="text-center text-white font-bold border-r border-white/5 py-1.5 text-[13px] font-['Adani']">Holding</TableHead>
@@ -422,10 +467,10 @@ export function TopSellers({ selectedCategories, topN, dateRange, buId }: TopSel
                       <TableCell className="text-center font-mono font-bold text-[11px] 2xl:text-[13px] text-foreground border-r border-border py-2">
                         {row.percent.toFixed(2)}%
                       </TableCell>
-                      <TableCell className="text-center border-r border-border font-mono font-bold text-[11px] 2xl:text-[13px] text-muted-foreground py-2">
+                      <TableCell className="text-center border-r border-border font-mono font-black text-[11px] 2xl:text-[13px] py-2 transition-colors bg-sky-500/10 text-sky-700 dark:text-sky-400">
                         {row.prevHoldings.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-center font-mono font-bold text-[11px] 2xl:text-[13px] text-muted-foreground border-r border-border py-2">
+                      <TableCell className="text-center font-mono font-bold text-[11px] 2xl:text-[13px] text-foreground border-r border-border py-2">
                         {row.prevPercent.toFixed(2)}%
                       </TableCell>
                     </TableRow>

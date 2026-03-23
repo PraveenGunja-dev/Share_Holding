@@ -58,7 +58,7 @@ export function BondYieldMovement({ dateRange }: BondYieldProps) {
 
               <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border/60">
                 <div>
-                  <div className="text-[9px] 2xl:text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">YTM</div>
+                  <div className="text-[13px] font-bold text-muted-foreground uppercase tracking-widest mb-1">YTM</div>
                   <div className="text-[13px] 2xl:text-[16px] font-black text-primary dark:text-foreground">{bond.currentYTM.toFixed(2)}%</div>
                   <div className={`flex items-center gap-0.5 text-[10px] 2xl:text-[11px] font-bold mt-1 ${bond.changeYTM > 0 ? 'text-rose-500' : bond.changeYTM < 0 ? 'text-emerald-500' : 'text-muted-foreground'}`}>
                     {bond.changeYTM > 0 ? <ArrowUp className="w-2.5 h-2.5" /> : bond.changeYTM < 0 ? <ArrowDown className="w-2.5 h-2.5" /> : null}
@@ -74,7 +74,7 @@ export function BondYieldMovement({ dateRange }: BondYieldProps) {
                   </div>
                 </div>
                 <div>
-                  <div className="text-[9px] 2xl:text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Z-Spread</div>
+                  <div className="text-[13px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Z-Spread</div>
                   <div className="text-[13px] 2xl:text-[16px] font-black text-primary dark:text-foreground">{bond.zSpread} <span className="text-[9px] text-muted-foreground">bps</span></div>
                   <div className={`flex items-center gap-0.5 text-[10px] 2xl:text-[11px] font-bold mt-1 ${bond.changeZSpread > 0 ? 'text-rose-500' : bond.changeZSpread < 0 ? 'text-emerald-500' : 'text-muted-foreground'}`}>
                     {bond.changeZSpread > 0 ? <ArrowUp className="w-2.5 h-2.5" /> : bond.changeZSpread < 0 ? <ArrowDown className="w-2.5 h-2.5" /> : null}
@@ -90,22 +90,22 @@ export function BondYieldMovement({ dateRange }: BondYieldProps) {
       {/* 4 Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="px-5 py-4 bg-card border-border border-l-4 border-l-amber-500 shadow-xl">
-          <div className="text-[10px] 2xl:text-[12px] font-black text-amber-500 uppercase tracking-widest mb-1.5">Average YTM</div>
+          <div className="text-[13px] font-black text-amber-500 uppercase tracking-widest mb-1.5">Average YTM</div>
           <div className="text-xl 2xl:text-2xl font-black text-primary dark:text-foreground leading-none">{avgYTM.toFixed(2)}%</div>
           <div className="text-[10px] 2xl:text-[11px] font-bold text-amber-500 mt-1.5 opacity-80">+0.07% WoW</div>
         </Card>
         <Card className="px-5 py-4 bg-card border-border border-l-4 border-l-sky-500 shadow-xl">
-          <div className="text-[10px] 2xl:text-[12px] font-black text-sky-500 uppercase tracking-widest mb-1.5">Average G-Spread</div>
+          <div className="text-[13px] font-black text-sky-500 uppercase tracking-widest mb-1.5">Average G-Spread</div>
           <div className="text-xl 2xl:text-2xl font-black text-primary dark:text-foreground leading-none">{avgGSpread} <span className="text-xs 2xl:text-base font-bold text-muted-foreground">bps</span></div>
           <div className="text-[10px] 2xl:text-[11px] font-bold text-rose-500 mt-1.5 opacity-80">+3 bps WoW</div>
         </Card>
         <Card className="px-5 py-4 bg-card border-border border-l-4 border-l-emerald-500 shadow-xl">
-          <div className="text-[10px] 2xl:text-[12px] font-black text-emerald-500 uppercase tracking-widest mb-1.5">Average Z-Spread</div>
+          <div className="text-[13px] font-black text-emerald-500 uppercase tracking-widest mb-1.5">Average Z-Spread</div>
           <div className="text-xl 2xl:text-2xl font-black text-primary dark:text-foreground leading-none">{avgZSpread} <span className="text-xs 2xl:text-base font-bold text-muted-foreground">bps</span></div>
           <div className="text-[10px] 2xl:text-[11px] font-bold text-emerald-500 mt-1.5 opacity-80">+1 bps WoW</div>
         </Card>
         <Card className="px-5 py-4 bg-card border-border border-l-4 border-l-primary dark:border-l-sky-400 shadow-xl">
-          <div className="text-[10px] 2xl:text-[12px] font-black text-primary dark:text-sky-400 uppercase tracking-widest mb-1.5">Total Outstanding</div>
+          <div className="text-[13px] font-black text-primary dark:text-sky-400 uppercase tracking-widest mb-1.5">Total Outstanding</div>
           <div className="text-xl 2xl:text-2xl font-black text-primary dark:text-foreground leading-none">₹{totalOutstanding.toLocaleString()} <span className="text-xs 2xl:text-base font-bold text-muted-foreground">Cr</span></div>
           <div className="text-[10px] 2xl:text-[11px] font-bold text-muted-foreground mt-1.5 opacity-80">Issue Size</div>
         </Card>
@@ -119,16 +119,16 @@ export function BondYieldMovement({ dateRange }: BondYieldProps) {
             <Table>
               <TableHeader className="bg-primary dark:bg-slate-900">
                 <TableRow className="hover:bg-transparent border-b border-white/10">
-                  <TableHead className="text-[9px] 2xl:text-[11px] font-bold text-white uppercase tracking-widest py-4">Issue Date</TableHead>
-                  <TableHead className="text-[9px] 2xl:text-[11px] font-bold text-white uppercase tracking-widest py-4">Particular</TableHead>
-                  <TableHead className="text-center text-[9px] 2xl:text-[11px] font-bold text-white uppercase tracking-widest py-4">Rating</TableHead>
-                  <TableHead className="text-right text-[9px] 2xl:text-[11px] font-bold text-white uppercase tracking-widest py-4">Issue Size (Cr)</TableHead>
-                  <TableHead className="text-right text-[9px] 2xl:text-[11px] font-bold text-white uppercase tracking-widest py-4">Coupon</TableHead>
-                  <TableHead className="text-[9px] 2xl:text-[11px] font-bold text-white uppercase tracking-widest py-4">Maturity</TableHead>
-                  <TableHead className="text-right text-[9px] 2xl:text-[11px] font-bold text-white uppercase tracking-widest py-4">Current YTM</TableHead>
-                  <TableHead className="text-right text-[9px] 2xl:text-[11px] font-bold text-white uppercase tracking-widest py-4">G-Spread</TableHead>
-                  <TableHead className="text-right text-[9px] 2xl:text-[11px] font-bold text-white uppercase tracking-widest py-4">Z-Spread</TableHead>
-                  <TableHead className="text-right text-[9px] 2xl:text-[11px] font-bold text-white uppercase tracking-widest py-4">Movement</TableHead>
+                  <TableHead className="font-bold text-white uppercase tracking-widest py-4">Issue Date</TableHead>
+                  <TableHead className="font-bold text-white uppercase tracking-widest py-4">Particular</TableHead>
+                  <TableHead className="text-center font-bold text-white uppercase tracking-widest py-4">Rating</TableHead>
+                  <TableHead className="text-right font-bold text-white uppercase tracking-widest py-4">Issue Size (Cr)</TableHead>
+                  <TableHead className="text-right font-bold text-white uppercase tracking-widest py-4">Coupon</TableHead>
+                  <TableHead className="font-bold text-white uppercase tracking-widest py-4">Maturity</TableHead>
+                  <TableHead className="text-right font-bold text-white uppercase tracking-widest py-4">Current YTM</TableHead>
+                  <TableHead className="text-right font-bold text-white uppercase tracking-widest py-4">G-Spread</TableHead>
+                  <TableHead className="text-right font-bold text-white uppercase tracking-widest py-4">Z-Spread</TableHead>
+                  <TableHead className="text-right font-bold text-white uppercase tracking-widest py-4">Movement</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

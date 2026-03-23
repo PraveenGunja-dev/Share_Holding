@@ -1,6 +1,20 @@
 import logoImage from '@/assets/6f29c1a0f289e97c582d0783215dfe3554c97f37.png';
 
-export function DashboardFooter() {
+function extractYearFromBuName(buName?: string): number {
+  if (!buName) return new Date().getFullYear();
+
+  // Common BU names include a 4-digit year (e.g. "FY 2024-25" / "2024").
+  const matches = buName.match(/\b(19|20)\d{2}\b/g);
+  if (matches && matches.length > 0) {
+    // If multiple years exist (e.g. 2024-25), prefer the first one.
+    const year = Number(matches[0]);
+    if (Number.isFinite(year)) return year;
+  }
+
+  return new Date().getFullYear();
+}
+
+export function DashboardFooter({ buName }: { buName?: string }) {
   return (
     <footer className="bg-card dark:bg-[#020617] border-t border-border px-6 py-4 mt-8 transition-colors duration-300">
       <div className="w-full">
@@ -18,7 +32,7 @@ export function DashboardFooter() {
 
           <div className="flex items-center gap-6">
             <div className="text-[11px] font-bold text-muted-foreground tracking-widest opacity-80">
-              © 2025 Adani Green Energy Limited
+              © {extractYearFromBuName(buName)} Adani Green Energy Limited
             </div>
           </div>
         </div>
